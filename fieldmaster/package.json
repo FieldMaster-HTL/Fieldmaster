@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "docker compose up -d && node ./scripts/wait-for-db.js && npm run db:prepare && next dev",
+    "stop": "docker compose down",
+    "db:prepare": "npm run db:migrate && npm run db:types",
+    "db:migrate": "drizzle-kit migrate",
+    "db:types": "drizzle-kit generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

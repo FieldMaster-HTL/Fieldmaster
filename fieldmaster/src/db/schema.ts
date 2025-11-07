@@ -11,6 +11,6 @@ export const User = pgTable("users", {
 export const Farm = pgTable("farm", {
   clerkId: text("clerk_organiasation_id").notNull().unique(),
   name: text("name"),
-  creatorId: integer("").references(() => User.id),
+  creatorId: integer("creator_id").references(() => User.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

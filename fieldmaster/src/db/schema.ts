@@ -1,8 +1,16 @@
-import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, serial } from "drizzle-orm/pg-core";
 
-export const usersTable = pgTable("users", {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    name: varchar({ length: 255 }).notNull(),
-    age: integer().notNull(),
-    email: varchar({ length: 255 }).notNull().unique(),
+export const User = pgTable("users", {
+  id: serial("id").primaryKey(),
+  clerkId: text("clerk_user_id").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const Farm = pgTable("farm", {
+  clerkId: text("clerk_organiasation_id").notNull().unique(),
+  name: text("name"),
+  creatorId: integer("creator_id").references(() => User.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -43,3 +43,11 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Drizzle ORM
+drizzle/*.sqlite
+drizzle/*.db
+drizzle/.cache/
+drizzle/*.tmp
+drizzle/introspect.json
+

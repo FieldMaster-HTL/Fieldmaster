@@ -11,7 +11,7 @@ export const User = pgTable("user", {
 
 export const Farm = pgTable("farm", {
   id: uuid("id").defaultRandom().primaryKey(),
-  clerkId: text("clerkOrganiasationId").notNull().unique(),
+  clerkId: text("clerkOrganisationId").notNull().unique(),
   name: text("name"),
   slug: text("slug"),
   creatorId: uuid("creatorId").references(() => User.id),

@@ -15,7 +15,7 @@ export const USER_QUERIES = {
       .limit(1)
       .then((row) => {
         const id = row[0]?.id;
-        if (id) throw new Error("no user found for clerkId:" + { clerkId });
+        if (!id) throw new Error("no user found for clerkId:" + { clerkId });
         return id as UUID;
       });
   },

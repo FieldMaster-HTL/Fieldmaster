@@ -1,16 +1,19 @@
 import { MUTATIONS } from "@/src/server/db/queries/queries";
-import { verifyWebhook } from "@clerk/nextjs/webhooks";
+import { verifyWebhook, WebhookEvent } from "@clerk/nextjs/webhooks";
 import { NextRequest } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const evt = await verifyWebhook(req);
+    const evt = (await verifyWebhook(req)) as WebhookEvent;
 
     const eventType = evt.type;
 
     if (eventType === "user.created") {
       await MUTATIONS.USER.createUser(
-        evt.data.id.toString(),
+        evt.data.id,
         evt.data.first_name,
         evt.data.last_name,
       );
@@ -37,11 +40,13 @@ export async function POST(req: NextRequest) {
     } else if (eventType === "organization.deleted") {
       if (!evt.data.id) throw Error("clerk id is null");
       await MUTATIONS.FARM.deleteFarmByClerkId(evt.data.id);
+    } else {
+      console.warn(`Unhandled webhook event type: ${eventType}`);
     }
 
     return new Response("Webhook received", { status: 200 });
   } catch (err) {
     console.error("Error verifying webhook:", err);
-    return new Response("Error verifying webhook: " + err, { status: 400 });
+    return new Response("Error verifying webhook", { status: 400 });
   }
 }

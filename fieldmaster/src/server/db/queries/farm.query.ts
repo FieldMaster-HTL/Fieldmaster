@@ -15,7 +15,7 @@ export const FARM_QUERIES = {
       .limit(1)
       .then((rows) => {
         const id = rows[0]?.id;
-        if (id) throw new Error("no Farm found for clerkId:" + { clerkId });
+        if (!id) throw new Error("no Farm found for clerkId:" + { clerkId });
         return id as UUID;
       });
   },

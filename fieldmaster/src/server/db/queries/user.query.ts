@@ -1,10 +1,9 @@
 "server-only";
 
 import { db } from "@/src/server/db";
-import { Farm, User } from "@/src/server/db/schema/schema";
+import { User } from "@/src/server/db/schema/schema";
 import { UUID } from "crypto";
 import { eq } from "drizzle-orm";
-import { FARM_MUTATIONS, FARM_QUERIES } from "./farm.query";
 
 export const USER_QUERIES = {
   async mapClerkIdtoLocalId(clerkId: string) {
@@ -57,13 +56,5 @@ export const USER_MUTATIONS = {
     return USER_QUERIES.mapClerkIdtoLocalId(clerkId).then((id) => {
       return USER_MUTATIONS.updateUser(id, values);
     });
-  },
-  async deleteFarm(id: string) {
-    return db.delete(Farm).where(eq(Farm.id, id));
-  },
-  async deleteFarmByClerkId(clerkId: string) {
-    return FARM_QUERIES.mapClerkIdToLocalId(clerkId).then((id) =>
-      FARM_MUTATIONS.deleteFarm(id),
-    );
   },
 };

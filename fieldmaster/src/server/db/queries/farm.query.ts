@@ -30,7 +30,13 @@ export const FARM_MUTATIONS = {
   ) {
     return (
       created_by
-        ? USER_QUERIES.mapClerkIdtoLocalId(created_by)
+        ? USER_QUERIES.mapClerkIdtoLocalId(created_by).catch((err) => {
+            console.warn(
+              `creator lookup failed for clerkId ${created_by}, inserting farm without creator`,
+              err,
+            );
+            return null;
+          })
         : Promise.resolve(null)
     ).then((id) =>
       db.insert(Farm).values({ clerkId, name, slug, creatorId: id }),

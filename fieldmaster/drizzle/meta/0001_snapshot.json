@@ -1,6 +1,6 @@
 {
-  "id": "68bd4590-00a7-4ed6-a67e-8d11270ccba9",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "42e0d624-d3ce-4a6b-aba7-2d9ef05a1d34",
+  "prevId": "eae09a4c-ed76-49c4-bab8-e83e3050a17a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -15,8 +15,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "clerkOrganiasationId": {
-          "name": "clerkOrganiasationId",
+        "clerkOrganisationId": {
+          "name": "clerkOrganisationId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -71,11 +71,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "farm_clerkOrganiasationId_unique": {
-          "name": "farm_clerkOrganiasationId_unique",
+        "farm_clerkOrganisationId_unique": {
+          "name": "farm_clerkOrganisationId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "clerkOrganiasationId"
+            "clerkOrganisationId"
           ]
         }
       },

@@ -1,6 +1,6 @@
 {
-  "id": "68bd4590-00a7-4ed6-a67e-8d11270ccba9",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "eae09a4c-ed76-49c4-bab8-e83e3050a17a",
+  "prevId": "b1a362e9-d4c4-43ba-983d-c8b1e450688b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -59,12 +59,8 @@
           "name": "farm_creatorId_user_id_fk",
           "tableFrom": "farm",
           "tableTo": "user",
-          "columnsFrom": [
-            "creatorId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["creatorId"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -74,9 +70,7 @@
         "farm_clerkOrganiasationId_unique": {
           "name": "farm_clerkOrganiasationId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clerkOrganiasationId"
-          ]
+          "columns": ["clerkOrganiasationId"]
         }
       },
       "policies": {},
@@ -133,9 +127,7 @@
         "user_clerkUserId_unique": {
           "name": "user_clerkUserId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clerkUserId"
-          ]
+          "columns": ["clerkUserId"]
         }
       },
       "policies": {},
@@ -155,3 +147,4 @@
     "tables": {}
   }
 }
+

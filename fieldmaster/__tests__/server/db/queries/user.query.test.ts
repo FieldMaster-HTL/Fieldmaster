@@ -103,6 +103,7 @@ describe("USER_MUTATIONS", () => {
       (db.then as jest.Mock).mockImplementation((callback) => callback([]));
       (eq as jest.Mock).mockReturnValue("eq_condition");
 
+      const mockDate = new Date("2024-01-01T00:00:00.000Z");
       const dateSpy = jest.spyOn(global, "Date").mockImplementation(() => mockDate as any);
       await USER_MUTATIONS.deleteUser("local_user_id_123");
       expect(db.update).toHaveBeenCalledWith(User);

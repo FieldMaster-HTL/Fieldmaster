@@ -1,5 +1,5 @@
 {
-  "id": "2bfe3f9b-dd17-4f5e-99b0-1a1a8b573866",
+  "id": "ca68a045-5b03-4de4-b72c-f2a9fb526d32",
   "prevId": "469105ed-ccb4-4a63-9e7d-48943c026c64",
   "version": "7",
   "dialect": "postgresql",
@@ -83,6 +83,7 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
     "public.task": {
       "name": "task",
       "schema": "",
@@ -225,6 +226,46 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+
+    },
+    "public.tools": {
+      "name": "tools",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "available": {
+          "name": "available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+
     }
   },
   "enums": {},

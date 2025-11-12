@@ -11,8 +11,9 @@ export default function Page() {
   const [showWindow, setShowWindow] = useState(false)
   const [form, setForm] = useState({ name: '', category: 'Maschine' })
 
+  // Tools beim Laden der Seite holen
   useEffect(() => {
-    loadTools()
+    loadToolsfromDB()
   }, [])
 
   async function loadToolsfromDB() {
@@ -32,7 +33,7 @@ export default function Page() {
 
     setForm({ name: '', category: 'Maschine' })
     setShowWindow(false)
-    await loadTools()
+    await loadToolsfromDB()
   }
 
   return (
@@ -44,6 +45,13 @@ export default function Page() {
       <button onClick={() => setShowWindow(true)} className="create-button">
         Create Tool
       </button>
+
+      {/* Tool-Namen direkt unter dem Button */}
+      <ul className="tool-names">
+        {tools.map((tool) => (
+          <li key={tool.id}>{tool.name}</li>
+        ))}
+      </ul>
 
       {/* ÜBERLAGERNDES FENSTER */}
       {showWindow && (
@@ -76,7 +84,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* Tool-Liste */}
+      {/* Stored tool-list */}
       <ul className="tool-list">
         {tools.map((tool) => (
           <li key={tool.id} className="tool-item">

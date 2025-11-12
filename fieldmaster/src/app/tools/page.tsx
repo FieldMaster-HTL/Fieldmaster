@@ -54,7 +54,8 @@ export default function Page() {
         Create Tool
       </button>
 
-      {/* Kurze Liste der Tool-Namen */}
+      {/* FMST-16: Werkzeug - Maschinen/Werkzeuge anzeigen 
+          (Kulmer Klara) */}
       <ul className="tool-names">
         {tools.map((tool) => (
           <li key={tool.id}>{tool.name}</li>
@@ -69,6 +70,11 @@ export default function Page() {
 
             {/* Formular für Name + Kategorie */}
             <form onSubmit={handleSubmit} className="modal-form">
+
+              {/* 
+                FMST-17: Werkzeug - Name wählen 
+                (Kulmer Klara)
+              */}
               <input
                 type="text"
                 placeholder="Tool-Name"
@@ -103,6 +109,10 @@ export default function Page() {
         </div>
       )}
       
+      {/* 
+        FMST-18: Werkzeug - Beschreibung 
+        (Kulmer Klara)
+      */}
       {/* Detailansicht der Tools mit Kategorie & Verfügbarkeitsstatus */}
       <ul className="tool-list">
         {tools.map((tool) => (

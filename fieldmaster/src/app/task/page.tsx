@@ -1,65 +1,37 @@
 'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
 
-interface Task {
-  id: string
-  name: string
-  description?: string
-  creator_id?: string
-  created_at?: string
-  due_to?: string
-  area_id?: string
-}
+import { useState, useEffect, useTransition } from 'react'
+import Link from 'next/link'
+import { getAllTasksAction, createTaskAction } from './actions'
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [tasks, setTasks] = useState<any[]>([])
   const [newTaskName, setNewTaskName] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedTask, setSelectedTask] = useState<any | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const fetchTasks = async () => {
-    const mockData: Task[] = [
-      {
-        id: crypto.randomUUID(),
-        name: 'Traktor warten',
-        description: 'Ölstand prüfen und Filter wechseln',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: crypto.randomUUID(),
-        name: 'Feld 3 düngen',
-        description: 'Dünger NPK-15 verwenden',
-        created_at: new Date().toISOString(),
-      },
-    ]
-    setTasks(mockData)
-  }
-
-  const createTask = async (name: string, description: string) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      name,
-      description,
-      created_at: new Date().toISOString(),
-    }
-    setTasks((prev) => [...prev, newTask])
-    setSelectedTask(newTask)
-    setShowModal(true)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTaskName.trim()) return
-    await createTask(newTaskName.trim(), newTaskDescription.trim())
-    setNewTaskName('')
-    setNewTaskDescription('')
+    const res = await getAllTasksAction()
+    setTasks(res)
   }
 
   useEffect(() => {
     fetchTasks()
   }, [])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!newTaskName.trim()) return
+
+    startTransition(async () => {
+      await createTaskAction(newTaskName, newTaskDescription)
+      await fetchTasks()
+      setNewTaskName('')
+      setNewTaskDescription('')
+    })
+  }
 
   return (
     <main className="flex justify-center items-center bg-surface p-6 min-h-screen">
@@ -98,9 +70,10 @@ export default function Tasks() {
           />
           <button
             type="submit"
+            disabled={isPending}
             className="bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white self-start"
           >
-            Hinzufügen
+            {isPending ? 'Speichern...' : 'Hinzufügen'}
           </button>
         </form>
 
@@ -130,7 +103,7 @@ export default function Tasks() {
       {/* Modal-Fenster */}
       {showModal && selectedTask && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative border border-gray-700">
+          <div className="bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative border border-gray-700">
             <button
               onClick={() => setShowModal(false)}
               className="absolute top-2 right-3 text-gray-400 hover:text-white text-2xl"
@@ -138,15 +111,18 @@ export default function Tasks() {
               ✕
             </button>
 
-            <h2 className="text-2xl font-bold text-primary-400 mb-2">
-              {selectedTask.name}
-            </h2>
+            <h2 className="text-2xl font-bold text-primary-400 mb-2">{selectedTask.name}</h2>
             <p className="text-sm text-gray-300 mb-4">
               {selectedTask.description || 'Keine Beschreibung vorhanden.'}
             </p>
             <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
               <p>ID: {selectedTask.id}</p>
-              <p>Erstellt am: {new Date(selectedTask.created_at || '').toLocaleString()}</p>
+              <p>
+                Erstellt am:{' '}
+                {selectedTask.createdAt
+                  ? new Date(selectedTask.createdAt).toLocaleString()
+                  : 'Unbekannt'}
+              </p>
             </div>
           </div>
         </div>

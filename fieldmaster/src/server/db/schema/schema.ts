@@ -18,3 +18,13 @@ export const Farm = pgTable("farm", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
 });
+
+export const Task = pgTable("task", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  creatorId: uuid("creator_id").references(() => User.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  dueTo: timestamp("due_to"),
+  areaId: uuid("area_id").references(() => Farm.id),
+})

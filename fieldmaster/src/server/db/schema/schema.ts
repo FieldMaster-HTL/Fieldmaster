@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, doublePrecision } from "drizzle-orm/pg-core";
 
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -14,6 +14,15 @@ export const Farm = pgTable("farm", {
   clerkId: text("clerkOrganisationId").notNull().unique(),
   name: text("name"),
   slug: text("slug"),
+  creatorId: uuid("creatorId").references(() => User.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
+});
+
+export const Area = pgTable("area", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  size: doublePrecision("size").notNull(),
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),

@@ -1,7 +1,9 @@
 "use client"
 
+import { create } from 'domain'
 import Link from 'next/link'
 import { useState } from 'react'
+import { createArea } from './actions'
 
 type Area = {
   id: number
@@ -22,10 +24,10 @@ export default function Page() {
   }
 
   const handleSubmit = (e: React.FormEvent) => {
+  
     e.preventDefault()
     setError(null)
 
-    // basic validation
     if (!name.trim()) {
       setError('Bitte einen Feldnamen eingeben.')
       return
@@ -37,14 +39,7 @@ export default function Page() {
       return
     }
 
-    const newArea: Area = {
-      id: Date.now(),
-      name: name.trim(),
-      size: numericSize,
-    }
-
-    setAreas(prev => [newArea, ...prev])
-    console.log('new area', newArea)
+   createArea(name.trim(), numericSize) 
     resetForm()
   }
 
@@ -60,7 +55,7 @@ export default function Page() {
             onChange={e => setName(e.target.value)}
             placeholder="z. B. Acker 1"
             aria-label="Feldname"
-            style={{ padding: 8 }}
+              style={{ padding: 8, backgroundColor: '#f0f0f0', color: '#000', border: '1px solid #ccc', borderRadius: 4 }}
           />
         </label>
 
@@ -73,7 +68,7 @@ export default function Page() {
             placeholder="z. B. 100"
             aria-label="Größe"
             min={0}
-            style={{ padding: 8 }}
+              style={{ padding: 8, backgroundColor: '#f0f0f0', color: '#000', border: '1px solid #ccc', borderRadius: 4 }}
           />
         </label>
 

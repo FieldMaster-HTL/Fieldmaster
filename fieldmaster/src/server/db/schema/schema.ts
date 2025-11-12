@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, uuid, boolean, doublePrecision } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  boolean,
+  doublePrecision,
+} from "drizzle-orm/pg-core";
 
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -8,7 +15,6 @@ export const User = pgTable("user", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
 });
-
 
 export const Farm = pgTable("farm", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -30,7 +36,6 @@ export const Area = pgTable("area", {
   deletedAt: timestamp("deletedAt"),
 });
 
-
 // Tools Table
 export const toolsTable = pgTable("tools", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -44,8 +49,8 @@ export const Task = pgTable("task", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  creatorId: uuid("creator_id").references(() => User.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  dueTo: timestamp("due_to"),
-  areaId: uuid("area_id").references(() => Area.id),
+  creatorId: uuid("creatorId").references(() => User.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  dueTo: timestamp("dueTo"),
+  areaId: uuid("areaId").references(() => Area.id),
 });

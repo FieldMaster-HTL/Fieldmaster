@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { TOOL_QUERIES } from '@/src/server/db/queries/tools.query'
+
 import './style.css'
+import { loadTools, storeTools } from './actions'
 
 export default function Page() {
   const [tools, setTools] = useState<any[]>([])
@@ -14,8 +15,8 @@ export default function Page() {
     loadTools()
   }, [])
 
-  async function loadTools() {
-    const data = await TOOL_QUERIES.getToolsFromDB()
+  async function loadToolsfromDB() {
+    const data = await loadTools()
     setTools(data)
   }
 
@@ -27,7 +28,7 @@ export default function Page() {
       return
     }
 
-    await TOOL_QUERIES.createToolInDB({ ...form, available: true })
+    await storeTools(form, true)
 
     setForm({ name: '', category: 'Maschine' })
     setShowWindow(false)
@@ -81,7 +82,7 @@ export default function Page() {
           <li key={tool.id} className="tool-item">
             <h2 className="tool-name">{tool.name}</h2>
             <p className="tool-category">Kategorie: {tool.category}</p>
-            <p className="tool-status">Status: {tool.available ? '✅ Verfügbar' : '❌ Nicht verfügbar'}</p>
+            <p className="tool-status">Status: {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}</p>
           </li>
         ))}
       </ul>

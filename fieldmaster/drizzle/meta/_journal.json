@@ -15,6 +15,13 @@
       "when": 1762976140992,
       "tag": "0001_smiling_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762978450795,
+      "tag": "0002_steep_stark_industries",
+      "breakpoints": true
     }
   ]
 }

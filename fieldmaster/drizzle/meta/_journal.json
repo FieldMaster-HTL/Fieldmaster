@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762939192819,
-      "tag": "0000_green_jamie_braddock",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1762940173726,
-      "tag": "0001_colossal_rhodey",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762967255274,
-      "tag": "0002_certain_rick_jones",
+      "when": 1762962612725,
+      "tag": "0000_lean_annihilus",
       "breakpoints": true
     }
   ]

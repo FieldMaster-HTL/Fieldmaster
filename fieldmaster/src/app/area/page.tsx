@@ -39,18 +39,36 @@ export default function Page() {
       return
     }
 
-    const newArea = await createArea(name.trim(), String(numericSize))
-    
-    setAreas(prevAreas => [...prevAreas, { id: newArea[0].id, name: newArea[0].name, size: Number(newArea[0].size) }])
-    
-    resetForm()
+    try {
+     const newArea = await createArea(name.trim(), numericSize)
+     
+     if (!newArea || !Array.isArray(newArea) || !newArea[0]) {
+       setError('Fehler beim Anlegen des Feldes.')
+       return
+     }
+     
+     setAreas(prevAreas => [...prevAreas, { 
+       id: newArea[0].id, 
+       name: newArea[0].name, 
+       size: Number(newArea[0].size) 
+     }])
+     
+     resetForm()
+   } catch (err) {
+     setError('Fehler beim Anlegen des Feldes.')
+     console.error('Error creating area:', err)
+   }
   }
   useEffect(() => {
       async function fetchAreas() {
-        const areasRes = await getAllAreas();
-
-        // Ensure we set an array — fall back to an empty array if the response is not an array
-        setAreas(Array.isArray(areasRes) ? areasRes : []);
+        try {
+          const areasRes = await getAllAreas();
+          // Ensure we set an array — fall back to an empty array if the response is not an array
+          setAreas(Array.isArray(areasRes) ? areasRes : []);
+        } catch (err) {
+          console.error('Error fetching areas:', err)
+          setError('Fehler beim Laden der Areas.')
+        }
       }
       fetchAreas();
 

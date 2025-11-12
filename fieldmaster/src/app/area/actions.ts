@@ -5,24 +5,20 @@
 import { MUTATIONS, QUERIES } from "@/src/server/db/queries/queries"
 import { UUID } from "crypto";
 
-export async function createArea(name: string, size: string) {
+export async function createArea(name: string, size: number) {
     const res = await MUTATIONS.AREA.CreateArea(name, size);
     return res;
 }
 
 export async function getAllAreas() {
     const res = await QUERIES.AREA.getAllAreas();
-    console.log(res);
     return res.map(area => {
         return {
             id: area.id,
             name: area.name,
-            size: Number(area.size),
+            size: area.size,
         }
     });
-}
-export async function getAreaById(id: UUID) {
-    return await QUERIES.AREA.getAreaById(id);
 }
 export async function getAreasByCreator(creatorId: UUID) {
     return await QUERIES.AREA.getAreasByCreator(creatorId);

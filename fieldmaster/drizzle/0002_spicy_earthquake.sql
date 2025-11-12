@@ -1,1 +1,0 @@
-ALTER TABLE "area" ALTER COLUMN "size" SET DATA TYPE double precision;

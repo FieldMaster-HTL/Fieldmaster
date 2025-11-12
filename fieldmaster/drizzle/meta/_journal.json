@@ -12,16 +12,10 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1762940350186,
-      "tag": "0001_warm_black_panther",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762948293303,
-      "tag": "0002_spicy_earthquake",
+      "when": 1762940173726,
+      "tag": "0001_colossal_rhodey",
       "breakpoints": true
     }
   ]
 }
+

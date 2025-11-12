@@ -20,6 +20,14 @@ export const Farm = pgTable("farm", {
   deletedAt: timestamp("deletedAt"),
 });
 
+//Area FMST-30  / FMST-31
+export const Area = pgTable("area", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  size: doublePrecision("size").notNull(),
+  creatorId: uuid("creatorId").references(() => User.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
 
 // Tools Table
 export const toolsTable = pgTable("tools", {
@@ -38,4 +46,4 @@ export const Task = pgTable("task", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   dueTo: timestamp("due_to"),
   areaId: uuid("area_id").references(() => Farm.id),
-})
+});

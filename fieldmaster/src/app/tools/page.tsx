@@ -24,13 +24,20 @@ export default function Page() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    /* 
+      FMST-17: Werkzeug - Name wählen 
+      (Kulmer Klara)
+    */
     if (!form.name.trim()) {
       alert('Bitte gib einen Tool-Namen ein.')
       return
     }
 
     await storeTools(form, true)
-
+    /*
+    MFST-18: Werkzeug - Beschreibung 
+    (Kulmer Klara)
+    */
     setForm({ name: '', category: 'Maschine' })
     setShowWindow(false)
     await loadToolsfromDB()
@@ -46,14 +53,14 @@ export default function Page() {
         Create Tool
       </button>
 
-      {/* Tool-Namen direkt unter dem Button */}
+      {/* Tool-Name */}
       <ul className="tool-names">
         {tools.map((tool) => (
           <li key={tool.id}>{tool.name}</li>
         ))}
       </ul>
 
-      {/* ÜBERLAGERNDES FENSTER */}
+      {/*overlay-window*/}
       {showWindow && (
         <div className="modal-overlay">
           <div className="modal-window">
@@ -83,8 +90,9 @@ export default function Page() {
           </div>
         </div>
       )}
-
-      {/* Stored tool-list */}
+      
+      {/* FMST-16: Werkzeug - Maschinen/Werkzeuge anzeigen
+        (Kulmer Klara ) */}
       <ul className="tool-list">
         {tools.map((tool) => (
           <li key={tool.id} className="tool-item">

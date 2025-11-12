@@ -1,5 +1,7 @@
 "use client"
 
+//Area FMST-30  / FMST-31
+
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createArea, getAllAreas } from '../area/actions'

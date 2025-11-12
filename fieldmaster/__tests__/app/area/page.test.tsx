@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import Page from '../../../src/app/area/page'
 import { createArea, getAllAreas } from '../../../src/app/area/actions'
 
+//Area FMST-30  / FMST-31
+
 jest.mock('../../../src/app/area/actions', () => ({
     createArea: jest.fn().mockImplementation(() => Promise.resolve([{ id: '3', name: 'Neues Feld', size: 42.5 }])),
     getAllAreas: jest.fn().mockImplementation(() => Promise.resolve([

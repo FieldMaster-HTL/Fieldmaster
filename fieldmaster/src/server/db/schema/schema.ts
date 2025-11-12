@@ -19,6 +19,7 @@ export const Farm = pgTable("farm", {
   deletedAt: timestamp("deletedAt"),
 });
 
+//Area FMST-30  / FMST-31
 export const Area = pgTable("area", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),

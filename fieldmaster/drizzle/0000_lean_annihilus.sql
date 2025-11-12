@@ -1,3 +1,12 @@
+CREATE TABLE "area" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"size" double precision NOT NULL,
+	"creatorId" uuid,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"deletedAt" timestamp
+);
+--> statement-breakpoint
 CREATE TABLE "farm" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"clerkOrganisationId" text NOT NULL,
@@ -36,6 +45,7 @@ CREATE TABLE "tools" (
 	"available" boolean NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "area" ADD CONSTRAINT "area_creatorId_user_id_fk" FOREIGN KEY ("creatorId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "farm" ADD CONSTRAINT "farm_creatorId_user_id_fk" FOREIGN KEY ("creatorId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "task" ADD CONSTRAINT "task_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "task" ADD CONSTRAINT "task_area_id_farm_id_fk" FOREIGN KEY ("area_id") REFERENCES "public"."farm"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "task" ADD CONSTRAINT "task_area_id_area_id_fk" FOREIGN KEY ("area_id") REFERENCES "public"."area"("id") ON DELETE no action ON UPDATE no action;

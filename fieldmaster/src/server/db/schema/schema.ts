@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, doublePrecision } from "drizzle-orm/pg-core";
 
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -28,6 +28,8 @@ export const Area = pgTable("area", {
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
+});
+
 
 // Tools Table
 export const toolsTable = pgTable("tools", {
@@ -45,5 +47,5 @@ export const Task = pgTable("task", {
   creatorId: uuid("creator_id").references(() => User.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   dueTo: timestamp("due_to"),
-  areaId: uuid("area_id").references(() => Farm.id),
+  areaId: uuid("area_id").references(() => Area.id),
 });

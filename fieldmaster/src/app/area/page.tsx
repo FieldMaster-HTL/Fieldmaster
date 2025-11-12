@@ -2,11 +2,12 @@
 
 import { create } from 'domain'
 import Link from 'next/link'
-import { useState } from 'react'
-import { createArea } from './actions'
+import { use, useEffect, useState } from 'react'
+import { createArea, getAllAreas } from '../area/actions'
+import { get } from 'http'
 
 type Area = {
-  id: number
+  id: string
   name: string
   size: number
 }
@@ -23,8 +24,7 @@ export default function Page() {
     setError(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
@@ -39,9 +39,24 @@ export default function Page() {
       return
     }
 
-   createArea(name.trim(), numericSize) 
+    const newArea = await createArea(name.trim(), String(numericSize))
+    
+    setAreas([...areas, { id: newArea[0].id, name: newArea[0].name, size: Number(newArea[0].size) }])
+    
     resetForm()
   }
+  useEffect(() => {
+      async function fetchAreas() {
+        const areasRes = await getAllAreas();
+        console.log(areasRes);
+
+        // Ensure we set an array — fall back to an empty array if the response is not an array
+        setAreas(Array.isArray(areasRes) ? areasRes : []);
+      }
+      fetchAreas();
+
+    }, []
+  )
 
   return (
     <div style={{ padding: 16 }}>
@@ -82,7 +97,7 @@ export default function Page() {
 
       <section style={{ marginTop: 24 }}>
         <h2>Bestehende Areas</h2>
-        {areas.length === 0 ? (
+        {areas.length === 0 || !areas ? (
           <p>Keine Areas vorhanden.</p>
         ) : (
           <ul>

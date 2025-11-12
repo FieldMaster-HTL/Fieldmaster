@@ -36,10 +36,8 @@ export const AREA_MUTATIONS = {
         size: string,
         creatorId?: UUID,)
     {
-        return db.insert(Area).values({ name, size , creatorId});
+        return db.insert(Area).values({ name, size , creatorId}).returning();
     }
-  
-  
 };
 
 

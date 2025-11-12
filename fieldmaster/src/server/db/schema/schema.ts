@@ -22,7 +22,7 @@ export const Farm = pgTable("farm", {
 export const Area = pgTable("area", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  size: doublePrecision("size").notNull(),
+  size: text("size").notNull(),
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),

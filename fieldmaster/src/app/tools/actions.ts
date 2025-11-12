@@ -1,7 +1,9 @@
 'use server'
 
 import { QUERIES } from "@/src/server/db/queries/queries";
-import { toolsTable } from "@/src/server/db/schema/schema";
+'use server'
+
+import { QUERIES } from "@/src/server/db/queries/queries";
 
 
     export async function loadTools() {

@@ -14,6 +14,7 @@ export default function Tasks() {
     const [showModal, setShowModal] = useState(false) // show task details modal
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
     const [isPending, startTransition] = useTransition() // transition for async updates
+    const [error, setError] = useState('') // error message for the form
 
     // fetch all tasks from server
     const fetchTasks = async () => {
@@ -31,11 +32,18 @@ export default function Tasks() {
         if (!newTaskName.trim()) return
 
         startTransition(async () => {
-            await createTaskAction(newTaskName, newTaskDescription, dueTo)
-            await fetchTasks()
-            setNewTaskName('')
-            setNewTaskDescription('')
-            setDueTo('') 
+            try {
+                setError('')
+                const creatorClerkId = localStorage.getItem('creatorClerkId') ?? undefined
+                const dueDate = dueTo ? new Date(dueTo) : undefined
+                await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate)
+                await fetchTasks()
+                setNewTaskName('')
+                setNewTaskDescription('')
+                setDueTo('')
+            } catch (err) {
+                setError('Failed to create task. Please try again.')
+            }
         })
     }
 
@@ -58,7 +66,7 @@ export default function Tasks() {
                         </Link>
                     </div>
                 </header>
-
+                
                 {/* Add new Task form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-6">
                     <input
@@ -81,6 +89,9 @@ export default function Tasks() {
                         className="border rounded-md p-2"
                         placeholder="Enddatum (optional)"
                     />
+                    {error && (
+                        <div className="text-red-500 text-sm mb-2">{error}</div>
+                    )}
                     <button
                         type="submit"
                         disabled={isPending}

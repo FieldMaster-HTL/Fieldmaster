@@ -31,7 +31,7 @@ describe('Area page', () => {
         })
     })
 
-    it('submits the form and calls createArea with number as string', async () => {
+    it('submits the form and calls createArea with numeric size', async () => {
         render(<Page />)
 
         await waitFor(() => {
@@ -45,7 +45,7 @@ describe('Area page', () => {
         fireEvent.change(sizeInput, { target: { value: '42.5' } })
         fireEvent.submit(form)
         await waitFor(() => {
-            expect(createArea).toHaveBeenCalledWith('Neues Feld', '42.5')
+            expect(createArea).toHaveBeenCalledWith('Neues Feld', 42.5)
         })
     })
 })

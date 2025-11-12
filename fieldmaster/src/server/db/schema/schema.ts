@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+// UserStory: FMST-32
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
   clerkId: text("clerkUserId").notNull().unique(),
@@ -9,6 +10,7 @@ export const User = pgTable("user", {
   deletedAt: timestamp("deletedAt"),
 });
 
+// UserStory: FMST-32
 export const Farm = pgTable("farm", {
   id: uuid("id").defaultRandom().primaryKey(),
   clerkId: text("clerkOrganisationId").notNull().unique(),

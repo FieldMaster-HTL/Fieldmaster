@@ -4,9 +4,10 @@ import "@testing-library/jest-dom";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 //Area FMST-30  / FMST-31
-
 jest.mock("../../../src/app/area/actions", () => ({
-  createArea: jest.fn().mockResolvedValue({ area: { id: "3", name: "Neues Feld", size: 42.5 }, error: null }),
+  createArea: jest
+    .fn()
+    .mockResolvedValue({ area: { id: "3", name: "Neues Feld", size: 42.5 }, error: null }),
   getAllAreas: jest.fn().mockResolvedValue({
     areas: [
       { id: "1", name: "Testfeld", size: 123.45 },

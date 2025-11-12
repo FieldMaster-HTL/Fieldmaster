@@ -1,10 +1,8 @@
 "use client"
 
-import { create } from 'domain'
 import Link from 'next/link'
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createArea, getAllAreas } from '../area/actions'
-import { get } from 'http'
 
 type Area = {
   id: string
@@ -41,14 +39,13 @@ export default function Page() {
 
     const newArea = await createArea(name.trim(), String(numericSize))
     
-    setAreas([...areas, { id: newArea[0].id, name: newArea[0].name, size: Number(newArea[0].size) }])
+    setAreas(prevAreas => [...prevAreas, { id: newArea[0].id, name: newArea[0].name, size: Number(newArea[0].size) }])
     
     resetForm()
   }
   useEffect(() => {
       async function fetchAreas() {
         const areasRes = await getAllAreas();
-        console.log(areasRes);
 
         // Ensure we set an array — fall back to an empty array if the response is not an array
         setAreas(Array.isArray(areasRes) ? areasRes : []);
@@ -62,7 +59,7 @@ export default function Page() {
     <div style={{ padding: 16 }}>
       <h1 style={{ color: 'var(--primary)' }}>Area anlegen</h1>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 8, maxWidth: 420 }} data-testid="area-form">
         <label style={{ display: 'flex', flexDirection: 'column' }}>
           <span>Feldname</span>
           <input
@@ -90,7 +87,7 @@ export default function Page() {
         {error && <div style={{ color: 'crimson' }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" style={{ padding: '8px 12px' }}>Anlegen</button>
+          <button type="submit" style={{ padding: '8px 12px' }} data-testid="submit-button">Anlegen</button>
           <Link href="/" style={{ alignSelf: 'center', color: 'var(--primary)' }}>Zurück</Link>
         </div>
       </form>

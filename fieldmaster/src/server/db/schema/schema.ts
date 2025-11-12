@@ -29,3 +29,13 @@ export const toolsTable = pgTable("tools", {
   available: boolean("available").notNull(),
 });
 
+//FMST-35
+export const Task = pgTable("task", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  creatorId: uuid("creator_id").references(() => User.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  dueTo: timestamp("due_to"),
+  areaId: uuid("area_id").references(() => Farm.id),
+})

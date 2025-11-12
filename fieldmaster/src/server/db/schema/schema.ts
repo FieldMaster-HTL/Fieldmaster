@@ -52,5 +52,5 @@ export const Task = pgTable("task", {
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   dueTo: timestamp("dueTo"),
-  areaId: uuid("areaId").references(() => Farm.id),
+  areaId: uuid("areaId").references(() => Area.id),
 });

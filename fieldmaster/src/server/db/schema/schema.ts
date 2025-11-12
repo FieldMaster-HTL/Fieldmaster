@@ -1,10 +1,5 @@
-import {
-  doublePrecision,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean} from "drizzle-orm/pg-core";
+
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
   clerkId: text("clerkUserId").notNull().unique(),
@@ -13,6 +8,7 @@ export const User = pgTable("user", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
 });
+
 
 export const Farm = pgTable("farm", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -32,6 +28,13 @@ export const Area = pgTable("area", {
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
+
+// Tools Table
+export const toolsTable = pgTable("tools", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  available: boolean("available").notNull(),
 });
 
 //FMST-35

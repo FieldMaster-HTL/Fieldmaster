@@ -34,8 +34,9 @@ export default function Tasks() {
         startTransition(async () => {
             try {
                 setError('')
+                const creatorClerkId = localStorage.getItem('creatorClerkId') ?? undefined
                 const dueDate = dueTo ? new Date(dueTo) : undefined
-                await createTaskAction(newTaskName, newTaskDescription, undefined, /*undefined,*/ dueDate)
+                await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate)
                 await fetchTasks()
                 setNewTaskName('')
                 setNewTaskDescription('')

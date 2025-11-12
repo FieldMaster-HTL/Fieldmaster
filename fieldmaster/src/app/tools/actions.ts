@@ -7,7 +7,12 @@ import { QUERIES } from "@/src/server/db/queries/queries";
 
 
     export async function loadTools() {
+    try {
     return await QUERIES.TOOL.getToolsFromDB()
+    } catch (error) {
+      console.error('Failed to load tools:', error)
+      throw new Error('Unable to load tools')
+    }
     }
 
 export async function storeTools(form: { name: string; category: string }, available: boolean) {

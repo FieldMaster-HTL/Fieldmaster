@@ -1,9 +1,6 @@
 'use server'
 
 import { QUERIES } from "@/src/server/db/queries/queries";
-'use server'
-
-import { QUERIES } from "@/src/server/db/queries/queries";
 
 
     export async function loadTools() {

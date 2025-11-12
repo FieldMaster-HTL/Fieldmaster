@@ -19,7 +19,7 @@ export async function createArea(
     }
     return { area: res };
   } catch {
-    return { area: null, error: "a error accured" };
+    return { area: null, error: "an error occurred" };
   }
 }
 
@@ -31,6 +31,6 @@ export async function getAllAreas(): Promise<{
     const res = await QUERIES.AREA.getAllAreas();
     return { areas: res };
   } catch {
-    return { areas: null, error: "a error accured" };
+    return { areas: null, error: "an error occurred" };
   }
 }

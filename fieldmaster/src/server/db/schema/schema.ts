@@ -19,6 +19,7 @@ export const Farm = pgTable("farm", {
   deletedAt: timestamp("deletedAt"),
 });
 
+//FMST-35
 export const Task = pgTable("task", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),

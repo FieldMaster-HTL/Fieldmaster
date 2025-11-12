@@ -1,3 +1,5 @@
+//FMST-35
+
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
@@ -5,14 +7,15 @@ import Link from 'next/link'
 import { getAllTasksAction, createTaskAction } from './actions'
 
 export default function Tasks() {
-    const [tasks, setTasks] = useState<any[]>([])
-    const [newTaskName, setNewTaskName] = useState('')
-    const [newTaskDescription, setNewTaskDescription] = useState('')
-    const [dueTo, setDueTo] = useState('') // neu: Enddatum
-    const [showModal, setShowModal] = useState(false)
-    const [selectedTask, setSelectedTask] = useState<any | null>(null)
-    const [isPending, startTransition] = useTransition()
+    const [tasks, setTasks] = useState<any[]>([]) // store all tasks
+    const [newTaskName, setNewTaskName] = useState('') // new task title
+    const [newTaskDescription, setNewTaskDescription] = useState('') // new task description
+    const [dueTo, setDueTo] = useState('') // new task due date
+    const [showModal, setShowModal] = useState(false) // show task details modal
+    const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
+    const [isPending, startTransition] = useTransition() // transition for async updates
 
+    // fetch all tasks from server
     const fetchTasks = async () => {
         const res = await getAllTasksAction()
         setTasks(res)
@@ -22,17 +25,17 @@ export default function Tasks() {
         fetchTasks()
     }, [])
 
+    // handle form submission to add new task
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         if (!newTaskName.trim()) return
 
         startTransition(async () => {
-            // Übergibt das Enddatum (wenn vorhanden) an die Action
             await createTaskAction(newTaskName, newTaskDescription, dueTo)
             await fetchTasks()
             setNewTaskName('')
             setNewTaskDescription('')
-            setDueTo('') // zurücksetzen
+            setDueTo('') 
         })
     }
 
@@ -56,7 +59,7 @@ export default function Tasks() {
                     </div>
                 </header>
 
-                {/* Neue Task hinzufügen */}
+                {/* Add new Task form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-6">
                     <input
                         type="text"
@@ -87,7 +90,7 @@ export default function Tasks() {
                     </button>
                 </form>
 
-                {/* Task-Liste */}
+                {/* Task List */}
                 <ul className="space-y-2">
                     {tasks.map((task) => (
                         <li
@@ -115,7 +118,7 @@ export default function Tasks() {
                 </ul>
             </section>
 
-            {/* Modal-Fenster */}
+            {/* Task Detail Modal */}
             {showModal && selectedTask && (
                 <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm">
                     <div className="bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative border border-gray-700">
@@ -128,18 +131,18 @@ export default function Tasks() {
 
                         <h2 className="text-2xl font-bold text-primary-400 mb-2">{selectedTask.name}</h2>
                         <p className="text-sm text-gray-300 mb-4">
-                            {selectedTask.description || 'Keine Beschreibung vorhanden.'}
+                            {selectedTask.description || 'No description.'}
                         </p>
                         <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
                             <p>ID: {selectedTask.id}</p>
                             <p>
-                                Erstellt am:{' '}
+                                Created:{' '}
                                 {selectedTask.createdAt
                                     ? new Date(selectedTask.createdAt).toLocaleString()
-                                    : 'Unbekannt'}
+                                    : 'Unknown'}
                             </p>
                             {selectedTask.dueTo && (
-                                <p>Fällig am: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
+                                <p>Due: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
                             )}
                         </div>
                     </div>

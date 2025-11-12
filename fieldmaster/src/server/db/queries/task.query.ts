@@ -1,3 +1,5 @@
+//FMST-35
+
 "server-only"
 
 import { db } from "@/src/server/db/index"
@@ -7,6 +9,7 @@ import { eq } from "drizzle-orm"
 import { UUID } from "crypto"
 
 export const TASK_QUERIES = {
+  // Get task by its UUID
   async mapIdToTask(id: UUID) {
     const rows = await db.select().from(Task).where(eq(Task.id, id)).limit(1)
     const task = rows[0]
@@ -14,18 +17,20 @@ export const TASK_QUERIES = {
     return task
   },
 
-
+  // Get all tasks created by a specific user (by clerk ID)
   async getTasksByCreator(userClerkId: string) {
     const userId = await USER_QUERIES.mapClerkIdtoLocalId(userClerkId)
     return db.select().from(Task).where(eq(Task.creatorId, userId))
   },
 
+  // Get all tasks
   async getAll() {
     return db.select().from(Task)
   },
 }
 
 export const TASK_MUTATIONS = {
+  // Create a new task
   async createTask(
     name: string,
     description: string,
@@ -39,20 +44,20 @@ export const TASK_MUTATIONS = {
       })
       : null
 
-
     return db.insert(Task).values({
       name,
       description,
-      ...(creatorId !== null && { creatorId }),
-      //...(areaId !== null && { areaId }),
-      ...(due_to && { dueTo: due_to }),
+      ...(creatorId !== null && { creatorId }), // add creatorId if exists
+      ...(due_to && { dueTo: due_to }), // add due date if provided
     })
   },
 
+  // Update an existing task
   async updateTask(id: UUID, values: Partial<{ name: string; description: string; due_to: Date }>) {
     return db.update(Task).set(values).where(eq(Task.id, id))
   },
 
+  // "Soft delete" a task by marking description and clearing due date
   async deleteTask(id: UUID) {
     return db
       .update(Task)

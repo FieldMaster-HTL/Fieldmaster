@@ -1,24 +1,24 @@
+//FMST-35
+
 'use server'
 
 import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
 import type { UUID } from 'crypto'
 
-/**
- * Alle Tasks abrufen
- */
+// Fetch all tasks
+
 export async function getAllTasksAction() {
   try {
     const tasks = await TASK_QUERIES.getAll()
     return tasks
   } catch (err) {
-    console.error('Fehler beim Laden der Tasks:', err)
+    console.error('Error loading tasks:', err)
     return []
   }
 }
 
-/**
- * Neue Task erstellen
- */
+// Create a new task
+
 export async function createTaskAction(
   name: string,
   description?: string,
@@ -33,37 +33,32 @@ export async function createTaskAction(
       creatorClerkId,
       due_to
     )
-    return newTask
   } catch (err) {
-    console.error('Fehler beim Erstellen der Task:', err)
-    throw err
-  }
-}
-/**
- * Task aktualisieren
- */
-export async function updateTaskAction(
-  id: UUID,
-  values: Partial<{ name: string; description: string; due_to: Date }>
-)
- {
-  try {
-    return await TASK_MUTATIONS.updateTask(id, values)
-  } catch (err) {
-    console.error('Fehler beim Aktualisieren der Task:', err)
+    console.error('Error creating task:', err)
     throw err
   }
 }
 
-/**
- * Task löschen
- */
+//Update a task
+
+export async function updateTaskAction(
+  id: UUID,
+  values: Partial<{ name: string; description: string; due_to: Date }>
+) {
+  try {
+    return await TASK_MUTATIONS.updateTask(id, values)
+  } catch (err) {
+    console.error('Error updating task:', err)
+    throw err
+  }
+}
+
+// Delete a task
 export async function deleteTaskAction(id: UUID) {
   try {
     return await TASK_MUTATIONS.deleteTask(id)
   } catch (err) {
-    console.error('Fehler beim Löschen der Task:', err)
+    console.error('Error deleting task:', err)
     throw err
   }
 }
-

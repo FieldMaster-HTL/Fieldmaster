@@ -1,27 +1,127 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
-  /* Hauptfarben */
-  --primary: #144332;
-  --primary-light: #1a684b;
-  --primary-dark: #0a2219;
-
-  /* System-Farben */
   --background: #ffffff;
   --foreground: #171717;
+  --primary-100: #144432;
+  --primary-500: #144432;
+  /* Hauptfarbe */
+  --primary-900: #144432;
+
+  --secondary-100: #1abe82;
+  --secondary-500: #1abe82;
+  /* Sekundärfarbe */
+  --secondary-900: #1abe82;
+
+  /* Hintergründe / Surfaces */
+  --bg-default: #ffffff;
+  --bg-muted: #f8fafc;
+  --bg-elevated: #f1f5f9;
 }
 
+/* Theme inline / vorhandene Variablen beibehalten */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark mode Varianten */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --primary-100: #144432;
+    --primary-500: #144432;
+    /* Hauptfarbe */
+    --primary-900: #144432;
+
+    --secondary-100: #1abe82;
+    --secondary-500: #1abe82;
+    /* Sekundärfarbe */
+    --secondary-900: #1abe82;
+
+    --bg-default: #171717;
+    --bg-muted: #171717;
+    --bg-elevated: #171717;
   }
 }
 
+/* Body */
 body {
-  background-color: var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Utilities für Primary / Secondary (3 Abstufungen) */
+.text-primary-100 {
+  color: var(--primary-100);
+}
+
+.text-primary-500 {
+  color: var(--primary-500);
+}
+
+.text-primary-900 {
+  color: var(--primary-900);
+}
+
+.bg-primary-100 {
+  background-color: var(--primary-100);
+}
+
+.bg-primary-500 {
+  background-color: var(--primary-500);
+}
+
+.bg-primary-900 {
+  background-color: var(--primary-900);
+}
+
+.border-primary {
+  border-color: var(--primary-500);
+}
+
+.text-secondary-100 {
+  color: var(--secondary-100);
+}
+
+.text-secondary-500 {
+  color: var(--secondary-500);
+}
+
+.text-secondary-900 {
+  color: var(--secondary-900);
+}
+
+.bg-secondary-100 {
+  background-color: var(--secondary-100);
+}
+
+.bg-secondary-500 {
+  background-color: var(--secondary-500);
+}
+
+.bg-secondary-900 {
+  background-color: var(--secondary-900);
+}
+
+.border-secondary {
+  border-color: var(--secondary-500);
+}
+
+/* Background / Surface Utilities */
+.bg-surface {
+  background-color: var(--bg-default);
+}
+
+.bg-muted {
+  background-color: var(--bg-muted);
+}
+
+.bg-elevated {
+  background-color: var(--bg-elevated);
 }

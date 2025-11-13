@@ -35,13 +35,10 @@ describe('Tasks page', () => {
   })
 
   // Test if creating a task calls the correct action
-it('calls createTaskAction when submitting the new task form', async () => {
+  it('calls createTaskAction when submitting the new task form', async () => {
     const creatorClerkId = 'creator-1'
-    const farmClerkId = 'farm-1'
 
-    // provide clerk ids for the component (common pattern: localStorage)
     localStorage.setItem('creatorClerkId', creatorClerkId)
-    localStorage.setItem('farmClerkId', farmClerkId)
 
     getAllTasksAction.mockResolvedValue([]) // no tasks initially
     createTaskAction.mockResolvedValue(undefined) // mock create
@@ -65,13 +62,12 @@ it('calls createTaskAction when submitting the new task form', async () => {
 
     // wait for createTaskAction to be called (component uses startTransition)
     await waitFor(() => {
-        expect(createTaskAction).toHaveBeenCalledWith(
-            'Test Task',
-            'Beschreibung',
-            creatorClerkId,
-            farmClerkId,
-            new Date('2025-11-12')
-        )
+      expect(createTaskAction).toHaveBeenCalledWith(
+        'Test Task',
+        'Beschreibung',
+        creatorClerkId,
+        new Date('2025-11-12')
+      )
     })
-})
+  })
 })

@@ -1,6 +1,6 @@
 {
-  "id": "0d1e1ddd-435d-4090-b5a4-6432d45abab8",
-  "prevId": "58643e52-1cb8-4432-ac84-f62a6a84cc60",
+  "id": "8dc35b81-11b5-4bbd-8454-80a6df477951",
+  "prevId": "0d1e1ddd-435d-4090-b5a4-6432d45abab8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -212,10 +212,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "task_areaId_farm_id_fk": {
-          "name": "task_areaId_farm_id_fk",
+        "task_areaId_area_id_fk": {
+          "name": "task_areaId_area_id_fk",
           "tableFrom": "task",
-          "tableTo": "farm",
+          "tableTo": "area",
           "columnsFrom": [
             "areaId"
           ],

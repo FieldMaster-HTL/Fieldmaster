@@ -36,6 +36,10 @@ describe('Tasks page', () => {
 
   // Test if creating a task calls the correct action
   it('calls createTaskAction when submitting the new task form', async () => {
+    const creatorClerkId = 'creator-1'
+
+    localStorage.setItem('creatorClerkId', creatorClerkId)
+
     getAllTasksAction.mockResolvedValue([]) // no tasks initially
     createTaskAction.mockResolvedValue(undefined) // mock create
 
@@ -58,7 +62,12 @@ describe('Tasks page', () => {
 
     // wait for createTaskAction to be called (component uses startTransition)
     await waitFor(() => {
-      expect(createTaskAction).toHaveBeenCalledWith('Test Task', 'Beschreibung', '2025-11-12')
+      expect(createTaskAction).toHaveBeenCalledWith(
+        'Test Task',
+        'Beschreibung',
+        creatorClerkId,
+        new Date('2025-11-12')
+      )
     })
   })
 })

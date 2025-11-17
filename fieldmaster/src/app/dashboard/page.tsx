@@ -23,12 +23,12 @@ export default function Page(): React.JSX.Element {
                 setLoadingAreas(true)
                 setLoadingTasks(true)
 
-                const [areasRes, tasksRes] = await Promise.all([
+                const [{ areas }, tasksRes] = await Promise.all([
                     getAllAreas(),
                     getAllTasksAction()
                 ])
 
-                setAreas(areasRes || [])
+                setAreas(areas || [])
                 setTasks(tasksRes || [])
             } catch (err: any) {
                 setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')

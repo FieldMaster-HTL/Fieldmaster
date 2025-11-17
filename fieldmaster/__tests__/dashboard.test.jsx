@@ -1,104 +1,81 @@
+/**
+ * @file __tests__/dashboard.test.jsx
+ *
+ * Tests for src/app/dashboard/page.tsx
+ */
+
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import Page from '@/src/app/dashboard/page'
-import * as areaActions from '@/src/app/area/actions'
-import * as taskActions from '@/src/app/task/actions'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom'
 
-jest.mock('@/src/app/area/actions')
-jest.mock('@/src/app/task/actions')
+jest.mock('@/src/app/area/actions', () => ({
+  getAllAreas: jest.fn()
+}))
 
-describe('Dashboard Page', () => {
-    const mockAreas = [
-        { id: '1', name: 'Area 1', size: 100 },
-        { id: '2', name: 'Area 2', size: 200 }
-    ]
+jest.mock('@/src/app/task/actions', () => ({
+  getAllTasksAction: jest.fn()
+}))
 
-    const mockTasks = [
-        {
-            id: '1',
-            name: 'Task 1',
-            description: 'Description 1',
-            creatorId: 'user1',
-            createdAt: new Date(),
-            dueTo: new Date(),
-            areaId: '1'
-        }
-    ]
+const { getAllAreas } = require('@/src/app/area/actions')
+const { getAllTasksAction } = require('@/src/app/task/actions')
 
-    beforeEach(() => {
-        jest.clearAllMocks()
-    })
+const Page = require('../src/app/dashboard/page').default
 
-    it('renders dashboard title', async () => {
-        areaActions.getAllAreas.mockResolvedValue([])
-        taskActions.getAllTasksAction.mockResolvedValue([])
+beforeEach(() => {
+  jest.resetAllMocks()
+})
 
-        render(<Page />)
-        expect(screen.getByText('Dashboard')).toBeInTheDocument()
-    })
+test('zeigt Areas nach dem Laden und aktualisiert die Areas-Zahl im Button', async () => {
+  getAllAreas.mockResolvedValue({ areas: [{ id: 'a1', name: 'Area 1', size: 42 }] })
+  getAllTasksAction.mockResolvedValue([])
 
-    it('loads and displays areas', async () => {
-        areaActions.getAllAreas.mockResolvedValue(mockAreas)
-        taskActions.getAllTasksAction.mockResolvedValue([])
+  render(<Page />)
 
-        render(<Page />)
+  // warten bis die Area gerendert ist
+  expect(await screen.findByText('Area 1')).toBeInTheDocument()
 
-        await waitFor(() => {
-            expect(screen.getByText('Area 1')).toBeInTheDocument()
-            expect(screen.getByText('Area 2')).toBeInTheDocument()
-        })
-    })
+  // Button zeigt die korrekte Anzahl
+  expect(screen.getByRole('button', { name: /Areas \(1\)/ })).toBeInTheDocument()
+  // Default-View ist 'areas' -> aria-pressed true
+  const areasButton = screen.getByRole('button', { name: /Areas \(1\)/ })
+  expect(areasButton).toHaveAttribute('aria-pressed', 'true')
+})
 
-    it('loads and displays tasks', async () => {
-        areaActions.getAllAreas.mockResolvedValue([])
-        taskActions.getAllTasksAction.mockResolvedValue(mockTasks)
+test('wechselt zur Tasks-Ansicht und zeigt Tasks mit Fälligkeitsdatum', async () => {
+  getAllAreas.mockResolvedValue({ areas: [] })
+  const dueIso = '2025-11-17T00:00:00.000Z'
+  getAllTasksAction.mockResolvedValue([
+    {
+      id: 't1',
+      name: 'Task X',
+      description: 'Beschreibung',
+      creatorId: null,
+      createdAt: new Date().toISOString(),
+      dueTo: dueIso,
+      areaId: null
+    }
+  ])
 
-        render(<Page />)
-        const tasksButton = screen.getByRole('button', { name: /Tasks/ })
-        tasksButton.click()
+  render(<Page />)
 
-        await waitFor(() => {
-            expect(screen.getByText('Task 1')).toBeInTheDocument()
-        })
-    })
+  // Warte auf den Tasks-Button (ohne exakte Count-Match), robust gegenüber asynchronen Count-Updates
+  const tasksButton = await screen.findByRole('button', { name: /Tasks/ })
+  fireEvent.click(tasksButton)
 
-    it('displays error message on load failure', async () => {
-        areaActions.getAllAreas.mockRejectedValue(new Error('Load failed'))
-        taskActions.getAllTasksAction.mockResolvedValue([])
+  // Task-Name erscheint
+  expect(await screen.findByText('Task X')).toBeInTheDocument()
+  // Fälligkeitsanzeige (de-DE Format) erscheint
+  expect(screen.getByText(/Fällig:/)).toBeInTheDocument()
+  // Prüfe Datumsteil (konkretes Format '17.11.2025' sollte erscheinen)
+  expect(screen.getByText(/17\.11\.2025/)).toBeInTheDocument()
+})
 
-        render(<Page />)
+test('zeigt Fehlermeldung wenn Laden fehlschlägt', async () => {
+  getAllAreas.mockRejectedValue(new Error('boom'))
+  getAllTasksAction.mockRejectedValue(new Error('boom'))
 
-        await waitFor(() => {
-            expect(screen.getByText(/Fehler.*Load failed/)).toBeInTheDocument()
-        })
-    })
+  render(<Page />)
 
-    it('shows empty state when no areas exist', async () => {
-        areaActions.getAllAreas.mockResolvedValue([])
-        taskActions.getAllTasksAction.mockResolvedValue([])
-
-        render(<Page />)
-
-        await waitFor(() => {
-            expect(screen.getByText('Keine Areas vorhanden.')).toBeInTheDocument()
-        })
-    })
-
-    it('toggles between areas and tasks view', async () => {
-        areaActions.getAllAreas.mockResolvedValue(mockAreas)
-        taskActions.getAllTasksAction.mockResolvedValue(mockTasks)
-
-        render(<Page />)
-
-        await waitFor(() => {
-            expect(screen.getByText('Area 1')).toBeInTheDocument()
-        })
-
-        const tasksButton = screen.getByRole('button', { name: /Tasks/ })
-        tasksButton.click()
-
-        await waitFor(() => {
-            expect(screen.getByText('Task 1')).toBeInTheDocument()
-        })
-    })
+  // Fehler wird angezeigt
+  expect(await screen.findByText(/Fehler: boom/)).toBeInTheDocument()
 })

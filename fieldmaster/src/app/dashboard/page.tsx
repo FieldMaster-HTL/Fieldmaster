@@ -2,9 +2,11 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { getAllAreas } from '@/src/app/area/actions'
+import { getAllTasksAction } from '@/src/app/task/actions'
 
-type Area = { id: string; name: string; description?: string }
-type Task = { id: string; title: string; status?: string; areaId?: string }
+type Area = { id: string; name: string; size: number }
+type Task = { id: string; name: string; description: string | null; creatorId: string | null; createdAt: Date; dueTo: Date | null; areaId: string | null }
 
 export default function Page(): React.JSX.Element {
     const [view, setView] = useState<'areas' | 'tasks'>('areas')
@@ -17,17 +19,20 @@ export default function Page(): React.JSX.Element {
     useEffect(() => {
         async function load() {
             try {
+                setError(null)
                 setLoadingAreas(true)
                 setLoadingTasks(true)
-                const [areasRes, tasksRes] = await Promise.all([fetch('/api/areas'), fetch('/api/tasks')])
-                if (!areasRes.ok) throw new Error('Fehler beim Laden der Areas')
-                if (!tasksRes.ok) throw new Error('Fehler beim Laden der Tasks')
-                const areasJson: Area[] = await areasRes.json()
-                const tasksJson: Task[] = await tasksRes.json()
-                setAreas(areasJson)
-                setTasks(tasksJson)
+
+                const [areasRes, tasksRes] = await Promise.all([
+                    getAllAreas(),
+                    getAllTasksAction()
+                ])
+
+                setAreas(areasRes || [])
+                setTasks(tasksRes || [])
             } catch (err: any) {
-                setError(err?.message ?? 'Unbekannter Fehler')
+                setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')
+                console.error('Dashboard load error:', err)
             } finally {
                 setLoadingAreas(false)
                 setLoadingTasks(false)
@@ -39,7 +44,7 @@ export default function Page(): React.JSX.Element {
     return (
         <main className="flex justify-center items-start bg-surface p-6 min-h-screen">
             <section className="bg-elevated shadow-md p-6 border rounded-lg w-full max-w-4xl">
-                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
                     <div>
                         <h1 className="font-extrabold text-primary-500 text-2xl md:text-3xl">Dashboard</h1>
                         <p className="mt-1 text-foreground/90 text-sm">Übersicht über Areas und Tasks</p>
@@ -49,14 +54,14 @@ export default function Page(): React.JSX.Element {
                         <button
                             aria-pressed={view === 'areas'}
                             onClick={() => setView('areas')}
-                            className={`px-4 py-2 rounded-md font-medium ${view === 'areas' ? 'bg-primary-500 text-white' : 'bg-surface border'}`}
+                            className={`px-4 py-2 rounded-md font-medium transition ${view === 'areas' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'}`}
                         >
                             Areas ({areas.length})
                         </button>
                         <button
                             aria-pressed={view === 'tasks'}
                             onClick={() => setView('tasks')}
-                            className={`px-4 py-2 rounded-md font-medium ${view === 'tasks' ? 'bg-primary-500 text-white' : 'bg-surface border'}`}
+                            className={`px-4 py-2 rounded-md font-medium transition ${view === 'tasks' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'}`}
                         >
                             Tasks ({tasks.length})
                         </button>
@@ -64,20 +69,26 @@ export default function Page(): React.JSX.Element {
                 </header>
 
                 <div className="mt-6">
-                    {error && <div className="text-red-600 mb-4">Fehler: {error}</div>}
+                    {error && (
+                        <div className="bg-red-100 mb-4 p-4 border border-red-400 rounded-md text-red-700">
+                            Fehler: {error}
+                        </div>
+                    )}
 
                     {view === 'areas' ? (
                         <section>
                             {loadingAreas ? (
-                                <div>Loading areas…</div>
+                                <div className="text-foreground/70">Areas werden geladen…</div>
                             ) : areas.length === 0 ? (
                                 <div className="text-foreground/80">Keine Areas vorhanden.</div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {areas.map((a) => (
-                                        <article key={a.id} className="p-4 border rounded-md bg-surface">
-                                            <h3 className="font-semibold text-primary-500">{a.name}</h3>
-                                            {a.description && <p className="mt-2 text-sm text-foreground/90">{a.description}</p>}
+                                <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+                                    {areas.map((area) => (
+                                        <article key={area.id} className="bg-surface p-4 border border-primary-500/10 hover:border-primary-500/30 rounded-md transition">
+                                            <h3 className="font-semibold text-primary-500 text-lg">{area.name}</h3>
+                                            <p className="mt-2 text-foreground/90 text-sm">
+                                                Größe: <span className="font-medium">{area.size} m²</span>
+                                            </p>
                                         </article>
                                     ))}
                                 </div>
@@ -86,18 +97,26 @@ export default function Page(): React.JSX.Element {
                     ) : (
                         <section>
                             {loadingTasks ? (
-                                <div>Loading tasks…</div>
+                                <div className="text-foreground/70">Tasks werden geladen…</div>
                             ) : tasks.length === 0 ? (
                                 <div className="text-foreground/80">Keine Tasks vorhanden.</div>
                             ) : (
                                 <div className="space-y-3">
-                                    {tasks.map((t) => (
-                                        <div key={t.id} className="p-4 border rounded-md bg-surface flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-semibold">{t.title}</h4>
-                                                <p className="text-sm text-foreground/90 mt-1">Status: {t.status ?? 'offen'}</p>
+                                    {tasks.map((task) => (
+                                        <div key={task.id} className="bg-surface p-4 border border-primary-500/10 hover:border-primary-500/30 rounded-md transition">
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div>
+                                                    <h4 className="font-semibold text-foreground">{task.name}</h4>
+                                                    {task.description && (
+                                                        <p className="mt-1 text-foreground/90 text-sm">{task.description}</p>
+                                                    )}
+                                                </div>
+                                                {task.dueTo && (
+                                                    <span className="text-foreground/70 text-xs whitespace-nowrap">
+                                                        Fällig: {new Date(task.dueTo).toLocaleDateString('de-DE')}
+                                                    </span>
+                                                )}
                                             </div>
-                                            {t.areaId && <span className="text-xs text-foreground/70">Area: {t.areaId}</span>}
                                         </div>
                                     ))}
                                 </div>

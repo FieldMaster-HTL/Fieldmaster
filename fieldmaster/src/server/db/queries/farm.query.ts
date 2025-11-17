@@ -6,6 +6,7 @@ import { USER_QUERIES } from "./user.query";
 import { eq } from "drizzle-orm";
 import { UUID } from "crypto";
 
+// UserStory: FMST-32
 export const FARM_QUERIES = {
   async mapClerkIdToLocalId(clerkId: string) {
     return db
@@ -21,6 +22,7 @@ export const FARM_QUERIES = {
   },
 };
 
+// UserStory: FMST-32
 export const FARM_MUTATIONS = {
   async createFarm(
     clerkId: string,

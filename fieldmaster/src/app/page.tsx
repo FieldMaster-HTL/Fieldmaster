@@ -13,45 +13,49 @@ export default function Page() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/new"
-              className="inline-block bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white"
+              href="/dashboard"
+              className="inline-block bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white font-medium"
             >
-              Neu anlegen
+              Zum Dashboard
             </Link>
             <Link
-              href="/about"
-              className="inline-block bg-secondary-100 px-4 py-2 border border-secondary-500 rounded-md text-white"
+              href="/new"
+              className="inline-block bg-secondary-100 hover:bg-secondary-200 px-4 py-2 border border-secondary-500 rounded-md text-foreground font-medium"
             >
-              Mehr erfahren
+              Neu anlegen
             </Link>
           </div>
         </header>
 
         <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mt-6">
-          <article className="bg-surface p-4 border border-primary-500/10 rounded-md">
+          <article className="bg-surface p-4 border border-primary-500/10 rounded-md hover:border-primary-500/30 transition">
             <h3 className="font-semibold text-primary-500">Übersicht</h3>
             <p className="mt-2 text-foreground/90 text-sm">
-              Schneller Zugriff auf Felder, Teams und Aktivitäten. Filter, Sortierung und Live-Status.
+              Schneller Zugriff auf Felder und Tasks. Dashboard mit Echtzeit-Status und Filteroptionen.
             </p>
           </article>
 
-          <article className="bg-surface p-4 border border-primary-500/10 rounded-md">
-            <h3 className="font-semibold text-primary-500">Planung</h3>
+          <article className="bg-surface p-4 border border-primary-500/10 rounded-md hover:border-primary-500/30 transition">
+            <h3 className="font-semibold text-primary-500">Verwaltung</h3>
             <p className="mt-2 text-foreground/90 text-sm">
-              Planungstools zur Einsatzkoordination mit Kalender-Export und Erinnerungen.
+              Erstelle und verwalte Areas (Felder) sowie Tasks (Einsätze) zentral an einem Ort.
             </p>
           </article>
 
-          <article className="bg-surface p-4 border border-primary-500/10 rounded-md">
-            <h3 className="font-semibold text-primary-500">Berichte</h3>
+          <article className="bg-surface p-4 border border-primary-500/10 rounded-md hover:border-primary-500/30 transition">
+            <h3 className="font-semibold text-primary-500">Organisation</h3>
             <p className="mt-2 text-foreground/90 text-sm">
-              Exportierbare Berichte und einfache Auswertungen für Management und Team.
+              Ordne Tasks zu Areas zu und behalte den Überblick über alle laufenden und geplanten Arbeiten.
             </p>
           </article>
         </div>
 
-        <footer className="mt-6 text-foreground/80 text-sm">
-          <p>Willkommen zur App. Starte mit „Neu anlegen“ um loszulegen.</p>
+        <footer className="mt-8 pt-6 border-t border-foreground/10">
+          <p className="text-foreground/80 text-sm">
+            👉 Klicke auf{' '}
+            <span className="font-semibold text-primary-500">„Zum Dashboard"</span> um zu starten, oder erstelle neue Areas und Tasks mit{' '}
+            <span className="font-semibold text-primary-500">„Neu anlegen"</span>.
+          </p>
         </footer>
       </section>
     </main>

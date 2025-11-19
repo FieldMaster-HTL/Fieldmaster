@@ -4,13 +4,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Area } from "../../server/db/type/DBTypes";
-import { createArea, getAllAreas } from "../area/actions";
+import { createArea, getAllAreas, updateArea } from "../area/actions";
 
 export default function Page() {
   const [name, setName] = useState("");
   const [size, setSize] = useState<number | "">("");
   const [areas, setAreas] = useState<Area[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editSize, setEditSize] = useState<number | "">("");
 
   const resetForm = () => {
     setName("");
@@ -49,6 +53,21 @@ export default function Page() {
       console.error("Error creating area:", err);
     }
   };
+
+  const openModal = (area: Area) => {
+    setSelectedArea(area);
+    setEditName(area.name);
+    setEditSize(area.size);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedArea(null);
+    setEditName("");
+    setEditSize("");
+  };
+
   useEffect(() => {
     async function fetchAreas() {
       try {
@@ -58,7 +77,6 @@ export default function Page() {
           setError(error);
         }
 
-        // Ensure we set an array — fall back to an empty array if the response is not an array
         setAreas(Array.isArray(areasRes) ? areasRes : []);
       } catch (err) {
         console.error("Error fetching areas:", err);
@@ -119,13 +137,88 @@ export default function Page() {
         ) : (
           <ul>
             {areas.map((a) => (
-              <li key={a.id}>
+              <li key={a.id} onClick={() => openModal(a)} className="cursor-pointer hover:underline">
                 {a.name} — {a.size} m²
               </li>
             ))}
           </ul>
         )}
       </section>
+      {/* FMST-43  */}
+      {/* Area Detail Modal */}
+      {showModal && selectedArea && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
+          <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
+            <button
+              onClick={closeModal}
+              className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="mb-4 font-bold text-primary-400 text-2xl">Area bearbeiten</h2>
+
+            <label className="flex flex-col mb-4">
+              <span className="text-gray-300 mb-2">Feldname</span>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="rounded border border-gray-300 bg-gray-100 p-2 text-black"
+              />
+            </label>
+
+            <label className="flex flex-col mb-4">
+              <span className="text-gray-300 mb-2">Größe (m²)</span>
+              <input
+                type="number"
+                value={editSize}
+                onChange={(e) => setEditSize(e.target.value === "" ? "" : Number(e.target.value))}
+                className="rounded border border-gray-300 bg-gray-100 p-2 text-black"
+              />
+            </label>
+
+            <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs mb-4">
+              <p>ID: {selectedArea.id}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                onClick={async () => {
+                  if (!editName.trim()) {
+                    setError("Bitte einen Feldnamen eingeben.");
+                    return;
+                  }
+                  const numericSize = typeof editSize === "string" ? Number(editSize) : editSize;
+                  if (!numericSize || Number.isNaN(numericSize) || numericSize <= 0) {
+                    setError("Bitte eine gültige Größe eingeben.");
+                    return;
+                  }
+                  try {
+                    const { area: updatedArea, error } = await updateArea(selectedArea.id, editName.trim(), numericSize);
+                    if (error || !updatedArea) {
+                      setError(error ?? "unknown error");
+                      return;
+                    }
+                    setAreas((prevAreas) =>
+                      prevAreas.map((a) => (a.id === updatedArea.id ? updatedArea : a))
+                    );
+                    closeModal();
+                  } catch (err) {
+                    setError("Fehler beim Speichern des Feldes.");
+                    console.error("Error updating area:", err);
+                  }
+                }}
+                className="px-3 py-2 bg-gray-600 rounded text-white"
+              >
+                Speichern
+              </button>
+              <button onClick={closeModal} className="px-3 py-2 bg-gray-600 rounded text-white">
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

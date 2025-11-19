@@ -27,4 +27,15 @@ export const AREA_MUTATIONS = {
         return area[0];
       });
   },
+
+  async UpdateArea(id: string, name: string, size: number) {
+    return db
+      .update(Area)
+      .set({ name, size })
+      .where(eq(Area.id, id))
+      .returning()
+      .then((area) => {
+        return area[0];
+      });
+  },
 };

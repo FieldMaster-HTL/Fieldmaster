@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
-import { getAllTasksAction, createTaskAction } from './actions'
+import { getAllTasksAction, createTaskAction, deleteTaskAction } from './actions'
 
 export default function Tasks() {
     const [tasks, setTasks] = useState<any[]>([]) // store all tasks
@@ -15,11 +15,21 @@ export default function Tasks() {
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
     const [isPending, startTransition] = useTransition() // transition for async updates
     const [error, setError] = useState('') // error message for the form
+    const [taskToDelete, setTaskToDelete] = useState<any | null>(null) // 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
 
     // fetch all tasks from server
     const fetchTasks = async () => {
-        const res = await getAllTasksAction()
-        setTasks(res)
+    const res = await getAllTasksAction()
+    const serialized = res.map(task => ({
+        id: task.id,
+        name: task.name,
+        description: task.description ?? null,
+        createdAt: task.createdAt ?? null,
+        dueTo: task.dueTo ?? null,
+    }))
+    setTasks(serialized)
     }
 
     useEffect(() => {
@@ -106,27 +116,53 @@ export default function Tasks() {
                     {tasks.map((task) => (
                         <li
                             key={task.id}
-                            className="bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md cursor-pointer"
-                            onClick={() => {
-                                setSelectedTask(task)
-                                setShowModal(true)
-                            }}
+                            className="relative bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md"
                         >
-                            <div className="font-semibold">{task.name}</div>
-                            {task.description && (
-                                <div className="text-foreground/80 text-sm">{task.description}</div>
-                            )}
-                            {task.dueTo && (
-                                <div className="mt-1 text-foreground/70 text-xs">
-                                    Bis: {new Date(task.dueTo).toLocaleDateString()}
-                                </div>
-                            )}
+                            <div
+                                className="cursor-pointer"
+                                onClick={() => {
+                                    setSelectedTask(task)
+                                    setShowModal(true)
+                                }}
+                            >
+                                <div className="font-semibold">{task.name}</div>
+                                {task.description && (
+                                    <div className="text-foreground/80 text-sm">{task.description}</div>
+                                )}
+                                {task.dueTo && (
+                                    <div className="mt-1 text-foreground/70 text-xs">
+                                        Bis: {new Date(task.dueTo).toLocaleDateString()}
+                                    </div>
+                                )}
+                            </div>
+
+                           {/* DELETE BUTTON */}
+                            <button
+                            onClick={async (e) => {
+                                e.stopPropagation() // verhindert, dass das Task-Modal geöffnet wird
+                                startTransition(async () => {
+                                try {
+                                    await deleteTaskAction(task.id) // Task direkt löschen
+                                    await fetchTasks() // Liste aktualisieren
+                                } catch (err) {
+                                    console.error('Fehler beim Löschen des Tasks:', err)
+                                }
+                                })
+                            }}
+                            className="absolute top-2 right-2 text-red-600 hover:text-red-800 text-sm font-semibold"
+                            >
+                            DELETE
+                            </button>
+
+
                         </li>
                     ))}
+
                     {tasks.length === 0 && (
                         <li className="text-foreground/70 italic">Keine Aufgaben vorhanden.</li>
                     )}
                 </ul>
+                
             </section>
 
             {/* Task Detail Modal */}

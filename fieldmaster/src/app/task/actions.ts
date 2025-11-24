@@ -10,12 +10,18 @@ import type { UUID } from 'crypto'
 export async function getAllTasksAction() {
   try {
     const tasks = await TASK_QUERIES.getAll()
-    return tasks
+    const tasksSerialized = tasks.map(task => ({
+      ...task,
+      createdAt: task.createdAt ? task.createdAt.toISOString() : null,
+      dueTo: task.dueTo ? task.dueTo.toISOString() : null,
+    }))
+    return tasksSerialized
   } catch (err) {
     console.error('Error loading tasks:', err)
     return []
   }
 }
+
 
 // Create a new task
 

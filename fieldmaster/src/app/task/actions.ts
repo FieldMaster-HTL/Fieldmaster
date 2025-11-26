@@ -2,6 +2,7 @@
 
 'use server'
 
+import { AREA_QUERIES } from '@/src/server/db/queries/area.query'
 import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
 import type { UUID } from 'crypto'
 
@@ -16,6 +17,15 @@ export async function getAllTasksAction() {
     return []
   }
 }
+export async function getAllAreasAction() {
+  try {
+    const areas = await AREA_QUERIES.getAllAreas()
+    return areas
+  } catch (err) {
+    console.error('Error loading areas:', err)
+    return []
+  }
+}
 
 // Create a new task
 
@@ -23,15 +33,16 @@ export async function createTaskAction(
   name: string,
   description?: string,
   creatorClerkId?: string,
-//  farmClerkId?: string,
-  due_to?: Date
+  due_to?: Date,
+  areaId?: string 
 ) {
   try {
     const newTask = await TASK_MUTATIONS.createTask(
       name,
       description ?? '',
       creatorClerkId,
-      due_to
+      due_to,
+      areaId ?? undefined
     )
   } catch (err) {
     console.error('Error creating task:', err)
@@ -43,7 +54,7 @@ export async function createTaskAction(
 
 export async function updateTaskAction(
   id: UUID,
-  values: Partial<{ name: string; description: string; due_to: Date }>
+  values: Partial<{ name: string; description: string; dueTo: Date; areaId: string }>
 ) {
   try {
     return await TASK_MUTATIONS.updateTask(id, values)

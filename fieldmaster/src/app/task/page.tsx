@@ -4,15 +4,18 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
-import { getAllTasksAction, createTaskAction } from './actions'
+import { getAllTasksAction, createTaskAction, getAllAreasAction, updateTaskAction } from './actions'
 
 export default function Tasks() {
     const [tasks, setTasks] = useState<any[]>([]) // store all tasks
+    const [areas, setAreas] = useState<any[]>([]) // store all tasks
     const [newTaskName, setNewTaskName] = useState('') // new task title
     const [newTaskDescription, setNewTaskDescription] = useState('') // new task description
     const [dueTo, setDueTo] = useState('') // new task due date
+    const [areaId, setareaId] = useState('') // new task due date
     const [showModal, setShowModal] = useState(false) // show task details modal
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
+    const [modalAreaId, setModalAreaId] = useState('')
     const [isPending, startTransition] = useTransition() // transition for async updates
     const [error, setError] = useState('') // error message for the form
 
@@ -21,9 +24,14 @@ export default function Tasks() {
         const res = await getAllTasksAction()
         setTasks(res)
     }
+    const fetchAreas = async () => {
+        const res = await getAllAreasAction()
+        setAreas(res)
+    }
 
     useEffect(() => {
         fetchTasks()
+        fetchAreas()
     }, [])
 
     // handle form submission to add new task
@@ -36,11 +44,12 @@ export default function Tasks() {
                 setError('')
                 const creatorClerkId = localStorage.getItem('creatorClerkId') ?? undefined
                 const dueDate = dueTo ? new Date(dueTo) : undefined
-                await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate)
+                await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate, areaId || undefined)
                 await fetchTasks()
                 setNewTaskName('')
                 setNewTaskDescription('')
                 setDueTo('')
+                setareaId('')
             } catch (err) {
                 setError('Failed to create task. Please try again.')
             }
@@ -89,6 +98,19 @@ export default function Tasks() {
                         className="p-2 border rounded-md"
                         placeholder="Enddatum (optional)"
                     />
+                    <select
+                        value={areaId}
+                        onChange={(e) => setareaId(e.target.value)}
+                        className="p-2 pr-8 border rounded-md bg-background text-foreground/90 border-foreground/20 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        aria-label="Feld auswählen (optional)"
+                    >
+                        <option value="">-- Feld auswählen (optional) --</option>
+                        {areas.map((a) => (
+                            <option key={a.id} value={a.id}>
+                                {a.name}{a.size ? ` (${a.size})` : ''}
+                            </option>
+                        ))}
+                    </select>
                     {error && (
                         <div className="mb-2 text-red-500 text-sm">{error}</div>
                     )}
@@ -109,12 +131,18 @@ export default function Tasks() {
                             className="bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md cursor-pointer"
                             onClick={() => {
                                 setSelectedTask(task)
+                                setModalAreaId(task.areaId ?? '')
                                 setShowModal(true)
                             }}
                         >
                             <div className="font-semibold">{task.name}</div>
                             {task.description && (
                                 <div className="text-foreground/80 text-sm">{task.description}</div>
+                            )}
+                            {(task.area || task.areaId) && (
+                                <div className="text-foreground/80 text-sm">
+                                    Feld: {task.area ?? areas.find((a) => a.id === task.areaId)?.name ?? 'Unbekannt'}
+                                </div>
                             )}
                             {task.dueTo && (
                                 <div className="mt-1 text-foreground/70 text-xs">
@@ -155,6 +183,45 @@ export default function Tasks() {
                             {selectedTask.dueTo && (
                                 <p>Due: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
                             )}
+                            <div className="mt-3">
+                                <label className="block text-xs text-gray-300 mb-1">Feld zuordnen</label>
+                                <select
+                                    value={modalAreaId}
+                                    onChange={(e) => setModalAreaId(e.target.value)}
+                                    className="w-full p-2 pr-8 border rounded-md bg-background text-foreground/90 border-foreground/20 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="">-- Kein Feld --</option>
+                                    {areas.map((a) => (
+                                        <option key={a.id} value={a.id}>
+                                            {a.name}{a.size ? ` (${a.size})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="mt-2 flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            startTransition(async () => {
+                                                try {
+                                                    await updateTaskAction(selectedTask.id, { areaId: modalAreaId || undefined })
+                                                    await fetchTasks()
+                                                    setShowModal(false)
+                                                } catch (err) {
+                                                    console.error(err)
+                                                }
+                                            })
+                                        }}
+                                        className="bg-primary-500 px-3 py-1 rounded text-white"
+                                    >
+                                        Speichern
+                                    </button>
+                                    <button
+                                        onClick={() => setModalAreaId(selectedTask.areaId ?? '')}
+                                        className="bg-secondary-100 px-3 py-1 rounded text-white"
+                                    >
+                                        Zurücksetzen
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

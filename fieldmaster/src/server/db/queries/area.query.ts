@@ -15,6 +15,19 @@ export const AREA_QUERIES = {
   async getAreasByCreator(creatorId: UUID) {
     return db.select().from(Area).where(eq(Area.creatorId, creatorId));
   },
+
+  async getAreaById(id: UUID) {
+    return db
+      .select()
+      .from(Area)
+      .where(eq(Area.id, id))
+      .limit(1)
+      .then((rows) => {
+        const area = rows[0];
+        if (!area) throw new Error("no Area found for id: " + id);
+        return area;
+      });
+  },
 };
 
 export const AREA_MUTATIONS = {

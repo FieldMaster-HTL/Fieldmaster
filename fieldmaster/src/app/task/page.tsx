@@ -136,7 +136,8 @@ export default function Tasks() {
                                 )}
                             </div>
 
-                           {/* DELETE BUTTON */}
+
+                          {/* DELETE BUTTON */}
                             <button
                             onClick={async (e) => {
                                 e.stopPropagation() // verhindert, dass das Task-Modal geöffnet wird

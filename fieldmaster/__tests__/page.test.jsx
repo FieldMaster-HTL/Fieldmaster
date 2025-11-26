@@ -6,7 +6,6 @@ describe("Page", () => {
   it("renders a heading", () => {
     render(<Page />);
 
-    // The top-level title in the current markup is "Fieldmaster"
     const heading = screen.getByRole("heading", {
       level: 1,
       name: "Fieldmaster",
@@ -15,4 +14,3 @@ describe("Page", () => {
     expect(heading).toBeInTheDocument();
   });
 });
-

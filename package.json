@@ -1,0 +1,7 @@
+{
+  "name": "do-not-install-here",
+  "private": true,
+  "scripts": {
+    "preinstall": "echo 'ERROR: Do not run npm install in the repo root. The Next.js app is in ./fieldmaster.'; exit 1"
+  }
+}

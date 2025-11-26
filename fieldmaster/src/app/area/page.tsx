@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 //Area FMST-30  / FMST-31
 
@@ -21,11 +21,13 @@ export default function Page() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+
   const resetForm = () => {
-    setName('')
-    setSize('')
-    setError(null)
-  }
+    setName("");
+    setSize("");
+    setError(null);
+  };
+
 
   const handleDeleteClick = (areaId: string) => {
     setDeletingId(areaId)
@@ -34,7 +36,14 @@ export default function Page() {
   const confirmDelete = async (areaId: string) => {
     try {
       setError(null)
-      await deleteArea(areaId)
+      const { success, error: deleteError } = await deleteArea(areaId)
+      
+      if (!success) {
+        setError(deleteError || 'Fehler beim Löschen der Area.')
+        setDeletingId(null)
+        return
+      }
+      
       setAreas((prevAreas: Area[]) => prevAreas.filter((a: Area) => a.id !== areaId))
       setSuccessMessage('Area erfolgreich gelöscht.')
       setDeletingId(null)
@@ -54,29 +63,31 @@ export default function Page() {
     e.preventDefault()
     setError(null)
 
+
     if (!name.trim()) {
-      setError('Bitte einen Feldnamen eingeben.')
-      return
+      setError("Bitte einen Feldnamen eingeben.");
+      return;
     }
 
-    const numericSize = typeof size === 'string' ? Number(size) : size
+    const numericSize = typeof size === "string" ? Number(size) : size;
     if (!numericSize || Number.isNaN(numericSize) || numericSize <= 0) {
-      setError('Bitte eine gültige Größe (größer als 0) eingeben.')
-      return
+      setError("Bitte eine gültige Größe (größer als 0) eingeben.");
+      return;
     }
 
     try {
-     const newArea = await createArea(name.trim(), numericSize)
+
+     const { area: newArea, error: createError } = await createArea(name.trim(), numericSize)
      
-     if (!newArea || !Array.isArray(newArea) || !newArea[0]) {
-       setError('Fehler beim Anlegen des Feldes.')
+     if (createError || !newArea) {
+       setError(createError || 'Fehler beim Anlegen des Feldes.')
        return
      }
      
      setAreas((prevAreas: Area[]) => [...prevAreas, { 
-       id: newArea[0].id, 
-       name: newArea[0].name, 
-       size: Number(newArea[0].size) 
+       id: newArea.id, 
+       name: newArea.name, 
+       size: Number(newArea.size) 
      }])
      
      setSuccessMessage('Area erfolgreich erstellt.')
@@ -88,39 +99,44 @@ export default function Page() {
    }
   }
   useEffect(() => {
-      async function fetchAreas() {
-        try {
-          const areasRes = await getAllAreas();
-          // Ensure we set an array — fall back to an empty array if the response is not an array
-          setAreas(Array.isArray(areasRes) ? areasRes : []);
-        } catch (err) {
-          console.error('Error fetching areas:', err)
-          setError('Fehler beim Laden der Areas.')
-        }
-      }
-      fetchAreas();
+    async function fetchAreas() {
+      try {
+        const { areas: areasRes, error } = await getAllAreas();
 
-    }, []
-  )
+        if (error) {
+          setError(error);
+        }
+
+        // Ensure we set an array — fall back to an empty array if the response is not an array
+        setAreas(Array.isArray(areasRes) ? areasRes : []);
+      } catch (err) {
+        console.error("Error fetching areas:", err);
+        setError("Fehler beim Laden der Areas.");
+      }
+    }
+    fetchAreas();
+  }, []);
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1 style={{ color: 'var(--primary)' }}>Area anlegen</h1>
+    <div className="p-4">
+      <h1 className="text-primary">Area anlegen</h1>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 8, maxWidth: 420 }} data-testid="area-form">
-        <label style={{ display: 'flex', flexDirection: 'column' }}>
+      <form onSubmit={handleSubmit} className="grid max-w-md gap-2" data-testid="area-form">
+        <label className="flex flex-col">
           <span>Feldname</span>
+
           <input
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder="z. B. Acker 1"
             aria-label="Feldname"
-              style={{ padding: 8, backgroundColor: '#f0f0f0', color: '#000', border: '1px solid #ccc', borderRadius: 4 }}
+            className="rounded border border-gray-300 bg-gray-100 p-2 text-black"
           />
         </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column' }}>
+        <label className="flex flex-col">
           <span>Größe (m²)</span>
+
           <input
             type="number"
             value={size}
@@ -128,20 +144,25 @@ export default function Page() {
             placeholder="z. B. 100"
             aria-label="Größe"
             min={0}
-              style={{ padding: 8, backgroundColor: '#f0f0f0', color: '#000', border: '1px solid #ccc', borderRadius: 4 }}
+            className="rounded border border-gray-300 bg-gray-100 p-2 text-black"
           />
         </label>
 
         {error && <div style={{ color: 'crimson' }}>{error}</div>}
         {successMessage && <div style={{ color: 'green' }}>{successMessage}</div>}
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" style={{ padding: '8px 12px' }} data-testid="submit-button">Anlegen</button>
-          <Link href="/" style={{ alignSelf: 'center', color: 'var(--primary)' }}>Zurück</Link>
+        <div className="flex gap-2">
+          <button type="submit" className="px-3 py-2" data-testid="submit-button">
+            Anlegen
+          </button>
+
+          <Link href="/" className="text-primary self-center">
+            Zurück
+          </Link>
         </div>
       </form>
 
-      <section style={{ marginTop: 24 }}>
+      <section className="mt-6">
         <h2>Bestehende Areas</h2>
         {areas.length === 0 || !areas ? (
           <p>Keine Areas vorhanden.</p>
@@ -230,5 +251,5 @@ export default function Page() {
         )}
       </section>
     </div>
-  )
+  );
 }

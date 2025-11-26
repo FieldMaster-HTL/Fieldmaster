@@ -14,6 +14,7 @@ export default function Tasks() {
     const [showModal, setShowModal] = useState(false) // show task details modal
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
     const [isPending, startTransition] = useTransition() // transition for async updates
+    const [error, setError] = useState('') // error message for the form
 
     // fetch all tasks from server
     const fetchTasks = async () => {
@@ -31,17 +32,24 @@ export default function Tasks() {
         if (!newTaskName.trim()) return
 
         startTransition(async () => {
-            await createTaskAction(newTaskName, newTaskDescription, dueTo)
-            await fetchTasks()
-            setNewTaskName('')
-            setNewTaskDescription('')
-            setDueTo('') 
+            try {
+                setError('')
+                const creatorClerkId = localStorage.getItem('creatorClerkId') ?? undefined
+                const dueDate = dueTo ? new Date(dueTo) : undefined
+                await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate)
+                await fetchTasks()
+                setNewTaskName('')
+                setNewTaskDescription('')
+                setDueTo('')
+            } catch (err) {
+                setError('Failed to create task. Please try again.')
+            }
         })
     }
 
     return (
         <main className="flex justify-center items-center bg-surface p-6 min-h-screen">
-            <section className="bg-elevated shadow-md p-8 border rounded-lg w-full max-w-3xl relative">
+            <section className="relative bg-elevated shadow-md p-8 border rounded-lg w-full max-w-3xl">
                 <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
                     <div>
                         <h1 className="font-extrabold text-primary-500 text-3xl md:text-4xl">Tasks</h1>
@@ -66,25 +74,28 @@ export default function Tasks() {
                         value={newTaskName}
                         onChange={(e) => setNewTaskName(e.target.value)}
                         placeholder="Titel der Aufgabe..."
-                        className="border rounded-md p-2"
+                        className="p-2 border rounded-md"
                     />
                     <textarea
                         value={newTaskDescription}
                         onChange={(e) => setNewTaskDescription(e.target.value)}
                         placeholder="Beschreibung (optional)..."
-                        className="border rounded-md p-2 min-h-[80px]"
+                        className="p-2 border rounded-md min-h-[80px]"
                     />
                     <input
                         type="date"
                         value={dueTo}
                         onChange={(e) => setDueTo(e.target.value)}
-                        className="border rounded-md p-2"
+                        className="p-2 border rounded-md"
                         placeholder="Enddatum (optional)"
                     />
+                    {error && (
+                        <div className="mb-2 text-red-500 text-sm">{error}</div>
+                    )}
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white self-start"
+                        className="self-start bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white"
                     >
                         {isPending ? 'Speichern...' : 'Hinzufügen'}
                     </button>
@@ -95,7 +106,7 @@ export default function Tasks() {
                     {tasks.map((task) => (
                         <li
                             key={task.id}
-                            className="border border-foreground/20 rounded-md p-3 bg-background hover:bg-foreground/5 cursor-pointer"
+                            className="bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md cursor-pointer"
                             onClick={() => {
                                 setSelectedTask(task)
                                 setShowModal(true)
@@ -103,10 +114,10 @@ export default function Tasks() {
                         >
                             <div className="font-semibold">{task.name}</div>
                             {task.description && (
-                                <div className="text-sm text-foreground/80">{task.description}</div>
+                                <div className="text-foreground/80 text-sm">{task.description}</div>
                             )}
                             {task.dueTo && (
-                                <div className="text-xs text-foreground/70 mt-1">
+                                <div className="mt-1 text-foreground/70 text-xs">
                                     Bis: {new Date(task.dueTo).toLocaleDateString()}
                                 </div>
                             )}
@@ -120,20 +131,20 @@ export default function Tasks() {
 
             {/* Task Detail Modal */}
             {showModal && selectedTask && (
-                <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm">
-                    <div className="bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 text-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative border border-gray-700">
+                <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
+                    <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
                         <button
                             onClick={() => setShowModal(false)}
-                            className="absolute top-2 right-3 text-gray-400 hover:text-white text-2xl"
+                            className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
                         >
                             ✕
                         </button>
 
-                        <h2 className="text-2xl font-bold text-primary-400 mb-2">{selectedTask.name}</h2>
-                        <p className="text-sm text-gray-300 mb-4">
+                        <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
+                        <p className="mb-4 text-gray-300 text-sm">
                             {selectedTask.description || 'No description.'}
                         </p>
-                        <div className="text-xs text-gray-400 border-t border-gray-700 pt-2">
+                        <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
                             <p>ID: {selectedTask.id}</p>
                             <p>
                                 Created:{' '}

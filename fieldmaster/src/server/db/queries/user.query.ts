@@ -5,6 +5,7 @@ import { User } from "@/src/server/db/schema/schema";
 import { UUID } from "crypto";
 import { eq } from "drizzle-orm";
 
+// UserStory: FMST-32
 export const USER_QUERIES = {
   async mapClerkIdtoLocalId(clerkId: string) {
     return db
@@ -20,6 +21,7 @@ export const USER_QUERIES = {
   },
 };
 
+// UserStory: FMST-32
 export const USER_MUTATIONS = {
   async createUser(
     clerkId: string,

@@ -23,7 +23,7 @@ export async function createTaskAction(
   name: string,
   description?: string,
   creatorClerkId?: string,
-  farmClerkId?: string,
+//  farmClerkId?: string,
   due_to?: Date
 ) {
   try {
@@ -39,7 +39,7 @@ export async function createTaskAction(
   }
 }
 
-//Update a task
+// Update a task
 
 export async function updateTaskAction(
   id: UUID,

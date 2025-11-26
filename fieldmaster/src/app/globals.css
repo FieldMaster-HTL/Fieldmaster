@@ -30,7 +30,7 @@
 /* Dark mode Varianten */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #171717;
     --foreground: #ededed;
 
     --primary-100: #144432;
@@ -45,7 +45,7 @@
 
     --bg-default: #171717;
     --bg-muted: #171717;
-    --bg-elevated: #171717;
+    --bg-elevated: #242424;
   }
 }
 

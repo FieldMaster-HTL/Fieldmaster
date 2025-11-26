@@ -20,6 +20,17 @@ export async function getAllAreas() {
         }
     });
 }
+
 export async function getAreasByCreator(creatorId: UUID) {
     return await QUERIES.AREA.getAreasByCreator(creatorId);
+}
+
+export async function deleteArea(areaId: string) {
+    try {
+        const res = await MUTATIONS.AREA.DeleteArea(areaId as UUID);
+        return { success: true, data: res };
+    } catch (error) {
+        console.error('Error deleting area:', error);
+        throw new Error('Fehler beim Löschen der Area.');
+    }
 }

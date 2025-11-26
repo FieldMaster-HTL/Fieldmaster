@@ -26,6 +26,13 @@ export const AREA_MUTATIONS = {
         creatorId?: UUID,)
     {
        return db.insert(Area).values({ name, size, creatorId }).returning();
+    },
+
+    async DeleteArea(areaId: UUID) {
+        return db.update(Area)
+            .set({ deletedAt: new Date() })
+            .where(eq(Area.id, areaId))
+            .returning();
     }
 };
 

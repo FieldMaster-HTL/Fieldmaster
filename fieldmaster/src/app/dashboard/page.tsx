@@ -2,11 +2,11 @@
 // FMST-15: Areas anzeigen
 // FMST-36: Dashboard anzeigen
 
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { getAllAreas } from '@/src/app/area/actions'
-import { getAllTasksAction } from '@/src/app/task/actions'
+import React, { useEffect, useState } from "react";
+import { getAllAreas } from "@/src/app/area/actions";
+import { getAllTasksAction } from "@/src/app/task/actions";
 
 /**
  * Dashboard page component.
@@ -26,21 +26,21 @@ import { getAllTasksAction } from '@/src/app/task/actions'
  */
 
 /** Minimal Area type used by this component */
-type Area = { id: string; name: string; size: number }
+type Area = { id: string; name: string; size: number };
 
 /**
  * Minimal Task type used by this component.
  * - dueTo can be null; when present it is displayed as a localized date.
  */
 type Task = {
-  id: string
-  name: string
-  description: string | null
-  creatorId: string | null
-  createdAt: Date
-  dueTo: Date | null
-  areaId: string | null
-}
+  id: string;
+  name: string;
+  description: string | null;
+  creatorId: string | null;
+  createdAt: Date;
+  dueTo: Date | null;
+  areaId: string | null;
+};
 
 /**
  * Dashboard React client component.
@@ -49,70 +49,76 @@ type Task = {
  */
 export default function Page(): React.JSX.Element {
   // UI view: either show areas or tasks
-  const [view, setView] = useState<'areas' | 'tasks'>('areas')
+  const [view, setView] = useState<"areas" | "tasks">("areas");
 
   // loaded data
-  const [areas, setAreas] = useState<Area[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   // loading flags for each resource
-  const [loadingAreas, setLoadingAreas] = useState(true)
-  const [loadingTasks, setLoadingTasks] = useState(true)
+  const [loadingAreas, setLoadingAreas] = useState(true);
+  const [loadingTasks, setLoadingTasks] = useState(true);
 
   // error text shown in a banner when any fetch fails
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
   // Load areas and tasks in parallel on first render.
   // The try/catch sets an error message and the finally ensures loading flags are cleared.
   useEffect(() => {
     async function load() {
       try {
-        setError(null)
-        setLoadingAreas(true)
-        setLoadingTasks(true)
+        setError(null);
+        setLoadingAreas(true);
+        setLoadingTasks(true);
 
-        const [{ areas }, tasksRes] = await Promise.all([getAllAreas(), getAllTasksAction()])
+        const [{ areas }, tasksRes] = await Promise.all([getAllAreas(), getAllTasksAction()]);
 
         // Defensive: fallback to empty arrays if responses are falsy
-        setAreas(areas || [])
-        setTasks(tasksRes || [])
-      } catch (err: any) {
-        setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')
-        console.error('Dashboard load error:', err)
+        setAreas(areas || []);
+        setTasks(tasksRes || []);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err?.message ?? "Unbekannter Fehler beim Laden der Daten");
+        }
+        console.error("Dashboard load error:", err);
       } finally {
-        setLoadingAreas(false)
-        setLoadingTasks(false)
+        setLoadingAreas(false);
+        setLoadingTasks(false);
       }
     }
-    load()
-  }, [])
+    load();
+  }, []);
 
   // Render
   return (
-    <main className="flex justify-center items-start bg-surface p-6 min-h-screen">
-      <section className="bg-elevated shadow-md p-6 border rounded-lg w-full max-w-4xl">
-        <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
+    <main className="bg-surface flex min-h-screen items-start justify-center p-6">
+      <section className="bg-elevated w-full max-w-4xl rounded-lg border p-6 shadow-md">
+        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="font-extrabold text-primary-500 text-2xl md:text-3xl">Dashboard</h1>
-            <p className="mt-1 text-foreground/90 text-sm">Übersicht über Areas und Tasks</p>
+            <h1 className="text-primary-500 text-2xl font-extrabold md:text-3xl">Dashboard</h1>
+            <p className="text-foreground/90 mt-1 text-sm">Übersicht über Areas und Tasks</p>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Toggle buttons: aria-pressed reflects the current view */}
             <button
-              aria-pressed={view === 'areas'}
-              onClick={() => setView('areas')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                view === 'areas' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
+              aria-pressed={view === "areas"}
+              onClick={() => setView("areas")}
+              className={`rounded-md px-4 py-2 font-medium transition ${
+                view === "areas"
+                  ? "bg-primary-500 text-white"
+                  : "bg-surface border-primary-500/20 border"
               }`}
             >
               Areas ({areas.length})
             </button>
             <button
-              aria-pressed={view === 'tasks'}
-              onClick={() => setView('tasks')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                view === 'tasks' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
+              aria-pressed={view === "tasks"}
+              onClick={() => setView("tasks")}
+              className={`rounded-md px-4 py-2 font-medium transition ${
+                view === "tasks"
+                  ? "bg-primary-500 text-white"
+                  : "bg-surface border-primary-500/20 border"
               }`}
             >
               Tasks ({tasks.length})
@@ -123,24 +129,27 @@ export default function Page(): React.JSX.Element {
         <div className="mt-6">
           {/* Error banner */}
           {error && (
-            <div className="bg-red-100 mb-4 p-4 border border-red-400 rounded-md text-red-700">
+            <div className="mb-4 rounded-md border border-red-400 bg-red-100 p-4 text-red-700">
               Fehler: {error}
             </div>
           )}
 
           {/* Conditional view rendering */}
-          {view === 'areas' ? (
+          {view === "areas" ? (
             <section>
               {loadingAreas ? (
                 <div className="text-foreground/70">Areas werden geladen…</div>
               ) : areas.length === 0 ? (
                 <div className="text-foreground/80">Keine Areas vorhanden.</div>
               ) : (
-                <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {areas.map((area) => (
-                    <article key={area.id} className="bg-surface p-4 border border-primary-500/10 hover:border-primary-500/30 rounded-md transition">
-                      <h3 className="font-semibold text-primary-500 text-lg">{area.name}</h3>
-                      <p className="mt-2 text-foreground/90 text-sm">
+                    <article
+                      key={area.id}
+                      className="bg-surface border-primary-500/10 hover:border-primary-500/30 rounded-md border p-4 transition"
+                    >
+                      <h3 className="text-primary-500 text-lg font-semibold">{area.name}</h3>
+                      <p className="text-foreground/90 mt-2 text-sm">
                         Größe: <span className="font-medium">{area.size} m²</span>
                       </p>
                     </article>
@@ -157,15 +166,20 @@ export default function Page(): React.JSX.Element {
               ) : (
                 <div className="space-y-3">
                   {tasks.map((task) => (
-                    <div key={task.id} className="bg-surface p-4 border border-primary-500/10 hover:border-primary-500/30 rounded-md transition">
-                      <div className="flex justify-between items-start gap-4">
+                    <div
+                      key={task.id}
+                      className="bg-surface border-primary-500/10 hover:border-primary-500/30 rounded-md border p-4 transition"
+                    >
+                      <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h4 className="font-semibold text-foreground">{task.name}</h4>
-                          {task.description && <p className="mt-1 text-foreground/90 text-sm">{task.description}</p>}
+                          <h4 className="text-foreground font-semibold">{task.name}</h4>
+                          {task.description && (
+                            <p className="text-foreground/90 mt-1 text-sm">{task.description}</p>
+                          )}
                         </div>
                         {task.dueTo && (
                           <span className="text-foreground/70 text-xs whitespace-nowrap">
-                            Fällig: {new Date(task.dueTo).toLocaleDateString('de-DE')}
+                            Fällig: {new Date(task.dueTo).toLocaleDateString("de-DE")}
                           </span>
                         )}
                       </div>
@@ -178,5 +192,6 @@ export default function Page(): React.JSX.Element {
         </div>
       </section>
     </main>
-  )
+  );
 }
+

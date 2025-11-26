@@ -98,21 +98,53 @@ This project is licensed under the MIT License
 
 For any questions or feedback, please contact:
 
-- **Name:**
-  **Email:**
-  **GitHub:**
+- **Name:** Konrad Samuel
+  **Email:** samuel.konrad@sr.htlweiz.at
+  **GitHub:** https://github.com/Samuelk0nrad
 
 ---
 
-- **Name:**
-  **Email:**
-  **GitHub:**
+- **Name:** Kulmer Klara
+  **Email:** klara.kulmer@sr.htlweiz.at
+  **GitHub:** https://github.com/KulmerKlara
 
 ---
 
-- **Name:**
-  **Email:**
-  **GitHub:**
+- **Name:** Lorenzer Bernd
+  **Email:** bernd.lorenzer@sr.htlweiz.at
+  **GitHub:** https://github.com/bernlore
+
+---
+
+- **Name:** Mauerhofer Magdalena
+  **Email:** magdalena.mauerhofer@sr.htlweiz.com
+  **GitHub:** https://github.com/mauerhofer4
+
+---
+
+- **Name:** Opriessnig Simon
+  **Email:** simon.opriessnig@sr.htlweiz.com
+  **GitHub:** https://github.com/s1monator
+
+---
+
+- **Name:** Pachler Tobias
+  **Email:** tobias.pachler@sr.htlweiz.com
+  **GitHub:** https://github.com/tobipac
+
+---
+
+- **Name:** Polt Leonie
+  **Email:** leonie.polt@sr.htlweiz.com
+  **GitHub:** https://github.com/leoniepolt
+
+---
+
+- **Name:** Posch Leonardo
+  **Email:** leonardo.posch@sr.htlweiz.com
+  **GitHub:** https://github.com/Poschi17
+
+---
 
 ## GitHub Codespaces
 

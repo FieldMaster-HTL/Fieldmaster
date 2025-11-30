@@ -139,22 +139,59 @@ export default function Tasks() {
 
                           {/* DELETE BUTTON */}
                             <button
-                            onClick={async (e) => {
-                                e.stopPropagation() // verhindert, dass das Task-Modal geöffnet wird
-                                startTransition(async () => {
-                                try {
-                                    await deleteTaskAction(task.id) // Task direkt löschen
-                                    await fetchTasks() // Liste aktualisieren
-                                } catch (err) {
-                                    console.error('Fehler beim Löschen des Tasks:', err)
-                                }
-                                })
-                            }}
-                            className="absolute top-2 right-2 text-red-600 hover:text-red-800 text-sm font-semibold"
-                            >
-                            DELETE
-                            </button>
+                                onClick={(e) => {
+                                    e.stopPropagation() // verhindert Öffnen des Detail-Modals
+                                    setTaskToDelete(task) // Task für später speichern
+                                    setShowDeleteConfirm(true) // Bestätigungsfenster öffnen
+                                }}
+                                className="absolute top-2 right-2 text-red-600 hover:text-red-800 text-sm font-semibold"
+                                >
+                                DELETE
+                                </button>
 
+                                {/* DELETE CONFIRM MODAL */}
+                                {showDeleteConfirm && taskToDelete?.id === task.id && (
+                                <div
+                                    className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                >
+                                    <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="bg-white rounded-xl shadow-xl p-6 w-80 animate-fadeIn"
+                                    >
+                                    <h2 className="text-lg font-semibold text-gray-800">
+                                        Do you really want to delete the task "{taskToDelete.name}"?
+                                    </h2>
+                                    <p className="text-sm text-gray-600 mt-2">
+                                        This action cannot be undone.
+                                    </p>
+
+                                    {/* BUTTONS */}
+                                    <div className="flex justify-end mt-6 space-x-3">
+                                        <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                                        >
+                                        exit
+                                        </button>
+
+                                        <button
+                                        onClick={() => {
+                                            startTransition(async () => {
+                                            await deleteTaskAction(taskToDelete.id)
+                                            await fetchTasks()
+                                            setShowDeleteConfirm(false)
+                                            setTaskToDelete(null)
+                                            })
+                                        }}
+                                        className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                                        >
+                                        Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            )}
 
                         </li>
                     ))}

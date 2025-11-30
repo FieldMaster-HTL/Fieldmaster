@@ -15,8 +15,8 @@ export default function Tasks() {
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
     const [isPending, startTransition] = useTransition() // transition for async updates
     const [error, setError] = useState('') // error message for the form
-    const [taskToDelete, setTaskToDelete] = useState<any | null>(null) // 
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [taskToDelete, setTaskToDelete] = useState<any | null>(null) // task selected for deletion
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false) // show delete confirmation modal
 
 
     // fetch all tasks from server
@@ -137,12 +137,14 @@ export default function Tasks() {
                             </div>
 
 
-                          {/* DELETE BUTTON */}
+                            
+                          {/* FMST-50 Task-Task delete
+                          DELETE BUTTON */}
                             <button
                                 onClick={(e) => {
-                                    e.stopPropagation() // verhindert Öffnen des Detail-Modals
-                                    setTaskToDelete(task) // Task für später speichern
-                                    setShowDeleteConfirm(true) // Bestätigungsfenster öffnen
+                                    e.stopPropagation() 
+                                    setTaskToDelete(task) 
+                                    setShowDeleteConfirm(true) 
                                 }}
                                 className="absolute top-2 right-2 text-red-600 hover:text-red-800 text-sm font-semibold"
                                 >

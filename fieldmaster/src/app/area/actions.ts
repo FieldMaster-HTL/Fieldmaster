@@ -48,7 +48,9 @@ export async function deleteArea(areaId: string): Promise<{
     }
     return { success: true, area: res };
   } catch (error) {
-    console.error('Error deleting area:', error);
+  } catch (error) {
+    return { success: false, error: "Fehler beim Löschen der Area." };
+  }
     return { success: false, error: "Fehler beim Löschen der Area." };
   }
 }

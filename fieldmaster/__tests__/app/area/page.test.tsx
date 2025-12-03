@@ -1,4 +1,4 @@
-import { createArea, getAllAreas } from "../../../src/app/area/actions";
+import { createArea, getAllAreas, updateArea } from "../../../src/app/area/actions";
 import Page from "../../../src/app/area/page";
 import "@testing-library/jest-dom";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -15,9 +15,13 @@ jest.mock("../../../src/app/area/actions", () => ({
     ],
     error: null,
   }),
+  updateArea: jest.fn().mockResolvedValue({ area: { id: "1", name: "Updated Field", size: 150 }, error: null }),
 }));
 
 describe("Area page", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it("renders heading and inputs", async () => {
     render(<Page />);
     await waitFor(() => {
@@ -55,6 +59,75 @@ describe("Area page", () => {
     fireEvent.submit(form);
     await waitFor(() => {
       expect(createArea).toHaveBeenCalledWith("Neues Feld", 42.5);
+    });
+  });
+
+  // FMST-43
+  it("opens edit modal and saves changes (calls updateArea and updates table)", async () => {
+    render(<Page />);
+
+    // wait for initial areas to be loaded
+    await waitFor(() => {
+      expect(getAllAreas).toHaveBeenCalled();
+    });
+
+    // open edit modal for the first area (Testfeld)
+    const editButton = screen.getByLabelText("Bearbeite Testfeld");
+    fireEvent.click(editButton);
+
+    // modal should open
+    await waitFor(() => {
+      expect(screen.getByText("Area bearbeiten")).toBeInTheDocument();
+    });
+
+    const nameInput = screen.getByDisplayValue("Testfeld") as HTMLInputElement;
+    const sizeInput = screen.getByDisplayValue("123.45") as HTMLInputElement;
+
+    // change values
+    fireEvent.change(nameInput, { target: { value: "Updated Field" } });
+    fireEvent.change(sizeInput, { target: { value: "150" } });
+
+    // click save
+    const saveButton = screen.getByText("Speichern");
+    fireEvent.click(saveButton);
+
+    // expect updateArea to have been called with id, name and numeric size
+    await waitFor(() => {
+      expect(updateArea).toHaveBeenCalledWith("1", "Updated Field", 150);
+    });
+
+    // table should reflect updated values
+    await waitFor(() => {
+      expect(screen.getByText("Updated Field")).toBeInTheDocument();
+      expect(screen.getByText("150 m²")).toBeInTheDocument();
+    });
+  });
+
+  it("shows validation error when saving with invalid data and does not call updateArea", async () => {
+    render(<Page />);
+
+    await waitFor(() => {
+      expect(getAllAreas).toHaveBeenCalled();
+    });
+
+    const editButton = screen.getByLabelText("Bearbeite Testfeld");
+    fireEvent.click(editButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Area bearbeiten")).toBeInTheDocument();
+    });
+
+    const nameInput = screen.getByDisplayValue("Testfeld") as HTMLInputElement;
+    // clear name to trigger validation
+    fireEvent.change(nameInput, { target: { value: "" } });
+
+    const saveButton = screen.getByText("Speichern");
+    fireEvent.click(saveButton);
+
+    // updateArea should not be called and a validation error should appear
+    await waitFor(() => {
+      expect(updateArea).not.toHaveBeenCalled();
+      expect(screen.getByText("Bitte einen Feldnamen eingeben.")).toBeInTheDocument();
     });
   });
 });

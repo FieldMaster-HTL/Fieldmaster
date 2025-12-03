@@ -172,7 +172,7 @@ export default function Page() {
           </Link>
         </div>
       </form>
-
+      {/*FMST-74 */}
       <section className="mt-6">
         <h2>Bestehende Tasks</h2>
 
@@ -233,7 +233,7 @@ export default function Page() {
           </div>
         )}
       </section>
-
+      {/*FMST-43 */}
       {/* Area Detail Modal */}
       {showModal && selectedArea && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">

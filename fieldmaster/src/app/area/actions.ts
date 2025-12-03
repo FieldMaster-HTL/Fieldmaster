@@ -3,20 +3,21 @@
 import { MUTATIONS, QUERIES } from "@/src/server/db/queries/queries";
 import { Area } from "@/src/server/db/type/DBTypes";
 
-//Area FMST-30  / FMST-31
+// Server actions for Areas (FMST-42).
+// Minimal English inline comments.
 
 export async function createArea(
   name: string,
   size: number,
+  category?: string,
 ): Promise<{
   area: Area | null;
   error?: string;
 }> {
   try {
-    const res = await MUTATIONS.AREA.CreateArea(name, size);
-    if (!res) {
-      throw Error();
-    }
+    // Forward data to mutation layer (which validates category).
+    const res = await MUTATIONS.AREA.CreateArea(name, size, undefined, category);
+    if (!res) throw Error();
     return { area: res };
   } catch {
     return { area: null, error: "an error occurred" };
@@ -28,6 +29,7 @@ export async function getAllAreas(): Promise<{
   error?: string;
 }> {
   try {
+    // Return all areas from query layer.
     const res = await QUERIES.AREA.getAllAreas();
     return { areas: res };
   } catch {

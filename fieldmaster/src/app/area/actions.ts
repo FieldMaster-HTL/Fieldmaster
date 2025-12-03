@@ -2,6 +2,7 @@
 
 import { MUTATIONS, QUERIES } from "@/src/server/db/queries/queries";
 import { Area } from "@/src/server/db/type/DBTypes";
+import { UUID } from "crypto";
 
 //Area FMST-30  / FMST-31
 
@@ -41,14 +42,18 @@ export async function deleteArea(areaId: string): Promise<{
   error?: string;
 }> {
   try {
-    const res = await MUTATIONS.AREA.DeleteArea(areaId as any);
+    // Validate UUID format before calling
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(areaId)) {
+      return { success: false, area: null, error: "Invalid Area ID." };
+    }
+    const res = await MUTATIONS.AREA.DeleteArea(areaId as UUID);
     if (!res) {
       // not found or nothing deleted
-      return { success: false, area: null, error: "Area nicht gefunden." };
+      return { success: false, area: null, error: "Area not found." };
     }
     return { success: true, area: res };
   } catch (error) {
-    console.error('Error deleting area:', error);
-    return { success: false, error: "Fehler beim Löschen der Area." };
+    return { success: false, error: "Error deleting area." };
   }
 }

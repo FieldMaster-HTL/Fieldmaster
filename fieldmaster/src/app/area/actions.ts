@@ -37,14 +37,16 @@ export async function getAllAreas(): Promise<{
 
 export async function deleteArea(areaId: string): Promise<{
   success: boolean;
+  area?: Area | null;
   error?: string;
 }> {
   try {
     const res = await MUTATIONS.AREA.DeleteArea(areaId as any);
     if (!res) {
-      throw Error();
+      // not found or nothing deleted
+      return { success: false, area: null, error: "Area nicht gefunden." };
     }
-    return { success: true };
+    return { success: true, area: res };
   } catch (error) {
     console.error('Error deleting area:', error);
     return { success: false, error: "Fehler beim Löschen der Area." };

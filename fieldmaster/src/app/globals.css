@@ -125,3 +125,9 @@ body {
 .bg-elevated {
   background-color: var(--bg-elevated);
 }
+
+/* Breakpoint: ab 1140px Desktop-Layout anzeigen, Mobile-Elemente verbergen */
+@media (min-width: 1140px) {
+  .show-desktop-1140 { display: flex !important; }
+  .hide-above-1140 { display: none !important; }
+}

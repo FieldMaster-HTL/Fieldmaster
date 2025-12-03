@@ -131,17 +131,54 @@ export default function Page() {
       </form>
 
       <section className="mt-6">
-        <h2>Bestehende Areas</h2>
-        {areas.length === 0 || !areas ? (
-          <p>Keine Areas vorhanden.</p>
+        <h2>Bestehende Tasks</h2>
+
+        {areas.length === 0 ? (
+          <p>Keine Tasks vorhanden.</p>
         ) : (
-          <ul>
-            {areas.map((a) => (
-              <li key={a.id} onClick={() => openModal(a)} className="cursor-pointer hover:underline">
-                {a.name} — {a.size} m²
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto">
+            <table
+              className="min-w-full divide-y divide-gray-700 bg-black text-white"
+              data-testid="areas-table"
+              role="table"
+              aria-label="Tasks Tabelle"
+            >
+              <thead className="bg-gray-900">
+          <tr>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              Größe (m²)
+            </th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+              ID
+            </th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              Aktionen
+            </th>
+          </tr>
+              </thead>
+              <tbody className="bg-black divide-y divide-gray-700">
+          {areas.map((a) => (
+            <tr key={a.id} className="hover:bg-gray-800">
+              <td className="px-4 py-2 text-sm text-gray-100">{a.name}</td>
+              <td className="px-4 py-2 text-sm text-gray-100">{a.size} m²</td>
+              <td className="px-4 py-2 text-sm text-gray-400">{a.id}</td>
+              <td className="px-4 py-2 text-sm">
+                <button
+            onClick={() => openModal(a)}
+            className="text-blue-300 hover:underline mr-3"
+            aria-label={`Bearbeite ${a.name}`}
+                >
+            Bearbeiten
+                </button>
+              </td>
+            </tr>
+          ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
       {/* FMST-43  */}

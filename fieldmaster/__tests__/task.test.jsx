@@ -6,11 +6,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 // Mock the actions so tests don't call the real DB
 jest.mock('../src/app/task/actions', () => ({
   getAllTasksAction: jest.fn(),
+  getAllAreasAction: jest.fn(),
   createTaskAction: jest.fn(),
 }))
 
 import Tasks from '../src/app/task/page'
-import { getAllTasksAction, createTaskAction } from '../src/app/task/actions'
+import { getAllTasksAction, getAllAreasAction, createTaskAction } from '../src/app/task/actions'
 
 afterEach(() => jest.clearAllMocks()) // clear mocks after each test
 
@@ -18,6 +19,7 @@ describe('Tasks page', () => {
   // Test if the page renders correctly with no tasks
   it('renders heading, inputs and empty state when no tasks', async () => {
     getAllTasksAction.mockResolvedValue([]) // mock empty tasks
+    getAllAreasAction.mockResolvedValue([]) // mock empty areas
 
     render(<Tasks />)
 
@@ -41,6 +43,7 @@ describe('Tasks page', () => {
     localStorage.setItem('creatorClerkId', creatorClerkId)
 
     getAllTasksAction.mockResolvedValue([]) // no tasks initially
+    getAllAreasAction.mockResolvedValue([]) // no areas
     createTaskAction.mockResolvedValue(undefined) // mock create
 
     render(<Tasks />)

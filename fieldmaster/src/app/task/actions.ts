@@ -34,6 +34,7 @@ export async function createTaskAction(
   description?: string,
   creatorClerkId?: string,
   due_to?: Date,
+  // Area ID to link task to specific area | FMST-11
   areaId?: string 
 ) {
   try {

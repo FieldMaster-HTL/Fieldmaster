@@ -36,6 +36,7 @@ export const TASK_MUTATIONS = {
     description: string,
     creatorClerkId?: string,
     dueTo?: Date,
+    // Area ID to link task to specific area | FMST-11
     areaId?: string
   ) {
     const creatorId = creatorClerkId

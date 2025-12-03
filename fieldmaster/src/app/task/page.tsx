@@ -12,7 +12,7 @@ export default function Tasks() {
     const [newTaskName, setNewTaskName] = useState('') // new task title
     const [newTaskDescription, setNewTaskDescription] = useState('') // new task description
     const [dueTo, setDueTo] = useState('') // new task due date
-    const [areaId, setareaId] = useState('') // new task due date
+    const [areaId, setareaId] = useState('') // new task area ID
     const [showModal, setShowModal] = useState(false) // show task details modal
     const [selectedTask, setSelectedTask] = useState<any | null>(null) // currently selected task
     const [modalAreaId, setModalAreaId] = useState('')
@@ -98,6 +98,7 @@ export default function Tasks() {
                         className="p-2 border rounded-md"
                         placeholder="Enddatum (optional)"
                     />
+                    {/* Area auswählen | FMST-11 */}
                     <select
                         value={areaId}
                         onChange={(e) => setareaId(e.target.value)}
@@ -130,7 +131,12 @@ export default function Tasks() {
                             key={task.id}
                             className="bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md cursor-pointer"
                             onClick={() => {
-                                setSelectedTask(task)
+                                
+                                setSelectedTask({
+                                    ...task,
+                                    // Show area name in modal | FMST-11
+                                    area: task.area ?? areas.find((a) => a.id === task.areaId)?.name,
+                                })
                                 setModalAreaId(task.areaId ?? '')
                                 setShowModal(true)
                             }}
@@ -139,6 +145,7 @@ export default function Tasks() {
                             {task.description && (
                                 <div className="text-foreground/80 text-sm">{task.description}</div>
                             )}
+                            {/* Area anzeigen | FMST-11 */}
                             {(task.area || task.areaId) && (
                                 <div className="text-foreground/80 text-sm">
                                     Feld: {task.area ?? areas.find((a) => a.id === task.areaId)?.name ?? 'Unbekannt'}
@@ -172,6 +179,8 @@ export default function Tasks() {
                         <p className="mb-4 text-gray-300 text-sm">
                             {selectedTask.description || 'No description.'}
                         </p>
+                        <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>
+            
                         <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
                             <p>ID: {selectedTask.id}</p>
                             <p>
@@ -183,45 +192,7 @@ export default function Tasks() {
                             {selectedTask.dueTo && (
                                 <p>Due: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
                             )}
-                            <div className="mt-3">
-                                <label className="block text-xs text-gray-300 mb-1">Feld zuordnen</label>
-                                <select
-                                    value={modalAreaId}
-                                    onChange={(e) => setModalAreaId(e.target.value)}
-                                    className="w-full p-2 pr-8 border rounded-md bg-background text-foreground/90 border-foreground/20 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                >
-                                    <option value="">-- Kein Feld --</option>
-                                    {areas.map((a) => (
-                                        <option key={a.id} value={a.id}>
-                                            {a.name}{a.size ? ` (${a.size})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="mt-2 flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            startTransition(async () => {
-                                                try {
-                                                    await updateTaskAction(selectedTask.id, { areaId: modalAreaId || undefined })
-                                                    await fetchTasks()
-                                                    setShowModal(false)
-                                                } catch (err) {
-                                                    console.error(err)
-                                                }
-                                            })
-                                        }}
-                                        className="bg-primary-500 px-3 py-1 rounded text-white"
-                                    >
-                                        Speichern
-                                    </button>
-                                    <button
-                                        onClick={() => setModalAreaId(selectedTask.areaId ?? '')}
-                                        className="bg-secondary-100 px-3 py-1 rounded text-white"
-                                    >
-                                        Zurücksetzen
-                                    </button>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>

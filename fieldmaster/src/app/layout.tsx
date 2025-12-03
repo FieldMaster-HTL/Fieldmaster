@@ -1,4 +1,5 @@
 import { type Metadata } from 'next'
+// Clerk imports for authentication | FMST-25, FMST-27, FMST-28, FMST-29
 import {
   ClerkProvider,
   SignInButton,

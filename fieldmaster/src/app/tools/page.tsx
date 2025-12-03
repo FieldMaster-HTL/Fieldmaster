@@ -1,6 +1,5 @@
 "use client"; // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Tool } from "../../server/db/type/DBTypes";
 import { loadTools, storeTools } from "./actions";
 import "./style.css";
@@ -38,7 +37,7 @@ export default function Page() {
       return;
     }
 
-    // Tool speichern (true könnte z. B. ein "create" Flag sein)
+    // Tool speichern (available = true, da neu erstellte Tools standardmäßig verfügbar sind)
     await storeTools(form, true);
 
     // Formular zurücksetzen und Modal schließen
@@ -52,7 +51,6 @@ export default function Page() {
   return (
     <div className="page-container">
       <h1 className="page-title">Tools</h1>
-      <Link className="page-link" href="/about"></Link>
 
       {/* BUTTON zum Öffnen des Erstellungsfensters */}
       <button onClick={() => setShowWindow(true)} className="create-button">

@@ -1,4 +1,4 @@
-import { createArea, getAllAreas } from "../../../src/app/area/actions";
+import { createArea, getAllAreas, deleteArea } from "../../../src/app/area/actions";
 import Page from "../../../src/app/area/page";
 import "@testing-library/jest-dom";
 import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -15,6 +15,7 @@ jest.mock("../../../src/app/area/actions", () => ({
     ],
     error: null,
   }),
+  deleteArea: jest.fn().mockResolvedValue({ success: true, error: null }),
 }));
 
 describe("Area page", () => {
@@ -55,6 +56,59 @@ describe("Area page", () => {
     fireEvent.submit(form);
     await waitFor(() => {
       expect(createArea).toHaveBeenCalledWith("Neues Feld", 42.5);
+    });
+  });
+
+  it("opens confirmation dialog and cancels deletion", async () => {
+    render(<Page />);
+
+    // wait for areas to load
+    await waitFor(() => {
+      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
+    });
+
+    // click delete button for area id 1
+    const deleteButton = screen.getByTestId("delete-button-1");
+    fireEvent.click(deleteButton);
+
+    // confirmation dialog should appear
+    await waitFor(() => {
+      expect(screen.getByText("Area löschen?")).toBeInTheDocument();
+      expect(screen.getByText(/Möchtest du die Area "Testfeld" wirklich löschen\?/)).toBeInTheDocument();
+    });
+
+    // click cancel
+    const cancelBtn = screen.getByTestId("cancel-delete-1");
+    fireEvent.click(cancelBtn);
+
+    // area should still be present and deleteArea should not have been called
+    await waitFor(() => {
+      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
+      expect(deleteArea).not.toHaveBeenCalled();
+    });
+  });
+
+  it("confirms deletion, calls deleteArea and removes area from list", async () => {
+    render(<Page />);
+
+    // wait for areas to load
+    await waitFor(() => {
+      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
+    });
+
+    // click delete button for area id 1
+    const deleteButton = screen.getByTestId("delete-button-1");
+    fireEvent.click(deleteButton);
+
+    // confirm delete
+    const confirmBtn = await screen.findByTestId("confirm-delete-1");
+    fireEvent.click(confirmBtn);
+
+    // deleteArea should be called and the item removed
+    await waitFor(() => {
+      expect(deleteArea).toHaveBeenCalledWith("1");
+      expect(screen.queryByText("Testfeld — 123.45 m²")).not.toBeInTheDocument();
+      expect(screen.getByText("Area erfolgreich gelöscht.")).toBeInTheDocument();
     });
   });
 });

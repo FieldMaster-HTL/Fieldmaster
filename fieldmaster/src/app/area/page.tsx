@@ -4,17 +4,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Area } from "../../server/db/type/DBTypes";
-import { createArea, getAllAreas, updateArea } from "../area/actions";
+import { createArea, getAllAreas, updateArea, deleteArea } from "../area/actions";
 
 export default function Page() {
   const [name, setName] = useState("");
   const [size, setSize] = useState<number | "">("");
   const [areas, setAreas] = useState<Area[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [editName, setEditName] = useState("");
   const [editSize, setEditSize] = useState<number | "">("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const resetForm = () => {
     setName("");
@@ -38,16 +40,21 @@ export default function Page() {
     }
 
     try {
-      const { area: newArea, error } = await createArea(name.trim(), numericSize);
+      const { area: newArea, error: createError } = await createArea(name.trim(), numericSize);
 
-      if (error || !newArea) {
-        setError(error ?? "unknown error");
+      if (createError || !newArea) {
+        setError(createError ?? "unknown error");
         return;
       }
 
-      setAreas((prevAreas) => [...prevAreas, newArea]);
+      setAreas((prevAreas) => [
+        ...prevAreas,
+        { id: newArea.id, name: newArea.name, size: Number(newArea.size) } as Area,
+      ]);
 
+      setSuccessMessage("Area erfolgreich erstellt.");
       resetForm();
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError("Fehler beim Anlegen des Feldes.");
       console.error("Error creating area:", err);
@@ -66,6 +73,7 @@ export default function Page() {
     setSelectedArea(null);
     setEditName("");
     setEditSize("");
+    setError(null);
   };
 
   useEffect(() => {
@@ -85,6 +93,40 @@ export default function Page() {
     }
     fetchAreas();
   }, []);
+
+  const handleDeleteClick = (areaId: string) => {
+    setDeletingId(areaId);
+  };
+
+  const cancelDelete = () => {
+    setDeletingId(null);
+  };
+
+  const confirmDelete = async (areaId: string) => {
+    try {
+      setError(null);
+      const { success, error: deleteError } = await deleteArea(areaId);
+
+      if (!success) {
+        setError(deleteError || "Fehler beim Löschen der Area.");
+        setDeletingId(null);
+        return;
+      }
+
+      setAreas((prevAreas) => prevAreas.filter((a) => a.id !== areaId));
+      // if currently editing the deleted area, close the modal
+      if (selectedArea?.id === areaId) {
+        closeModal();
+      }
+      setSuccessMessage("Area erfolgreich gelöscht.");
+      setDeletingId(null);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError("Fehler beim Löschen der Area.");
+      console.error("Error deleting area:", err);
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -118,6 +160,7 @@ export default function Page() {
         </label>
 
         {error && <div className="text-red-600">{error}</div>}
+        {successMessage && <div className="text-green-600">{successMessage}</div>}
 
         <div className="flex gap-2">
           <button type="submit" className="px-3 py-2" data-testid="submit-button">
@@ -144,44 +187,53 @@ export default function Page() {
               aria-label="Tasks Tabelle"
             >
               <thead className="bg-gray-900">
-          <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-              Name
-            </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-              Größe (m²)
-            </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-              ID
-            </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-              Aktionen
-            </th>
-          </tr>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Größe (m²)
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Aktionen
+                  </th>
+                </tr>
               </thead>
               <tbody className="bg-black divide-y divide-gray-700">
-          {areas.map((a) => (
-            <tr key={a.id} className="hover:bg-gray-800">
-              <td className="px-4 py-2 text-sm text-gray-100">{a.name}</td>
-              <td className="px-4 py-2 text-sm text-gray-100">{a.size} m²</td>
-              <td className="px-4 py-2 text-sm text-gray-400">{a.id}</td>
-              <td className="px-4 py-2 text-sm">
-                <button
-            onClick={() => openModal(a)}
-            className="text-blue-300 hover:underline mr-3"
-            aria-label={`Bearbeite ${a.name}`}
-                >
-            Bearbeiten
-                </button>
-              </td>
-            </tr>
-          ))}
+                {areas.map((a) => (
+                  <tr key={a.id} className="hover:bg-gray-800">
+                    <td className="px-4 py-2 text-sm text-gray-100">{a.name}</td>
+                    <td className="px-4 py-2 text-sm text-gray-100">{a.size} m²</td>
+                    <td className="px-4 py-2 text-sm text-gray-400">{a.id}</td>
+                    <td className="px-4 py-2 text-sm">
+                      <button
+                        onClick={() => openModal(a)}
+                        className="text-blue-300 hover:underline mr-3"
+                        aria-label={`Bearbeite ${a.name}`}
+                      >
+                        Bearbeiten
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteClick(a.id)}
+                        className="text-red-400 hover:underline"
+                        aria-label={`Lösche ${a.name}`}
+                        data-testid={`delete-button-${a.id}`}
+                      >
+                        Löschen
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
-      {/* FMST-43  */}
+
       {/* Area Detail Modal */}
       {showModal && selectedArea && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
@@ -219,7 +271,7 @@ export default function Page() {
             </div>
 
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={async () => {
                   if (!editName.trim()) {
                     setError("Bitte einen Feldnamen eingeben.");
@@ -236,10 +288,10 @@ export default function Page() {
                       setError(error ?? "unknown error");
                       return;
                     }
-                    setAreas((prevAreas) =>
-                      prevAreas.map((a) => (a.id === updatedArea.id ? updatedArea : a))
-                    );
+                    setAreas((prevAreas) => prevAreas.map((a) => (a.id === updatedArea.id ? updatedArea : a)));
                     closeModal();
+                    setSuccessMessage("Area erfolgreich gespeichert.");
+                    setTimeout(() => setSuccessMessage(null), 3000);
                   } catch (err) {
                     setError("Fehler beim Speichern des Feldes.");
                     console.error("Error updating area:", err);
@@ -250,6 +302,74 @@ export default function Page() {
                 Speichern
               </button>
               <button onClick={closeModal} className="px-3 py-2 bg-gray-600 rounded text-white">
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingId && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "24px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              textAlign: "center",
+              maxWidth: "400px",
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3 style={{ marginTop: 0, marginBottom: "16px", color: "#333" }}>Area löschen?</h3>
+            <p style={{ marginBottom: "24px", color: "#666" }}>
+              Möchtest du die Area "{areas.find((x) => x.id === deletingId)?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={() => confirmDelete(deletingId)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                data-testid={`confirm-delete-${deletingId}`}
+              >
+                Löschen
+              </button>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                data-testid={`cancel-delete-${deletingId}`}
+              >
                 Abbrechen
               </button>
             </div>

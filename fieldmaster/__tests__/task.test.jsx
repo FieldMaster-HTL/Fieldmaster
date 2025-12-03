@@ -7,10 +7,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 jest.mock('../src/app/task/actions', () => ({
   getAllTasksAction: jest.fn(),
   createTaskAction: jest.fn(),
+  deleteTaskAction: jest.fn(),
 }))
 
 import Tasks from '../src/app/task/page'
-import { getAllTasksAction, createTaskAction } from '../src/app/task/actions'
+import { getAllTasksAction, createTaskAction, deleteTaskAction } from '../src/app/task/actions'
 
 afterEach(() => jest.clearAllMocks()) // clear mocks after each test
 
@@ -70,4 +71,41 @@ describe('Tasks page', () => {
       )
     })
   })
+
+
+/*****************************************************************************/
+/*********************new tests for FMST-50**********************************/
+/***************************************************************************/
+  /*DELETE CONFIRM MODAL APPEARS (for FMST-50)*/
+  it('shows the delete confirmation modal when clicking DELETE', async () => {
+    // one example task
+    const tasks = [
+      { 
+        id: '1', 
+        name: 'Testtask', 
+        description: 'Lorem', 
+        dueDate: null 
+      },
+    ]
+
+    getAllTasksAction.mockResolvedValue(tasks)
+
+    render(<Tasks />)
+
+    // wait for tasks to load
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    // click DELETE button of the task
+    const deleteBtn = screen.getByText('DELETE')
+    fireEvent.click(deleteBtn)
+
+    // modal should appear now
+    expect(
+      screen.getByText(/do you really want to delete the task/i)
+    ).toBeInTheDocument()
+
+    // task name inside modal
+    expect(screen.getAllByText(/Testtask/i)[1]).toBeInTheDocument()
+  })
+
 })

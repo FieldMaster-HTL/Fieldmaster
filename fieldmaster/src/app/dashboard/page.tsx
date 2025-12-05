@@ -63,6 +63,8 @@ export default function Page(): React.JSX.Element {
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err?.message ?? "Unbekannter Fehler beim Laden der Daten");
+        } else {
+          setError("Unbekannter Fehler beim Laden der Daten");
         }
         console.error("Dashboard load error:", err);
       } finally {

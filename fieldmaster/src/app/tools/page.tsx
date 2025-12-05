@@ -16,8 +16,13 @@ export default function Page() {
 
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
-    const data = await loadTools(); // Daten aus DB holen
-    setTools(data); // Tools im State speichern
+    try {
+      const data = await loadTools();
+      setTools(data);
+    } catch (error) {
+      console.error("Failed to load tools:", error);
+      // Consider adding an error state to display to users
+    }
   }
 
   useEffect(() => {
@@ -29,22 +34,24 @@ export default function Page() {
 
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); // Standardformularverhalten verhindern
+    e.preventDefault();
 
-    // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
       alert("Bitte gib einen Tool-Namen ein.");
       return;
     }
 
-    // Tool speichern (available = true, da neu erstellte Tools standardmäßig verfügbar sind)
-    await storeTools(form, true);
+    try {
+      await storeTools(form, true);
+    } catch (error) {
+      console.error("Failed to create tool:", error);
+      alert("Fehler beim Erstellen des Tools.");
+      return;
+    }
 
-    // Formular zurücksetzen und Modal schließen
     setForm({ name: "", category: "Maschine" });
     setShowWindow(false);
 
-    // Liste neu laden, um das neue Tool anzuzeigen
     await loadToolsfromDB();
   }
 

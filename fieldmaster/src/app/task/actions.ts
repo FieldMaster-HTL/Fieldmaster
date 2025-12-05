@@ -72,7 +72,7 @@ export async function createTaskAction(
 // Update a task
 export async function updateTaskAction(
   id: string,
-  values: Partial<{ name: string; description: string; due_to: Date }>,
+  values: Partial<{ name: string; description: string; dueTo: Date }>,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -80,7 +80,7 @@ export async function updateTaskAction(
   if (!isUUID(id)) {
     return {
       task: null,
-      error: `id is not a valide UUID: ${id}`,
+      error: `id is not a valid UUID: ${id}`,
     };
   }
   const taskId = id as UUID;

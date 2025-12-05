@@ -22,7 +22,12 @@ export default function Tasks() {
   // fetch all tasks from server
   const fetchTasks = async () => {
     const res = await getAllTasksAction();
-    setTasks(res.tasks!);
+    if (res.error || !res.tasks) {
+      console.error("Failed to fetch tasks:", res.error);
+      setTasks([]);
+      return;
+    }
+    setTasks(res.tasks);
   };
 
   useEffect(() => {
@@ -154,7 +159,7 @@ export default function Tasks() {
                     className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
                   >
                     <h2 className="text-lg font-semibold text-gray-800">
-                      Do you really want to delete the task &quot;{taskToDelete.name}&quat;?
+                      Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
 
@@ -170,10 +175,19 @@ export default function Tasks() {
                       <button
                         onClick={() => {
                           startTransition(async () => {
-                            await deleteTaskAction(taskToDelete.id);
-                            await fetchTasks();
-                            setShowDeleteConfirm(false);
-                            setTaskToDelete(null);
+                            try {
+                              const result = await deleteTaskAction(taskToDelete.id);
+                              if (result.error) {
+                                setError(result.error || "Failed to delete task.");
+                                return;
+                              }
+                              await fetchTasks();
+                            } catch {
+                              setError("Failed to delete task. Please try again.");
+                            } finally {
+                              setShowDeleteConfirm(false);
+                              setTaskToDelete(null);
+                            }
                           });
                         }}
                         className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"

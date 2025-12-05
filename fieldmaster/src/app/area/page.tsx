@@ -5,12 +5,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createArea, getAllAreas, deleteArea } from "../area/actions";
-
-type Area = {
-  id: string;
-  name: string;
-  size: number;
-};
+import { Area } from "@/src/server/db/type/DBTypes";
 
 export default function Page() {
   const [name, setName] = useState("");
@@ -79,14 +74,7 @@ export default function Page() {
         return;
       }
 
-      setAreas((prevAreas: Area[]) => [
-        ...prevAreas,
-        {
-          id: newArea.id,
-          name: newArea.name,
-          size: Number(newArea.size),
-        },
-      ]);
+      setAreas((prevAreas: Area[]) => [...prevAreas, newArea]);
 
       setSuccessMessage("Area erfolgreich erstellt.");
       resetForm();

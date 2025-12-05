@@ -22,7 +22,7 @@ export default function Tasks() {
   // fetch all tasks from server
   const fetchTasks = async () => {
     const res = await getAllTasksAction();
-    setTasks(res);
+    setTasks(res.tasks!);
   };
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Tasks() {
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
-      } catch (err) {
+      } catch {
         setError("Failed to create task. Please try again.");
       }
     });
@@ -154,7 +154,7 @@ export default function Tasks() {
                     className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
                   >
                     <h2 className="text-lg font-semibold text-gray-800">
-                      Do you really want to delete the task "{taskToDelete.name}"?
+                      Do you really want to delete the task &quot;{taskToDelete.name}&quat;?
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
 

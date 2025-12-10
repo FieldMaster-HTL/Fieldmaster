@@ -1,38 +1,40 @@
 // FMST-35
-import { getAllTasksAction, createTaskAction, deleteTaskAction } from "../src/app/task/actions";
-import Tasks from "../src/app/task/page";
-import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+
+import '@testing-library/jest-dom'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 // Mock the actions so tests don't call the real DB
-jest.mock("../src/app/task/actions", () => ({
+jest.mock('../src/app/task/actions', () => ({
   getAllTasksAction: jest.fn(),
   getAllAreasAction: jest.fn(),
   createTaskAction: jest.fn(),
-  deleteTaskAction: jest.fn(),
-}));
+}))
 
-afterEach(() => jest.clearAllMocks()); // clear mocks after each test
+import Tasks from '../src/app/task/page'
+import { getAllTasksAction, getAllAreasAction, createTaskAction } from '../src/app/task/actions'
 
-describe("Tasks page", () => {
+afterEach(() => jest.clearAllMocks()) // clear mocks after each test
+
+describe('Tasks page', () => {
   // Test if the page renders correctly with no tasks
-  it("renders heading, inputs and empty state when no tasks", async () => {
-    getAllTasksAction.mockResolvedValue({ tasks: [] }); // mock empty tasks
+  it('renders heading, inputs and empty state when no tasks', async () => {
+    getAllTasksAction.mockResolvedValue([]) // mock empty tasks
+    getAllAreasAction.mockResolvedValue([]) // mock empty areas
 
-    render(<Tasks />);
+    render(<Tasks />)
 
     // wait for initial fetch
-    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled());
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
 
     // check heading and input fields
-    expect(screen.getByRole("heading", { name: /tasks/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Titel der Aufgabe...")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Beschreibung (optional)...")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Enddatum (optional)")).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /tasks/i })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Titel der Aufgabe...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Beschreibung (optional)...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Enddatum (optional)')).toBeInTheDocument()
 
     // check empty state text
-    expect(screen.getByText("Keine Aufgaben vorhanden.")).toBeInTheDocument();
-  });
+    expect(screen.getByText('Keine Aufgaben vorhanden.')).toBeInTheDocument()
+  })
 
   // FMST-11: Test if area dropdown is rendered with areas
   it('renders area dropdown with available areas', async () => {
@@ -105,72 +107,185 @@ describe("Tasks page", () => {
   })
 
   // Test if creating a task calls the correct action
-  it("calls createTaskAction when submitting the new task form", async () => {
-    const creatorClerkId = "creator-1";
+  it('calls createTaskAction when submitting the new task form', async () => {
+    const creatorClerkId = 'creator-1'
 
-    localStorage.setItem("creatorClerkId", creatorClerkId);
+    localStorage.setItem('creatorClerkId', creatorClerkId)
 
-    getAllTasksAction.mockResolvedValue({ tasks: [] }); // no tasks initially
-    createTaskAction.mockResolvedValue(undefined); // mock create
+    getAllTasksAction.mockResolvedValue([]) // no tasks initially
+    getAllAreasAction.mockResolvedValue([]) // no areas
+    createTaskAction.mockResolvedValue(undefined) // mock create
 
-    render(<Tasks />);
+    render(<Tasks />)
 
-    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled());
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
 
-    const nameInput = screen.getByPlaceholderText("Titel der Aufgabe...");
-    const descInput = screen.getByPlaceholderText("Beschreibung (optional)...");
-    const dateInput = screen.getByPlaceholderText("Enddatum (optional)");
-    const button = screen.getByRole("button", { name: /hinzufügen/i });
+    const nameInput = screen.getByPlaceholderText('Titel der Aufgabe...')
+    const descInput = screen.getByPlaceholderText('Beschreibung (optional)...')
+    const dateInput = screen.getByPlaceholderText('Enddatum (optional)')
+    const button = screen.getByRole('button', { name: /hinzufügen/i })
 
     // fill out form
-    fireEvent.change(nameInput, { target: { value: "Test Task" } });
-    fireEvent.change(descInput, { target: { value: "Beschreibung" } });
-    fireEvent.change(dateInput, { target: { value: "2025-11-12" } });
+    fireEvent.change(nameInput, { target: { value: 'Test Task' } })
+    fireEvent.change(descInput, { target: { value: 'Beschreibung' } })
+    fireEvent.change(dateInput, { target: { value: '2025-11-12' } })
 
     // submit form
-    fireEvent.click(button);
+    fireEvent.click(button)
 
     // wait for createTaskAction to be called (component uses startTransition)
     await waitFor(() => {
       expect(createTaskAction).toHaveBeenCalledWith(
-        "Test Task",
-        "Beschreibung",
+        'Test Task',
+        'Beschreibung',
         creatorClerkId,
-        new Date("2025-11-12T00:00:00.000Z"),
-      );
-    });
-  });
+        new Date('2025-11-12'),
+        undefined
+      )
+    })
+  })
 
-  /*****************************************************************************/
-  /*********************new tests for FMST-50**********************************/
-  /***************************************************************************/
-  /*DELETE CONFIRM MODAL APPEARS (for FMST-50)*/
-  it("shows the delete confirmation modal when clicking DELETE", async () => {
-    // one example task
-    const tasks = [
+  // FMST-11: Test if tasks display their associated area name
+  it('displays area name in task list when task has area', async () => {
+    const mockAreas = [
+      { id: 'area-1', name: 'Feld A', size: '100m²' },
+      { id: 'area-2', name: 'Feld B', size: '200m²' },
+    ]
+
+    const mockTasks = [
       {
-        id: "1",
-        name: "Testtask",
-        description: "Lorem",
-        dueTo: null,
+        id: 'task-1',
+        name: 'Task mit Feld',
+        description: 'Beschreibung',
+        areaId: 'area-1',
+        dueTo: '2025-12-15',
+        createdAt: '2025-12-10',
       },
-    ];
+      {
+        id: 'task-2',
+        name: 'Task ohne Feld',
+        description: 'Keine Area',
+        dueTo: '2025-12-20',
+        createdAt: '2025-12-10',
+      },
+    ]
 
-    getAllTasksAction.mockResolvedValue({ tasks });
+    getAllTasksAction.mockResolvedValue(mockTasks)
+    getAllAreasAction.mockResolvedValue(mockAreas)
 
-    render(<Tasks />);
+    render(<Tasks />)
 
-    // wait for tasks to load
-    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled());
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
 
-    // click DELETE button of the task
-    const deleteBtn = screen.getByText("DELETE");
-    fireEvent.click(deleteBtn);
+    // Check if task with area shows area name
+    expect(screen.getByText('Task mit Feld')).toBeInTheDocument()
+    expect(screen.getByText('Feld: Feld A')).toBeInTheDocument()
 
-    // modal should appear now
-    expect(screen.getByText(/do you really want to delete the task/i)).toBeInTheDocument();
+    // Check if task without area doesn't show area field
+    expect(screen.getByText('Task ohne Feld')).toBeInTheDocument()
+    const allAreaTexts = screen.queryAllByText(/^Feld:/)
+    expect(allAreaTexts).toHaveLength(1) // only one task should show area
+  })
 
-    // task name inside modal
-    expect(screen.getAllByText(/Testtask/i)[1]).toBeInTheDocument();
-  });
-});
+  // FMST-11: Test if modal displays area name
+  it('displays area name in modal when task is clicked', async () => {
+    const mockAreas = [
+      { id: 'area-1', name: 'Feld A', size: '100m²' },
+    ]
+
+    const mockTasks = [
+      {
+        id: 'task-1',
+        name: 'Task mit Feld',
+        description: 'Beschreibung',
+        areaId: 'area-1',
+        dueTo: '2025-12-15',
+        createdAt: '2025-12-10T10:00:00Z',
+      },
+    ]
+
+    getAllTasksAction.mockResolvedValue(mockTasks)
+    getAllAreasAction.mockResolvedValue(mockAreas)
+
+    render(<Tasks />)
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    // Click on task to open modal
+    const taskItem = screen.getByText('Task mit Feld')
+    fireEvent.click(taskItem)
+
+    // Check if modal shows area name - look for the modal container specifically
+    await waitFor(() => {
+      const modal = screen.getByRole('heading', { name: 'Task mit Feld' }).closest('div')
+      expect(modal).toHaveTextContent('Feld: Feld A')
+    })
+  })
+
+  // Test error handling when createTaskAction fails
+  it('displays error message when task creation fails', async () => {
+    const creatorClerkId = 'creator-1'
+
+    localStorage.setItem('creatorClerkId', creatorClerkId)
+
+    getAllTasksAction.mockResolvedValue([])
+    getAllAreasAction.mockResolvedValue([])
+    createTaskAction.mockRejectedValue(new Error('Database error'))
+
+    render(<Tasks />)
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    const nameInput = screen.getByPlaceholderText('Titel der Aufgabe...')
+    const button = screen.getByRole('button', { name: /hinzufügen/i })
+
+    // fill out form
+    fireEvent.change(nameInput, { target: { value: 'Test Task' } })
+
+    // submit form
+    fireEvent.click(button)
+
+    // wait for error message to appear
+    await waitFor(() => {
+      expect(screen.getByText('Failed to create task. Please try again.')).toBeInTheDocument()
+    })
+  })
+
+  // FMST-11: Test if modal displays 'Unbekannt' when area not found
+  it('displays "Unbekannt" in modal when area is not found', async () => {
+    const mockAreas = [
+      { id: 'area-1', name: 'Feld A', size: '100m²' },
+    ]
+
+    const mockTasks = [
+      {
+        id: 'task-1',
+        name: 'Task mit unbekanntem Feld',
+        description: 'Beschreibung',
+        areaId: 'non-existent-area-id', // Area ID that doesn't exist
+        dueTo: '2025-12-15',
+        createdAt: '2025-12-10T10:00:00Z',
+      },
+    ]
+
+    getAllTasksAction.mockResolvedValue(mockTasks)
+    getAllAreasAction.mockResolvedValue(mockAreas)
+
+    render(<Tasks />)
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    // Check if task list shows "Unbekannt"
+    expect(screen.getByText('Feld: Unbekannt')).toBeInTheDocument()
+
+    // Click on task to open modal
+    const taskItem = screen.getByText('Task mit unbekanntem Feld')
+    fireEvent.click(taskItem)
+
+    // Check if modal also shows "Unbekannt" (now consistent with the update)
+    await waitFor(() => {
+      const modal = screen.getByRole('heading', { name: 'Task mit unbekanntem Feld' }).closest('div')
+      expect(modal).toHaveTextContent('Feld: Unbekannt')
+    })
+  })
+})

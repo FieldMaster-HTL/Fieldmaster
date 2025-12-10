@@ -1,7 +1,7 @@
-import { createArea, getAllAreas, deleteArea } from "../../../src/app/area/actions";
+import { createArea, getAllAreas, updateArea } from "../../../src/app/area/actions";
 import Page from "../../../src/app/area/page";
 import "@testing-library/jest-dom";
-import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 //Area FMST-30  / FMST-31
 jest.mock("../../../src/app/area/actions", () => ({
@@ -15,10 +15,13 @@ jest.mock("../../../src/app/area/actions", () => ({
     ],
     error: null,
   }),
-  deleteArea: jest.fn().mockResolvedValue({ success: true, error: null }),
+  updateArea: jest.fn().mockResolvedValue({ area: { id: "1", name: "Updated Field", size: 150 }, error: null }),
 }));
 
 describe("Area page", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it("renders heading and inputs", async () => {
     render(<Page />);
     await waitFor(() => {
@@ -33,8 +36,10 @@ describe("Area page", () => {
 
     // Wait for the areas to appear
     await waitFor(() => {
-      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
-      expect(screen.getByText("Acker — 99 m²")).toBeInTheDocument();
+      expect(screen.getByText("Testfeld")).toBeInTheDocument();
+      expect(screen.getByText((content, element) => content.includes("123.45"))).toBeInTheDocument();
+      expect(screen.getByText("Acker")).toBeInTheDocument();
+      expect(screen.getByText((content, element) => content.includes("99"))).toBeInTheDocument();
     }); // Increase timeout to 5 seconds
 
     // Assert that "Keine Areas vorhanden." is not in the document after areas are rendered
@@ -59,56 +64,63 @@ describe("Area page", () => {
     });
   });
 
-  it("opens confirmation dialog and cancels deletion", async () => {
+  // FMST-43
+  it("opens edit modal and saves changes (calls updateArea and updates table)", async () => {
     render(<Page />);
 
-    // wait for areas to load
+    // wait for initial areas to be loaded and rendered
+    const editButton = await screen.findByLabelText("Bearbeite Testfeld");
+    fireEvent.click(editButton);
+
+    // modal should open
     await waitFor(() => {
-      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
+      expect(screen.getByText("Area bearbeiten")).toBeInTheDocument();
     });
 
-    // click delete button for area id 1
-    const deleteButton = screen.getByTestId("delete-button-1");
-    fireEvent.click(deleteButton);
+    const nameInput = screen.getByDisplayValue("Testfeld") as HTMLInputElement;
+    const sizeInput = screen.getByDisplayValue("123.45") as HTMLInputElement;
 
-    // confirmation dialog should appear
+    // change values
+    fireEvent.change(nameInput, { target: { value: "Updated Field" } });
+    fireEvent.change(sizeInput, { target: { value: "150" } });
+
+    // click save
+    const saveButton = screen.getByText("Speichern");
+    fireEvent.click(saveButton);
+
+    // expect updateArea to have been called with id, name and numeric size
     await waitFor(() => {
-      expect(screen.getByText("Area löschen?")).toBeInTheDocument();
-      expect(screen.getByText(/Möchtest du die Area "Testfeld" wirklich löschen\?/)).toBeInTheDocument();
+      expect(updateArea).toHaveBeenCalledWith("1", "Updated Field", 150);
     });
 
-    // click cancel
-    const cancelBtn = screen.getByTestId("cancel-delete-1");
-    fireEvent.click(cancelBtn);
-
-    // area should still be present and deleteArea should not have been called
+    // table should reflect updated values
     await waitFor(() => {
-      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
-      expect(deleteArea).not.toHaveBeenCalled();
+      expect(screen.getByText("Updated Field")).toBeInTheDocument();
+      expect(screen.getByText("150 m²")).toBeInTheDocument();
     });
   });
 
-  it("confirms deletion, calls deleteArea and removes area from list", async () => {
+  it("shows validation error when saving with invalid data and does not call updateArea", async () => {
     render(<Page />);
 
-    // wait for areas to load
+    const editButton = await screen.findByLabelText("Bearbeite Testfeld");
+    fireEvent.click(editButton);
+
     await waitFor(() => {
-      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
+      expect(screen.getByText("Area bearbeiten")).toBeInTheDocument();
     });
 
-    // click delete button for area id 1
-    const deleteButton = screen.getByTestId("delete-button-1");
-    fireEvent.click(deleteButton);
+    const nameInput = screen.getByDisplayValue("Testfeld") as HTMLInputElement;
+    // clear name to trigger validation
+    fireEvent.change(nameInput, { target: { value: "" } });
 
-    // confirm delete
-    const confirmBtn = await screen.findByTestId("confirm-delete-1");
-    fireEvent.click(confirmBtn);
+    const saveButton = screen.getByText("Speichern");
+    fireEvent.click(saveButton);
 
-    // deleteArea should be called and the item removed
+    // updateArea should not be called and a validation error should appear
     await waitFor(() => {
-      expect(deleteArea).toHaveBeenCalledWith("1");
-      expect(screen.queryByText("Testfeld — 123.45 m²")).not.toBeInTheDocument();
-      expect(screen.getByText("Area erfolgreich gelöscht.")).toBeInTheDocument();
+      expect(updateArea).not.toHaveBeenCalled();
+      expect(screen.getByText("Bitte einen Feldnamen eingeben.")).toBeInTheDocument();
     });
   });
 });

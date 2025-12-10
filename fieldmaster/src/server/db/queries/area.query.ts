@@ -32,14 +32,23 @@ export const AREA_MUTATIONS = {
       });
   },
 
-  async DeleteArea(areaId: UUID): Promise<AreaRow | undefined> {
-    return db
-      .update(Area)
+  async DeleteArea(areaId: UUID) {
+    return db.update(Area)
       .set({ deletedAt: new Date() })
       .where(eq(Area.id, areaId))
       .returning()
       .then((rows: AreaRow[]) => {
         return rows[0];
       });
-  }
+  },
+  async UpdateArea(id: string, name: string, size: number) {
+    return db
+      .update(Area)
+      .set({ name, size })
+      .where(eq(Area.id, id))
+      .returning()
+      .then((area) => {
+        return area[0];
+      });
+  },
 };

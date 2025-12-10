@@ -1,63 +1,69 @@
-"use client"; // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
-import { useState, useEffect } from "react";
-import { Tool } from "../../server/db/type/DBTypes";
-import { loadTools, storeTools } from "./actions";
-import "./style.css";
+'use client' // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
 
-// Import von asynchronen Funktionen zur Datenbank-Interaktion
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+
+import './style.css'
+import { loadTools, storeTools, loadCategories } from './actions' // Funktionen zum Laden und Speichern von Tools und Kategorien
 
 export default function Page() {
   // React State Hooks:
-  const [tools, setTools] = useState<Tool[]>([]); // Liste der gespeicherten Tools
-  const [showWindow, setShowWindow] = useState(false); // Steuert, ob das Modal-Fenster angezeigt wird
-  const [form, setForm] = useState({ name: "", category: "Maschine" }); // Formularzustand für neues Tool
+  const [tools, setTools] = useState<any[]>([]) // Liste der gespeicherten Tools
+  const [categories, setCategories] = useState<any[]>([]) // Liste der Kategorien
+  const [showWindow, setShowWindow] = useState(false) // Steuert, ob das Modal-Fenster angezeigt wird
+  const [form, setForm] = useState({ name: '', category: '' }) // Formularzustand für neues Tool
 
-  // Lädt die Tools beim ersten Rendern der Seite
+  // Lädt die Tools und Kategorien beim ersten Rendern der Seite
+  useEffect(() => {
+    loadToolsfromDB()
+    loadCategoriesFromDB()
+  }, [])
 
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
+    const data = await loadTools() // Daten aus DB holen
+    setTools(data) // Tools im State speichern
+  }
+
+  // Asynchrone Funktion, um Kategorien aus der Datenbank zu laden - FMST-19 (Polt Leonie)
+  async function loadCategoriesFromDB() {
     try {
-      const data = await loadTools();
-      setTools(data);
+      const data = await loadCategories() // Kategorien aus DB holen
+      setCategories(data) // Kategorien im State speichern
+      // Setze die erste Kategorie als Standard, wenn vorhanden
+      if (data.length > 0 && !form.category) {
+        setForm(prev => ({ ...prev, category: data[0].name }))
+      }
     } catch (error) {
-      console.error("Failed to load tools:", error);
-      // Consider adding an error state to display to users
+      console.error('Failed to load categories:', error)
     }
   }
 
-  useEffect(() => {
-    const fetchTools = () => {
-      loadToolsfromDB();
-    };
-    fetchTools();
-  }, []);
-
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault() // Standardformularverhalten verhindern
 
+    // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
-      alert("Bitte gib einen Tool-Namen ein.");
-      return;
+      alert('Bitte gib einen Tool-Namen ein.')
+      return
     }
 
-    try {
-      await storeTools(form, true);
-    } catch (error) {
-      console.error("Failed to create tool:", error);
-      alert("Fehler beim Erstellen des Tools.");
-      return;
-    }
+    // Tool speichern (true könnte z. B. ein "create" Flag sein)
+    await storeTools(form, true)
+    
+    // Formular zurücksetzen und Modal schließen
+    setForm({ name: '', category: categories.length > 0 ? categories[0].name : '' })
+    setShowWindow(false)
 
-    setForm({ name: "", category: "Maschine" });
-    setShowWindow(false);
-
-    await loadToolsfromDB();
+    // Liste neu laden, um das neue Tool anzuzeigen
+    await loadToolsfromDB()
   }
 
   return (
     <div className="page-container">
       <h1 className="page-title">Tools</h1>
+      <Link className="page-link" href="/categories">Kategorien verwalten</Link>
 
       {/* BUTTON zum Öffnen des Erstellungsfensters */}
       <button onClick={() => setShowWindow(true)} className="create-button">
@@ -80,6 +86,7 @@ export default function Page() {
 
             {/* Formular für Name + Kategorie */}
             <form onSubmit={handleSubmit} className="modal-form">
+
               {/* 
                 FMST-17: Werkzeug - Name wählen 
                 (Kulmer Klara)
@@ -98,16 +105,25 @@ export default function Page() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="modal-select"
               >
-                <option value="Maschine">Maschine</option>
-                <option value="Handwerkzeug">Handwerkzeug</option>
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">Keine Kategorien verfügbar</option>
+                )}
               </select>
 
               {/* Buttons im Modal */}
               <div className="modal-buttons">
-                <button type="submit" className="modal-save">
-                  Speichern
-                </button>
-                <button type="button" onClick={() => setShowWindow(false)} className="modal-cancel">
+                <button type="submit" className="modal-save">Speichern</button>
+                <button
+                  type="button"
+                  onClick={() => setShowWindow(false)}
+                  className="modal-cancel"
+                >
                   Abbrechen
                 </button>
               </div>
@@ -115,7 +131,7 @@ export default function Page() {
           </div>
         </div>
       )}
-
+      
       {/* 
         FMST-18: Werkzeug - Beschreibung 
         (Kulmer Klara)
@@ -127,11 +143,11 @@ export default function Page() {
             <h2 className="tool-name">{tool.name}</h2>
             <p className="tool-category">Kategorie: {tool.category}</p>
             <p className="tool-status">
-              Status: {tool.available ? "Verfügbar" : "Nicht verfügbar"}
+              Status: {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}
             </p>
           </li>
         ))}
       </ul>
     </div>
-  );
+  )
 }

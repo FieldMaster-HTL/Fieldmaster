@@ -54,3 +54,11 @@ export const Task = pgTable("task", {
   dueTo: timestamp("dueTo"),
   areaId: uuid("areaId").references(() => Area.id),
 });
+
+// FMST-19 (Polt Leonie) - tabelle mit benötigten Spalten für Kategorien
+export const categoriesTable = pgTable("categories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
+});

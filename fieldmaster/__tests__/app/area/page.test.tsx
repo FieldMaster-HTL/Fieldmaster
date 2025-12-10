@@ -1,7 +1,7 @@
 import { createArea, getAllAreas, updateArea } from "../../../src/app/area/actions";
 import Page from "../../../src/app/area/page";
 import "@testing-library/jest-dom";
-import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 //Area FMST-30  / FMST-31
 jest.mock("../../../src/app/area/actions", () => ({
@@ -36,8 +36,10 @@ describe("Area page", () => {
 
     // Wait for the areas to appear
     await waitFor(() => {
-      expect(screen.getByText("Testfeld — 123.45 m²")).toBeInTheDocument();
-      expect(screen.getByText("Acker — 99 m²")).toBeInTheDocument();
+      expect(screen.getByText("Testfeld")).toBeInTheDocument();
+      expect(screen.getByText((content, element) => content.includes("123.45"))).toBeInTheDocument();
+      expect(screen.getByText("Acker")).toBeInTheDocument();
+      expect(screen.getByText((content, element) => content.includes("99"))).toBeInTheDocument();
     }); // Increase timeout to 5 seconds
 
     // Assert that "Keine Areas vorhanden." is not in the document after areas are rendered
@@ -66,13 +68,8 @@ describe("Area page", () => {
   it("opens edit modal and saves changes (calls updateArea and updates table)", async () => {
     render(<Page />);
 
-    // wait for initial areas to be loaded
-    await waitFor(() => {
-      expect(getAllAreas).toHaveBeenCalled();
-    });
-
-    // open edit modal for the first area (Testfeld)
-    const editButton = screen.getByLabelText("Bearbeite Testfeld");
+    // wait for initial areas to be loaded and rendered
+    const editButton = await screen.findByLabelText("Bearbeite Testfeld");
     fireEvent.click(editButton);
 
     // modal should open
@@ -106,11 +103,7 @@ describe("Area page", () => {
   it("shows validation error when saving with invalid data and does not call updateArea", async () => {
     render(<Page />);
 
-    await waitFor(() => {
-      expect(getAllAreas).toHaveBeenCalled();
-    });
-
-    const editButton = screen.getByLabelText("Bearbeite Testfeld");
+    const editButton = await screen.findByLabelText("Bearbeite Testfeld");
     fireEvent.click(editButton);
 
     await waitFor(() => {

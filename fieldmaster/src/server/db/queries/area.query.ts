@@ -4,16 +4,20 @@
 
 import { db } from "@/src/server/db/index";
 import { Area } from "@/src/server/db/schema/schema";
-import { eq } from "drizzle-orm";
+import type { Area as AreaRow } from "@/src/server/db/type/DBTypes";
+import { eq, and, isNull } from "drizzle-orm";
 import { UUID } from "crypto";
 
 export const AREA_QUERIES = {
   async getAllAreas() {
-    return db.select().from(Area);
+    return db.select().from(Area).where(isNull(Area.deletedAt));
   },
 
   async getAreasByCreator(creatorId: UUID) {
-    return db.select().from(Area).where(eq(Area.creatorId, creatorId));
+    return db
+      .select()
+      .from(Area)
+      .where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
   },
 
   async getAreaById(id: UUID) {
@@ -35,6 +39,26 @@ export const AREA_MUTATIONS = {
     return db
       .insert(Area)
       .values({ name, size, creatorId })
+      .returning()
+      .then((area) => {
+        return area[0];
+      });
+  },
+
+  async DeleteArea(areaId: UUID) {
+    return db.update(Area)
+      .set({ deletedAt: new Date() })
+      .where(eq(Area.id, areaId))
+      .returning()
+      .then((rows: AreaRow[]) => {
+        return rows[0];
+      });
+  },
+  async UpdateArea(id: string, name: string, size: number) {
+    return db
+      .update(Area)
+      .set({ name, size })
+      .where(eq(Area.id, id))
       .returning()
       .then((area) => {
         return area[0];

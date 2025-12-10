@@ -1,53 +1,63 @@
-'use client' // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
+"use client"; // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
+import { useState, useEffect } from "react";
+import { Tool } from "../../server/db/type/DBTypes";
+import { loadTools, storeTools } from "./actions";
+import "./style.css";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-
-import './style.css'
-import { loadTools, storeTools } from './actions' // Import von asynchronen Funktionen zur Datenbank-Interaktion
+// Import von asynchronen Funktionen zur Datenbank-Interaktion
 
 export default function Page() {
   // React State Hooks:
-  const [tools, setTools] = useState<any[]>([]) // Liste der gespeicherten Tools
-  const [showWindow, setShowWindow] = useState(false) // Steuert, ob das Modal-Fenster angezeigt wird
-  const [form, setForm] = useState({ name: '', category: 'Maschine' }) // Formularzustand für neues Tool
+  const [tools, setTools] = useState<Tool[]>([]); // Liste der gespeicherten Tools
+  const [showWindow, setShowWindow] = useState(false); // Steuert, ob das Modal-Fenster angezeigt wird
+  const [form, setForm] = useState({ name: "", category: "Maschine" }); // Formularzustand für neues Tool
 
   // Lädt die Tools beim ersten Rendern der Seite
-  useEffect(() => {
-    loadToolsfromDB()
-  }, [])
 
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
-    const data = await loadTools() // Daten aus DB holen
-    setTools(data) // Tools im State speichern
+    try {
+      const data = await loadTools();
+      setTools(data);
+    } catch (error) {
+      console.error("Failed to load tools:", error);
+      // Consider adding an error state to display to users
+    }
   }
+
+  useEffect(() => {
+    const fetchTools = () => {
+      loadToolsfromDB();
+    };
+    fetchTools();
+  }, []);
 
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault() // Standardformularverhalten verhindern
+    e.preventDefault();
 
-    // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
-      alert('Bitte gib einen Tool-Namen ein.')
-      return
+      alert("Bitte gib einen Tool-Namen ein.");
+      return;
     }
 
-    // Tool speichern (true könnte z. B. ein "create" Flag sein)
-    await storeTools(form, true)
-    
-    // Formular zurücksetzen und Modal schließen
-    setForm({ name: '', category: 'Maschine' })
-    setShowWindow(false)
+    try {
+      await storeTools(form, true);
+    } catch (error) {
+      console.error("Failed to create tool:", error);
+      alert("Fehler beim Erstellen des Tools.");
+      return;
+    }
 
-    // Liste neu laden, um das neue Tool anzuzeigen
-    await loadToolsfromDB()
+    setForm({ name: "", category: "Maschine" });
+    setShowWindow(false);
+
+    await loadToolsfromDB();
   }
 
   return (
     <div className="page-container">
       <h1 className="page-title">Tools</h1>
-      <Link className="page-link" href="/about"></Link>
 
       {/* BUTTON zum Öffnen des Erstellungsfensters */}
       <button onClick={() => setShowWindow(true)} className="create-button">
@@ -70,7 +80,6 @@ export default function Page() {
 
             {/* Formular für Name + Kategorie */}
             <form onSubmit={handleSubmit} className="modal-form">
-
               {/* 
                 FMST-17: Werkzeug - Name wählen 
                 (Kulmer Klara)
@@ -95,12 +104,10 @@ export default function Page() {
 
               {/* Buttons im Modal */}
               <div className="modal-buttons">
-                <button type="submit" className="modal-save">Speichern</button>
-                <button
-                  type="button"
-                  onClick={() => setShowWindow(false)}
-                  className="modal-cancel"
-                >
+                <button type="submit" className="modal-save">
+                  Speichern
+                </button>
+                <button type="button" onClick={() => setShowWindow(false)} className="modal-cancel">
                   Abbrechen
                 </button>
               </div>
@@ -108,7 +115,7 @@ export default function Page() {
           </div>
         </div>
       )}
-      
+
       {/* 
         FMST-18: Werkzeug - Beschreibung 
         (Kulmer Klara)
@@ -120,11 +127,11 @@ export default function Page() {
             <h2 className="tool-name">{tool.name}</h2>
             <p className="tool-category">Kategorie: {tool.category}</p>
             <p className="tool-status">
-              Status: {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}
+              Status: {tool.available ? "Verfügbar" : "Nicht verfügbar"}
             </p>
           </li>
         ))}
       </ul>
     </div>
-  )
+  );
 }

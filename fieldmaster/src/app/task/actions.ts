@@ -1,31 +1,35 @@
 //FMST-35
 
-'use server'
+"use server";
 
-import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
-import type { UUID } from 'crypto'
-
-function serializeTask(task: any) {
-  return {
-    id: String(task.id),
-    name: task.name,
-    description: task.description ?? null,
-    createdAt: task.createdAt ? task.createdAt.toISOString() : null,
-    dueTo: task.dueTo ? task.dueTo.toISOString() : null,
-    creatorId: task.creatorId ?? null,
-  }
-}
+import { TASK_QUERIES, TASK_MUTATIONS } from "@/src/server/db/queries/task.query";
+import { Task } from "@/src/server/db/type/DBTypes";
+import { isUUID } from "@/src/util/uuidValidator";
+import type { UUID } from "crypto";
 
 // Fetch all tasks
-export async function getAllTasksAction() {
+export async function getAllTasksAction(): Promise<{
+  tasks: Task[] | null;
+  error?: string;
+}> {
   try {
-    const tasks = await TASK_QUERIES.getAll()
-    const tasksSerialized = tasks.map(serializeTask)
+    const tasks = await TASK_QUERIES.getAll();
 
-    return tasksSerialized
+    return {
+      tasks,
+    };
   } catch (err) {
-    console.error('Error loading tasks:', err)
-    return []
+    if (err instanceof Error) {
+      return {
+        tasks: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        tasks: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 
@@ -34,35 +38,71 @@ export async function createTaskAction(
   name: string,
   description?: string,
   creatorClerkId?: string,
-  due_to?: Date
-) {
+  due_to?: Date,
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
   try {
     const newTask = await TASK_MUTATIONS.createTask(
       name,
-      description ?? '',
+      description ?? "",
       creatorClerkId,
-      due_to
-    )
-    if (!newTask) return null
-    return serializeTask(newTask)
+      due_to,
+    );
+    if (!newTask) throw Error("unknown error db/ orm");
+    return {
+      task: newTask,
+    };
   } catch (err) {
-    console.error('Error creating task:', err)
-    throw err
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 
 // Update a task
 export async function updateTaskAction(
-  id: UUID,
-  values: Partial<{ name: string; description: string; due_to: Date }>
-) {
+  id: string,
+  values: Partial<{ name: string; description: string; dueTo: Date }>,
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
+  if (!isUUID(id)) {
+    return {
+      task: null,
+      error: `id is not a valid UUID: ${id}`,
+    };
+  }
+  const taskId = id as UUID;
   try {
-    await TASK_MUTATIONS.updateTask(id, values)
-    const updated = await TASK_QUERIES.mapIdToTask(id)
-    return serializeTask(updated)
-  } catch (err) {
-    console.error('Error updating task:', err)
-    throw err
+    await TASK_MUTATIONS.updateTask(taskId, values);
+
+    const updated = await TASK_QUERIES.mapIdToTask(taskId);
+    return {
+      task: updated,
+    };
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 
@@ -70,14 +110,36 @@ export async function updateTaskAction(
 /******************FMST-50*******************/
 // *******************************************
 // Delete a task
-export async function deleteTaskAction(id: UUID) {
-  try {
-    await TASK_MUTATIONS.deleteTask(id)
+export async function deleteTaskAction(id: string): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
+  if (!isUUID(id)) {
+    return {
+      task: null,
+      error: `id is not a valide UUID: ${id}`,
+    };
+  }
+  const taskId = id as UUID;
 
-    const deleted = await TASK_QUERIES.mapIdToTask(id)
-    return serializeTask(deleted)
+  try {
+    await TASK_MUTATIONS.deleteTask(taskId);
+
+    const deleted = await TASK_QUERIES.mapIdToTask(taskId);
+    return {
+      task: deleted,
+    };
   } catch (err) {
-    console.error('Error deleting task:', err)
-    throw err
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }

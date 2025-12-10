@@ -102,7 +102,7 @@ export default function Tasks() {
                     <select
                         value={areaId}
                         onChange={(e) => setareaId(e.target.value)}
-                        className="p-2 pr-8 border rounded-md bg-background text-foreground/90 border-foreground/20 shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="bg-background shadow-sm p-2 pr-8 border border-foreground/20 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-foreground/90 appearance-none"
                         aria-label="Feld auswählen (optional)"
                     >
                         <option value="">-- Feld auswählen (optional) --</option>
@@ -135,7 +135,7 @@ export default function Tasks() {
                                 setSelectedTask({
                                     ...task,
                                     // Show area name in modal | FMST-11
-                                    area: task.area ?? areas.find((a) => a.id === task.areaId)?.name,
+                                    area: task.area ?? areas.find((a) => a.id === task.areaId)?.name ?? 'Unbekannt',
                                 })
                                 setModalAreaId(task.areaId ?? '')
                                 setShowModal(true)
@@ -177,20 +177,20 @@ export default function Tasks() {
 
                         <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
                         <p className="mb-4 text-gray-300 text-sm">
-                            {selectedTask.description || 'No description.'}
+                            {selectedTask.description || 'Keine Beschreibung.'}
                         </p>
                         <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>
             
                         <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
                             <p>ID: {selectedTask.id}</p>
                             <p>
-                                Created:{' '}
+                                Erstellt:{' '}
                                 {selectedTask.createdAt
                                     ? new Date(selectedTask.createdAt).toLocaleString()
-                                    : 'Unknown'}
+                                    : 'Unbekannt'}
                             </p>
                             {selectedTask.dueTo && (
-                                <p>Due: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
+                                <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
                             )}
                             
                         </div>

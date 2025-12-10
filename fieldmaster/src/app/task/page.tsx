@@ -59,19 +59,19 @@ export default function Tasks() {
   };
 
   return (
-    <main className="bg-surface flex min-h-screen items-center justify-center p-6">
-      <section className="bg-elevated relative w-full max-w-3xl rounded-lg border p-8 shadow-md">
-        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <main className="flex justify-center items-center bg-surface p-6 min-h-screen">
+      <section className="relative bg-elevated shadow-md p-8 border rounded-lg w-full max-w-3xl">
+        <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-primary-500 text-3xl font-extrabold md:text-4xl">Tasks</h1>
-            <p className="text-foreground/90 mt-2 text-sm">
+            <h1 className="font-extrabold text-primary-500 text-3xl md:text-4xl">Tasks</h1>
+            <p className="mt-2 text-foreground/90 text-sm">
               Verwaltungstool für Felder und Einsätze — schnell, übersichtlich und zuverlässig.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/about"
-              className="bg-secondary-100 border-secondary-500 inline-block rounded-md border px-4 py-2 text-white"
+              className="inline-block bg-secondary-100 px-4 py-2 border border-secondary-500 rounded-md text-white"
             >
               Mehr erfahren
             </Link>
@@ -79,32 +79,32 @@ export default function Tasks() {
         </header>
 
         {/* Add new Task form */}
-        <form onSubmit={handleSubmit} className="mb-6 flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-6">
           <input
             type="text"
             value={newTaskName}
             onChange={(e) => setNewTaskName(e.target.value)}
             placeholder="Titel der Aufgabe..."
-            className="rounded-md border p-2"
+            className="p-2 border rounded-md"
           />
           <textarea
             value={newTaskDescription}
             onChange={(e) => setNewTaskDescription(e.target.value)}
             placeholder="Beschreibung (optional)..."
-            className="min-h-[80px] rounded-md border p-2"
+            className="p-2 border rounded-md min-h-[80px]"
           />
           <input
             type="date"
             value={dueTo}
             onChange={(e) => setDueTo(e.target.value)}
-            className="rounded-md border p-2"
+            className="p-2 border rounded-md"
             placeholder="Enddatum (optional)"
           />
-          {error && <div className="mb-2 text-sm text-red-500">{error}</div>}
+          {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
             disabled={isPending}
-            className="bg-primary-500 self-start rounded-md px-4 py-2 text-white shadow-sm hover:opacity-95"
+            className="self-start bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white"
           >
             {isPending ? "Speichern..." : "Hinzufügen"}
           </button>
@@ -115,7 +115,7 @@ export default function Tasks() {
           {tasks.map((task) => (
             <li
               key={task.id}
-              className="bg-background hover:bg-foreground/5 border-foreground/20 relative rounded-md border p-3"
+              className="relative bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md"
             >
               <div
                 className="cursor-pointer"
@@ -129,7 +129,7 @@ export default function Tasks() {
                   <div className="text-foreground/80 text-sm">{task.description}</div>
                 )}
                 {task.dueTo && (
-                  <div className="text-foreground/70 mt-1 text-xs">
+                  <div className="mt-1 text-foreground/70 text-xs">
                     Bis: {new Date(task.dueTo).toLocaleDateString()}
                   </div>
                 )}
@@ -143,7 +143,7 @@ export default function Tasks() {
                   setTaskToDelete(task);
                   setShowDeleteConfirm(true);
                 }}
-                className="absolute top-2 right-2 text-sm font-semibold text-red-600 hover:text-red-800"
+                className="top-2 right-2 absolute font-semibold text-red-600 hover:text-red-800 text-sm"
               >
                 DELETE
               </button>
@@ -151,23 +151,23 @@ export default function Tasks() {
               {/* DELETE CONFIRM MODAL */}
               {showDeleteConfirm && taskToDelete?.id === task.id && (
                 <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                  className="z-50 fixed inset-0 flex justify-center items-center bg-black/40 backdrop-blur-sm"
                   onClick={() => setShowDeleteConfirm(false)}
                 >
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
+                    className="bg-white shadow-xl p-6 rounded-xl w-80 animate-fadeIn"
                   >
-                    <h2 className="text-lg font-semibold text-gray-800">
+                    <h2 className="font-semibold text-gray-800 text-lg">
                       Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
                     </h2>
-                    <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
+                    <p className="mt-2 text-gray-600 text-sm">This action cannot be undone.</p>
 
                     {/* BUTTONS */}
-                    <div className="mt-6 flex justify-end space-x-3">
+                    <div className="flex justify-end space-x-3 mt-6">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+                        className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
                       >
                         exit
                       </button>
@@ -190,7 +190,7 @@ export default function Tasks() {
                             }
                           });
                         }}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white"
                       >
                         Delete
                       </button>
@@ -209,20 +209,20 @@ export default function Tasks() {
 
       {/* Task Detail Modal */}
       {showModal && selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="from-primary-900 to-secondary-800 relative w-full max-w-md rounded-2xl border border-gray-700 bg-gradient-to-br via-gray-800 p-6 text-white shadow-2xl">
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
+          <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
+              className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
             >
               ✕
             </button>
 
-            <h2 className="text-primary-400 mb-2 text-2xl font-bold">{selectedTask.name}</h2>
-            <p className="mb-4 text-sm text-gray-300">
+            <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
+            <p className="mb-4 text-gray-300 text-sm">
               {selectedTask.description || "No description."}
             </p>
-            <div className="border-t border-gray-700 pt-2 text-xs text-gray-400">
+            <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
               <p>ID: {selectedTask.id}</p>
               <p>
                 Created:{" "}

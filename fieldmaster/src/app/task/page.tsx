@@ -5,15 +5,18 @@
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { getAllTasksAction, createTaskAction, deleteTaskAction } from "./actions";
+import {getAllAreas} from "../area/actions";
 import { Task } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]); // store all tasks
+  const [areas, setAreas] = useState<any[]>([]); // store all areas | FMST-11
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
+  const [newTaskAreaId, setNewTaskAreaId] = useState(""); // new task area | FMST-11
   const [showModal, setShowModal] = useState(false); // show task details modal
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // currently selected task
+  const [selectedTask, setSelectedTask] = useState<(Task & { area?: string }) | null>(null); // currently selected task
   const [isPending, startTransition] = useTransition(); // transition for async updates
   const [error, setError] = useState(""); // error message for the form
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
@@ -30,9 +33,21 @@ export default function Tasks() {
     setTasks(res.tasks);
   };
 
+  // fetch all areas from server | FMST-11
+  const fetchAreas = async () => {
+    const res = await getAllAreas();
+    if (res.error || !res.areas) {
+      console.error("Failed to fetch areas:", res.error);
+      setAreas([]);
+      return;
+    }
+    setAreas(res.areas);
+  };
+
   useEffect(() => {
     const fetchAllTasks = async () => {
       await fetchTasks();
+      await fetchAreas();
     };
     fetchAllTasks();
   }, []);
@@ -52,6 +67,7 @@ export default function Tasks() {
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
+        setNewTaskAreaId(""); // FMST-11
       } catch {
         setError("Failed to create task. Please try again.");
       }
@@ -100,6 +116,20 @@ export default function Tasks() {
             className="p-2 border rounded-md"
             placeholder="Enddatum (optional)"
           />
+          {/* FMST-11: Area selection dropdown */}
+          <select
+            value={newTaskAreaId}
+            onChange={(e) => setNewTaskAreaId(e.target.value)}
+            className="p-2 border rounded-md"
+            aria-label="Feld auswählen (optional)"
+          >
+            <option value="">-- Feld auswählen (optional) --</option>
+            {areas.map((area) => (
+              <option key={area.id} value={area.id}>
+                {area.name} {area.size ? `(${area.size})` : ""}
+              </option>
+            ))}
+          </select>
           {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
@@ -120,13 +150,23 @@ export default function Tasks() {
               <div
                 className="cursor-pointer"
                 onClick={() => {
-                  setSelectedTask(task);
+                  setSelectedTask({
+                    ...task,
+                    // FMST-11: Show area name in modal
+                    area: task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : undefined,
+                  });
                   setShowModal(true);
                 }}
               >
                 <div className="font-semibold">{task.name}</div>
                 {task.description && (
                   <div className="text-foreground/80 text-sm">{task.description}</div>
+                )}
+                {/* FMST-11: Display area name in task list */}
+                {task.areaId && (
+                  <div className="text-foreground/80 text-sm">
+                    Feld: {areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt"}
+                  </div>
                 )}
                 {task.dueTo && (
                   <div className="mt-1 text-foreground/70 text-xs">
@@ -135,8 +175,7 @@ export default function Tasks() {
                 )}
               </div>
 
-              {/* FMST-50 Task-Task delete
-                          DELETE BUTTON */}
+              {/* FMST-50 Task-Task delete - DELETE BUTTON */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -220,18 +259,20 @@ export default function Tasks() {
 
             <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
             <p className="mb-4 text-gray-300 text-sm">
-              {selectedTask.description || "No description."}
+              {selectedTask.description || "Keine Beschreibung."}
             </p>
+            {/* FMST-11: Display area in modal */}
+            {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
             <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
               <p>ID: {selectedTask.id}</p>
               <p>
-                Created:{" "}
+                Erstellt:{" "}
                 {selectedTask.createdAt
                   ? new Date(selectedTask.createdAt).toLocaleString()
-                  : "Unknown"}
+                  : "Unbekannt"}
               </p>
               {selectedTask.dueTo && (
-                <p>Due: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
+                <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
               )}
             </div>
           </div>

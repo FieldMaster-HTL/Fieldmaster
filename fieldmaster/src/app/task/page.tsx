@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { getAllTasksAction, createTaskAction, deleteTaskAction } from "./actions";
+import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
@@ -18,24 +18,35 @@ export default function Tasks() {
   const [error, setError] = useState(""); // error message for the form
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
+  const [filter, setFilter] = useState<"all" | "active" | "deleted">("all"); // sorting states
+  const [sort, setSort] = useState<"dueDate" | undefined>(undefined); // sorting after due date
 
+
+  
   // fetch all tasks from server
-  const fetchTasks = async () => {
-    const res = await getAllTasksAction();
+  const fetchTasks = async (
+    filterParam = filter,
+    sortParam = sort,
+  ) => {
+    const res = await getTasksSortedFilteredAction({
+      filter: filterParam,
+      sort: sortParam,
+    });
+
     if (res.error || !res.tasks) {
       console.error("Failed to fetch tasks:", res.error);
       setTasks([]);
       return;
     }
+
     setTasks(res.tasks);
   };
 
+
   useEffect(() => {
-    const fetchAllTasks = async () => {
-      await fetchTasks();
-    };
-    fetchAllTasks();
-  }, []);
+    fetchTasks();
+  }, [filter, sort]);
+
 
   // handle form submission to add new task
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -110,102 +121,122 @@ export default function Tasks() {
           </button>
         </form>
 
-        {/* Task List */}
-        <ul className="space-y-2">
-          {tasks.map((task) => (
-            <li
-              key={task.id}
-              className="bg-background hover:bg-foreground/5 border-foreground/20 relative rounded-md border p-3"
-            >
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  setSelectedTask(task);
-                  setShowModal(true);
-                }}
-              >
-                <div className="font-semibold">{task.name}</div>
-                {task.description && (
-                  <div className="text-foreground/80 text-sm">{task.description}</div>
-                )}
-                {task.dueTo && (
-                  <div className="text-foreground/70 mt-1 text-xs">
-                    Bis: {new Date(task.dueTo).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
 
-              {/* FMST-50 Task-Task delete
-                          DELETE BUTTON */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTaskToDelete(task);
-                  setShowDeleteConfirm(true);
-                }}
-                className="absolute top-2 right-2 text-sm font-semibold text-red-600 hover:text-red-800"
-              >
-                DELETE
-              </button>
+      {/* MFST-75: */}
+        <table className="w-full border-collapse border border-gray-50">
+          <thead>
+            <tr className="bg-gray-200/50">
+              <th className="border p-2 text-left">Name</th>
+              <th className="border p-2 text-left">Description</th>
+              <th className="border p-2 text-left">Due Date</th>
+              <th className="border p-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center p-4 italic text-gray-500">
+                  Keine Aufgaben vorhanden.
+                </td>
+              </tr>
+            )}
 
-              {/* DELETE CONFIRM MODAL */}
-              {showDeleteConfirm && taskToDelete?.id === task.id && (
-                <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                  onClick={() => setShowDeleteConfirm(false)}
+            {tasks.map((task) => {
+              const isDeleted = task.description === "[DELETED]";
+              return (
+                <tr
+                  key={task.id}
+                className={`transition-colors ${isDeleted ? "hover:bg-gray-400/10" : "hover:bg-gray-200/20"}`}
                 >
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
-                  >
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
+                  <td className="border p-2">{task.name}</td>
+                  <td className="border p-2">{isDeleted ? "[DELETED]" : task.description || "-"}</td>
+                  <td className="border p-2">{isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}</td>
+                  <td className="border p-2 flex gap-2">
+                    {/* View Button */}
+                    <button
+                      onClick={() => { setSelectedTask(task); setShowModal(true); }}
+                      className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600 transition-colors"
+                      disabled={isDeleted} // disables view for deleted tasks
+                    >
+                      View
+                    </button>
 
-                    {/* BUTTONS */}
-                    <div className="mt-6 flex justify-end space-x-3">
+                    {/* Delete Button */}
+                    {!isDeleted && (
                       <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
-                      >
-                        exit
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          startTransition(async () => {
-                            try {
-                              const result = await deleteTaskAction(taskToDelete.id);
-                              if (result.error) {
-                                setError(result.error || "Failed to delete task.");
-                                return;
-                              }
-                              await fetchTasks();
-                            } catch {
-                              setError("Failed to delete task. Please try again.");
-                            } finally {
-                              setShowDeleteConfirm(false);
-                              setTaskToDelete(null);
-                            }
-                          });
-                        }}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                        onClick={() => { setTaskToDelete(task); setShowDeleteConfirm(true); }}
+                        className="relative rounded bg-red-500 px-3 py-1 text-white before:absolute before:inset-0 before:bg-black/10 before:opacity-0 hover:before:opacity-100 transition-opacity"
                       >
                         Delete
                       </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
 
-          {tasks.length === 0 && (
-            <li className="text-foreground/70 italic">Keine Aufgaben vorhanden.</li>
-          )}
-        </ul>
+        {/* DELETE CONFIRM MODAL – außerhalb der Tabelle */}
+        {showDeleteConfirm && taskToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
+            >
+              <h2 className="text-lg font-semibold text-gray-800">
+                Do you really want to delete the task "{taskToDelete.name}"?
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+                >
+                  Exit
+                </button>
+
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      if (!taskToDelete) return;
+                      try {
+                        const result = await deleteTaskAction(taskToDelete.id);
+                        if (result.error) {
+                          setError(result.error);
+                          return;
+                        }
+                        // Soft Delete im State markieren
+                        setTasks(prev =>
+                          prev.map(t =>
+                            t.id === taskToDelete.id
+                              ? { ...t, description: "[DELETED]", dueTo: null }
+                              : t
+                          )
+                        );
+                      } catch {
+                        setError("Failed to delete task. Please try again.");
+                      } finally {
+                        setShowDeleteConfirm(false);
+                        setTaskToDelete(null);
+                      }
+                    });
+                  }}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
+
+
 
       {/* Task Detail Modal */}
       {showModal && selectedTask && (

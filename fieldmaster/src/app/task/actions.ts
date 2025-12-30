@@ -144,7 +144,9 @@ export async function deleteTaskAction(id: string): Promise<{
   }
 }
 
-
+// *******************************************
+// FMST-60: Sort and filter tasks
+// *******************************************
 export async function getTasksSortedFilteredAction(params: {
   showDeleted?: boolean; 
 }): Promise<{
@@ -155,16 +157,20 @@ export async function getTasksSortedFilteredAction(params: {
     let tasks = await TASK_QUERIES.getAll();
     if (!tasks) throw new Error("No tasks found");
 
+    // Filter by "deleted" (description === "[DELETED]")
     if (params.showDeleted === true) {
       tasks = tasks.filter((task) => task.description === "[DELETED]");
     } else if (params.showDeleted === false) {
       tasks = tasks.filter((task) => task.description !== "[DELETED]");
     }
+
+    // Sort by dueTo in ascending order
     tasks.sort((a, b) => {
       if (!a.dueTo) return 1;
       if (!b.dueTo) return -1;
       return a.dueTo.getTime() - b.dueTo.getTime();
     });
+
     return { tasks };
   } catch (err) {
     if (err instanceof Error) {

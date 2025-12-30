@@ -143,3 +143,34 @@ export async function deleteTaskAction(id: string): Promise<{
     }
   }
 }
+
+
+export async function getTasksSortedFilteredAction(params: {
+  showDeleted?: boolean; 
+}): Promise<{
+  tasks: Task[] | null;
+  error?: string;
+}> {
+  try {
+    let tasks = await TASK_QUERIES.getAll();
+    if (!tasks) throw new Error("No tasks found");
+
+    if (params.showDeleted === true) {
+      tasks = tasks.filter((task) => task.description === "[DELETED]");
+    } else if (params.showDeleted === false) {
+      tasks = tasks.filter((task) => task.description !== "[DELETED]");
+    }
+    tasks.sort((a, b) => {
+      if (!a.dueTo) return 1;
+      if (!b.dueTo) return -1;
+      return a.dueTo.getTime() - b.dueTo.getTime();
+    });
+    return { tasks };
+  } catch (err) {
+    if (err instanceof Error) {
+      return { tasks: null, error: err.message };
+    } else {
+      return { tasks: null, error: "unknown error" };
+    }
+  }
+}

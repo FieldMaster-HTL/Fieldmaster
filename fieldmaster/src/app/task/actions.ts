@@ -145,10 +145,11 @@ export async function deleteTaskAction(id: string): Promise<{
 }
 
 // *******************************************
-// FMST-60: Sort and filter tasks
+// FMST-75: Sort and filter tasks (extended)
 // *******************************************
 export async function getTasksSortedFilteredAction(params: {
-  showDeleted?: boolean; 
+  filter?: "all" | "active" | "deleted";
+  sort?: "dueDate";
 }): Promise<{
   tasks: Task[] | null;
   error?: string;
@@ -157,19 +158,39 @@ export async function getTasksSortedFilteredAction(params: {
     let tasks = await TASK_QUERIES.getAll();
     if (!tasks) throw new Error("No tasks found");
 
-    // Filter by "deleted" (description === "[DELETED]")
-    if (params.showDeleted === true) {
-      tasks = tasks.filter((task) => task.description === "[DELETED]");
-    } else if (params.showDeleted === false) {
-      tasks = tasks.filter((task) => task.description !== "[DELETED]");
+    /* -------------------------
+       FILTER
+    --------------------------*/
+    switch (params.filter) {
+      case "active":
+        tasks = tasks.filter(task => task.description !== "[DELETED]");
+        break;
+
+      case "deleted":
+        tasks = tasks.filter(task => task.description === "[DELETED]");
+        break;
+
+      case "all":
+      default:
+        break;
     }
 
-    // Sort by dueTo in ascending order
-    tasks.sort((a, b) => {
-      if (!a.dueTo) return 1;
-      if (!b.dueTo) return -1;
-      return a.dueTo.getTime() - b.dueTo.getTime();
-    });
+    /* -------------------------
+       SORT
+    --------------------------*/
+    switch (params.sort) {
+      case "dueDate":
+        tasks.sort((a, b) => {
+          if (!a.dueTo && !b.dueTo) return 0;
+          if (!a.dueTo) return 1;
+          if (!b.dueTo) return -1;
+          return a.dueTo.getTime() - b.dueTo.getTime();
+        });
+        break;
+
+      default:
+        break;
+    }
 
     return { tasks };
   } catch (err) {

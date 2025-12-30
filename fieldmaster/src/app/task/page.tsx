@@ -121,6 +121,30 @@ export default function Tasks() {
           </button>
         </form>
 
+      <div className="mb-4 flex flex-wrap gap-3">
+        {/* FILTER */}
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as any)}
+          className="rounded-md border p-2"
+        >
+          <option value="all">Alle Aufgaben</option>
+          <option value="active">Aktiv</option>
+          <option value="deleted">Gelöscht</option>
+        </select>
+
+        {/* SORT */}
+        <select
+          value={sort ?? ""}
+          onChange={(e) =>
+            setSort(e.target.value ? "dueDate" : undefined)
+          }
+          className="rounded-md border p-2"
+        >
+          <option value="">Keine Sortierung</option>
+          <option value="dueDate">Nach Fälligkeitsdatum</option>
+        </select>
+      </div>
 
       {/* MFST-75: */}
         <table className="w-full border-collapse border border-gray-50">

@@ -47,7 +47,7 @@ export default function Page() {
   return (
     <div className="page-container">
       <h1 className="page-title">Tools</h1>
-      <Link className="page-link" href="/about"></Link>
+      <Link className="page-link" href="/about">About</Link>
 
       {/* BUTTON zum Öffnen des Erstellungsfensters */}
       <button onClick={() => setShowWindow(true)} className="create-button">

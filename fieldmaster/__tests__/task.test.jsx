@@ -301,7 +301,7 @@ describe('Tasks page', () => {
     })
   })
 
-  // FMST-4: Test that assigned tools are shown as badges in the task list
+  // FMST-12: Test that assigned tools are shown as badges in the task list
   it('renders assigned tool badges for tasks', async () => {
     const mockTools = [
       { id: 'tool-1', name: 'Traktor' },
@@ -326,7 +326,7 @@ describe('Tasks page', () => {
     expect(screen.getByText('Traktor')).toBeInTheDocument()
   })
 
-  // FMST-4: Modal should pre-select assigned tools and Save should call the actions
+  // FMST-12: Modal should pre-select assigned tools and Save should call the actions
   it('preselects tools in modal and calls setTaskToolsAction on save', async () => {
     const mockTools = [
       { id: 'tool-1', name: 'Hoe' },

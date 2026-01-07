@@ -23,8 +23,13 @@ export const TOOL_QUERIES = {
     // Lädt alle Tools aus der Datenbank
     async getToolsFromDB() {
         // SELECT * FROM toolsTable
-        const tools = await db.select().from(toolsTable)
-        return tools // Gibt das Array der Tools zurück
+            try {
+                const tools = await db.select().from(toolsTable)
+                return tools // Gibt das Array der Tools zurück
+            } catch (err) {
+                console.error('Error in TOOL_QUERIES.getToolsFromDB:', err)
+                throw err
+            }
     },
 
     // Erstellt ein neues Tool in der Datenbank

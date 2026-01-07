@@ -25,7 +25,12 @@ export const TASK_QUERIES = {
 
   // Get all tasks
   async getAll() {
-    return db.select().from(Task)
+    try {
+      return await db.select().from(Task)
+    } catch (err) {
+      console.error('Error in TASK_QUERIES.getAll:', err)
+      throw err
+    }
   },
 }
 
@@ -58,14 +63,15 @@ export const TASK_MUTATIONS = {
 
   // Update an existing task
   async updateTask(id: UUID, values: Partial<{ name: string; description: string; dueTo: Date; areaId: string }>) {
-    // Remove undefined fields so Drizzle doesn't attempt to set columns to undefined  - FMST-4 | Pachler
-    const filtered: Partial<{ name: string; description: string; dueTo: Date | null; areaId: string | null }> = {}
-    for (const [key, value] of Object.entries(values)) {
-      if (value !== undefined) {
-        // @ts-ignore - dynamic assignment for filtered object
-        filtered[key as keyof typeof filtered] = value as any
-      }
-    }
+    // Remove undefined fields in a type-safe way so Drizzle doesn't attempt to set columns to undefined
+    const entries = Object.entries(values).filter(([, v]) => v !== undefined)
+    const filtered = Object.fromEntries(entries) as Partial<{
+      name: string
+      description: string
+      dueTo: Date | null
+      areaId: string | null
+    }>
+
     return db.update(Task).set(filtered).where(eq(Task.id, id))
   },
 

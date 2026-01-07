@@ -20,7 +20,7 @@ export async function getAllTasksAction() {
     return JSON.parse(JSON.stringify(tasks))
   } catch (err) {
     console.error('Error loading tasks:', err)
-    return []
+    throw err
   }
 }
 // Fetch all areas
@@ -30,38 +30,38 @@ export async function getAllAreasAction() {
     return JSON.parse(JSON.stringify(areas))
   } catch (err) {
     console.error('Error loading areas:', err)
-    return []
+    throw err
   }
 }
-// Fetch all tools - FMST-4 | Pachler
+// Fetch all tools - FMST-12 | Pachler
 export async function getAllToolsAction() {
   try {
     const tools = await TOOL_QUERIES.getToolsFromDB()
     return JSON.parse(JSON.stringify(tools))
   } catch (err) {
     console.error('Error loading tools:', err)
-    return []
+    throw err
   }
 }
-// Fetch all task tools - FMST-4 | Pachler
+// Fetch all task tools - FMST-12 | Pachler
 export async function getAllTaskToolsAction() {
   try {
     const taskTools = await TASKTOOL_QUERIES.getAllTaskTools()
     return JSON.parse(JSON.stringify(taskTools))
   } catch (err) {
     console.error('Error loading task tools:', err)
-    return []
+    throw err
   }
 }
 
-// Fetch tools for a specific task - FMST-4 | Pachler
+// Fetch tools for a specific task - FMST-12 | Pachler
 export async function getToolsForTaskAction(taskId: UUID) {
   try {
     const tools = await TASKTOOL_QUERIES.getToolsForTask(taskId)
     return JSON.parse(JSON.stringify(tools))
   } catch (err) {
     console.error('Error loading tools for task:', err)
-    return []
+    throw err
   }
 }
 
@@ -92,7 +92,7 @@ export async function createTaskAction(
   }
 }
 
-// Set tools for a specific task - FMST-4 | Pachler
+// Set tools for a specific task - FMST-12 | Pachler
 export async function setTaskToolsAction(taskId: UUID, toolIds: string[]) {
   try {
     // Replace associations for a task (delete existing, insert new)
@@ -125,7 +125,8 @@ export async function updateTaskAction(
 // Delete a task
 export async function deleteTaskAction(id: UUID) {
   try {
-    return await TASK_MUTATIONS.deleteTask(id)
+    const res = await TASK_MUTATIONS.deleteTask(id)
+    return JSON.parse(JSON.stringify(res))
   } catch (err) {
     console.error('Error deleting task:', err)
     throw err

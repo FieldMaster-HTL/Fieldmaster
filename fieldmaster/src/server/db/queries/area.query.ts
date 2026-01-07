@@ -4,23 +4,33 @@
 
 import { db } from "@/src/server/db/index";
 import { Area } from "@/src/server/db/schema/schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull, and } from "drizzle-orm";
 import { UUID } from "crypto";
 
 export const AREA_QUERIES = {
   async getAllAreas() {
-    return db.select().from(Area);
+    try {
+      return await db.select().from(Area).where(isNull(Area.deletedAt));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAllAreas:', err)
+      throw err
+    }
   },
 
   async getAreasByCreator(creatorId: UUID) {
-    return db.select().from(Area).where(eq(Area.creatorId, creatorId));
+    try {
+      return await db.select().from(Area).where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAreasByCreator:', err)
+      throw err
+    }
   },
 
   async getAreaById(id: UUID) {
     return db
       .select()
       .from(Area)
-      .where(eq(Area.id, id))
+      .where(and(eq(Area.id, id), isNull(Area.deletedAt)))
       .limit(1)
       .then((rows) => {
         const area = rows[0];

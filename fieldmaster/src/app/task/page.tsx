@@ -9,8 +9,8 @@ import { getAllTasksAction, createTaskAction, getAllAreasAction, getAllToolsActi
 export default function Tasks() {
     const [tasks, setTasks] = useState<any[]>([]) // store all tasks
     const [areas, setAreas] = useState<any[]>([]) // store all areas
-    const [tools, setTools] = useState<any[]>([]) // store all tools - FMST-4
-    const [taskTools, setTaskTools] = useState<any[]>([]) // store all task tools - FMST-4
+    const [tools, setTools] = useState<any[]>([]) // store all tools - FMST-12
+    const [taskTools, setTaskTools] = useState<any[]>([]) // store all task tools - FMST-12
     const [newTaskName, setNewTaskName] = useState('') // new task title
     const [newTaskDescription, setNewTaskDescription] = useState('') // new task description
     const [dueTo, setDueTo] = useState('') // new task due date
@@ -54,8 +54,8 @@ export default function Tasks() {
     useEffect(() => {
         fetchTasks()
         fetchAreas()
-        fetchTools() // FMST-4
-        fetchTaskTools() // FMST-4
+        fetchTools() // FMST-12
+        fetchTaskTools() // FMST-12
     }, [])
 
     // handle form submission to add new task
@@ -261,7 +261,7 @@ export default function Tasks() {
                             <p className="mb-2 text-gray-300 text-sm">Feld: {selectedTask.area}</p>
 
                             </div>
-                        {/* FMST-4 | Pachler */}
+                        {/* FMST-12 | Pachler */}
                         <div className="mb-4">
                             <label className="block text-sm text-gray-300 mb-1">Werkzeuge zuordnen</label>
                             <div className="max-h-40 overflow-auto p-2 bg-gray-900/30 rounded">

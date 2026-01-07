@@ -35,7 +35,8 @@ export const TASK_MUTATIONS = {
     name: string,
     description: string,
     creatorClerkId?: string,
-    dueTo?: Date
+    dueTo?: Date,
+    priority?: string
   ) {
     const creatorId = creatorClerkId
       ? await USER_QUERIES.mapClerkIdtoLocalId(creatorClerkId).catch((err) => {
@@ -49,12 +50,13 @@ export const TASK_MUTATIONS = {
       description,
       ...(creatorId !== null && { creatorId }), // add creatorId if exists
       ...(dueTo && { dueTo: dueTo }), // add due date if provided
+      ...(priority && { priority }),
     }).returning()
     return task
   },
 
   // Update an existing task
-  async updateTask(id: UUID, values: Partial<{ name: string; description: string; dueTo: Date }>){
+  async updateTask(id: UUID, values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>){
     return db.update(Task).set(values).where(eq(Task.id, id))
   },
 

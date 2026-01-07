@@ -49,6 +49,8 @@ export const Task = pgTable("task", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  // priority: Hoch, Mittel, Niedrig (default Mittel)
+  priority: text("priority").default('Mittel').notNull(),
   creatorId: uuid("creatorId").references(() => User.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   dueTo: timestamp("dueTo"),

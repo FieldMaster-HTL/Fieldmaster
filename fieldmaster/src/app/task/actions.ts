@@ -24,14 +24,16 @@ export async function createTaskAction(
   description?: string,
   creatorClerkId?: string,
 //  farmClerkId?: string,
-  due_to?: Date
+  due_to?: Date,
+  priority?: string
 ) {
   try {
     const newTask = await TASK_MUTATIONS.createTask(
       name,
       description ?? '',
       creatorClerkId,
-      due_to
+      due_to,
+      priority
     )
   } catch (err) {
     console.error('Error creating task:', err)
@@ -43,7 +45,7 @@ export async function createTaskAction(
 
 export async function updateTaskAction(
   id: UUID,
-  values: Partial<{ name: string; description: string; due_to: Date }>
+  values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>
 ) {
   try {
     return await TASK_MUTATIONS.updateTask(id, values)

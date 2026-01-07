@@ -36,7 +36,7 @@ export const Area = pgTable("area", {
   deletedAt: timestamp("deletedAt"),
 });
 
-// Tools Table
+// Tools Table - FMST-4 | Pachler
 export const toolsTable = pgTable("tools", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -54,3 +54,12 @@ export const Task = pgTable("task", {
   dueTo: timestamp("dueTo"),
   areaId: uuid("areaId").references(() => Area.id),
 });
+
+//FMST-4 | Pachler
+export const TaskTool = pgTable("task_tools", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  taskId: uuid("taskId").references(() => Task.id),
+  toolId: uuid("toolId").references(() => toolsTable.id),
+});
+// Join table linking `task.id` <-> `tools.id` for a many-to-many
+// relationship. Rows represent a single assignment of a tool to a task.

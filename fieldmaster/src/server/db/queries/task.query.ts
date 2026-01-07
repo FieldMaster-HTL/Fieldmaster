@@ -51,14 +51,22 @@ export const TASK_MUTATIONS = {
       description,
       ...(creatorId !== null && { creatorId }), // add creatorId if exists
       ...(dueTo && { dueTo: dueTo }), // add due date if provided
-      ...(areaId && { areaId: areaId }), // add areaId if provided
+      ...(areaId && { areaId: areaId }), // add areaId if provided (links task to an Area)
     }).returning()
     return task
   },
 
   // Update an existing task
   async updateTask(id: UUID, values: Partial<{ name: string; description: string; dueTo: Date; areaId: string }>) {
-    return db.update(Task).set(values).where(eq(Task.id, id))
+    // Remove undefined fields so Drizzle doesn't attempt to set columns to undefined  - FMST-4 | Pachler
+    const filtered: Partial<{ name: string; description: string; dueTo: Date | null; areaId: string | null }> = {}
+    for (const [key, value] of Object.entries(values)) {
+      if (value !== undefined) {
+        // @ts-ignore - dynamic assignment for filtered object
+        filtered[key as keyof typeof filtered] = value as any
+      }
+    }
+    return db.update(Task).set(filtered).where(eq(Task.id, id))
   },
 
   // "Soft delete" a task by marking description and clearing due date

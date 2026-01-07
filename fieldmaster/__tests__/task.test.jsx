@@ -8,10 +8,22 @@ jest.mock('../src/app/task/actions', () => ({
   getAllTasksAction: jest.fn(),
   getAllAreasAction: jest.fn(),
   createTaskAction: jest.fn(),
+  getAllToolsAction: jest.fn(),
+  getAllTaskToolsAction: jest.fn(),
+  getToolsForTaskAction: jest.fn(),
+  setTaskToolsAction: jest.fn(),
+  updateTaskAction: jest.fn(),
 }))
 
 import Tasks from '../src/app/task/page'
-import { getAllTasksAction, getAllAreasAction, createTaskAction } from '../src/app/task/actions'
+import { getAllTasksAction, getAllAreasAction, createTaskAction, getAllToolsAction, getAllTaskToolsAction, getToolsForTaskAction, setTaskToolsAction, updateTaskAction } from '../src/app/task/actions'
+
+// default mocks for tool-related actions
+getAllToolsAction.mockResolvedValue([])
+getAllTaskToolsAction.mockResolvedValue([])
+getToolsForTaskAction.mockResolvedValue([])
+setTaskToolsAction.mockResolvedValue([])
+updateTaskAction.mockResolvedValue(undefined)
 
 afterEach(() => jest.clearAllMocks()) // clear mocks after each test
 
@@ -286,6 +298,73 @@ describe('Tasks page', () => {
     await waitFor(() => {
       const modal = screen.getByRole('heading', { name: 'Task mit unbekanntem Feld' }).closest('div')
       expect(modal).toHaveTextContent('Feld: Unbekannt')
+    })
+  })
+
+  // FMST-4: Test that assigned tools are shown as badges in the task list
+  it('renders assigned tool badges for tasks', async () => {
+    const mockTools = [
+      { id: 'tool-1', name: 'Traktor' },
+    ]
+    const mockTaskTools = [
+      { id: 'tt-1', taskId: 'task-1', toolId: 'tool-1' },
+    ]
+    const mockTasks = [
+      { id: 'task-1', name: 'Task with tool' },
+    ]
+
+    getAllTasksAction.mockResolvedValue(mockTasks)
+    getAllAreasAction.mockResolvedValue([])
+    getAllToolsAction.mockResolvedValue(mockTools)
+    getAllTaskToolsAction.mockResolvedValue(mockTaskTools)
+
+    render(<Tasks />)
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    // Badge should display the tool name
+    expect(screen.getByText('Traktor')).toBeInTheDocument()
+  })
+
+  // FMST-4: Modal should pre-select assigned tools and Save should call the actions
+  it('preselects tools in modal and calls setTaskToolsAction on save', async () => {
+    const mockTools = [
+      { id: 'tool-1', name: 'Hoe' },
+      { id: 'tool-2', name: 'Seeder' },
+    ]
+    const mockTasks = [
+      { id: 'task-1', name: 'Editable Task', createdAt: '2025-01-01' },
+    ]
+
+    getAllTasksAction.mockResolvedValue(mockTasks)
+    getAllAreasAction.mockResolvedValue([])
+    getAllToolsAction.mockResolvedValue(mockTools)
+    // getToolsForTaskAction returns the tools assigned to the task
+    getToolsForTaskAction.mockResolvedValue([{ id: 'tool-2', name: 'Seeder' }])
+    setTaskToolsAction.mockResolvedValue([])
+    updateTaskAction.mockResolvedValue(undefined)
+
+    render(<Tasks />)
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled())
+
+    // Open modal by clicking the task
+    fireEvent.click(screen.getByText('Editable Task'))
+
+    // Wait for modal and expect the assigned tool checkbox to be checked
+    await waitFor(() => {
+      const seederCheckbox = screen.getByRole('checkbox', { name: /Seeder/i })
+      expect(seederCheckbox).toBeChecked()
+      const hoeCheckbox = screen.getByRole('checkbox', { name: /Hoe/i })
+      expect(hoeCheckbox).not.toBeChecked()
+    })
+
+    // Click Save and assert actions were called
+    fireEvent.click(screen.getByText('Speichern'))
+
+    await waitFor(() => {
+      expect(updateTaskAction).toHaveBeenCalled()
+      expect(setTaskToolsAction).toHaveBeenCalledWith('task-1', ['tool-2'])
     })
   })
 })

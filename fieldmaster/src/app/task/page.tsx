@@ -28,6 +28,9 @@ export default function Tasks() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
   const [filter, setFilter] = useState<"all" | "active" | "deleted">("all"); // sorting states
   const [sort, setSort] = useState<"dueDate" | undefined>(undefined); // sorting after due date
+  const [filterPriority, setFilterPriority] = useState<"Alle" | "Hoch" | "Mittel" | "Niedrig">(
+    "Alle",
+  ); // priority filter
 
   // fetch all tasks from server
   const fetchTasks = async (filterParam = filter, sortParam = sort) => {
@@ -165,6 +168,18 @@ export default function Tasks() {
             <option value="deleted">Gelöscht</option>
           </select>
 
+          {/* PRIORITY FILTER */}
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as any)}
+            className="rounded-md border p-2"
+          >
+            <option>Alle</option>
+            <option>Hoch</option>
+            <option>Mittel</option>
+            <option>Niedrig</option>
+          </select>
+
           {/* SORT */}
           <select
             value={sort ?? ""}
@@ -197,80 +212,86 @@ export default function Tasks() {
               </tr>
             )}
 
-            {tasks.map((task) => {
-              const isDeleted = task.description === "[DELETED]";
-              return (
-                <tr
-                  key={task.id}
-                  className={`transition-colors ${isDeleted ? "hover:bg-gray-400/10" : "hover:bg-gray-200/20"}`}
-                >
-                  <td className="border p-2">
-                    {isDeleted ? (
-                      "-"
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-block h-3 w-3 rounded-full ${
-                            task.priority === "Hoch"
-                              ? "bg-red-500"
-                              : task.priority === "Niedrig"
-                                ? "bg-green-500"
-                                : "bg-yellow-400"
-                          }`}
-                          title={task.priority ?? "Mittel"}
-                        />
-                        <span className="text-sm">{task.priority ?? "Mittel"}</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="border p-2">{task.name}</td>
-                  <td className="border p-2">
-                    {isDeleted ? "[DELETED]" : task.description || "-"}
-                  </td>
-                  <td className="border p-2">
-                    {isDeleted
-                      ? "-"
-                      : task.areaId
-                        ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                        : "-"}
-                  </td>
-                  <td className="border p-2">
-                    {isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}
-                  </td>
-                  <td className="flex gap-2 border p-2">
-                    {/* View Button */}
-                    <button
-                      onClick={() => {
-                        setSelectedTask({
-                          ...task,
-                          area: task.areaId
-                            ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                            : undefined,
-                        });
-                        setShowModal(true);
-                      }}
-                      className="rounded bg-blue-500 px-3 py-1 text-white transition-colors hover:bg-blue-600"
-                      disabled={isDeleted}
-                    >
-                      View
-                    </button>
-
-                    {/* Delete Button */}
-                    {!isDeleted && (
+            {tasks
+              .filter((task) => filterPriority === "Alle" || task.priority === filterPriority)
+              .map((task) => {
+                const isDeleted = task.description === "[DELETED]";
+                return (
+                  <tr
+                    key={task.id}
+                    className={`transition-colors ${isDeleted ? "hover:bg-gray-400/10" : "hover:bg-gray-200/20"}`}
+                  >
+                    <td className="border p-2">
+                      {isDeleted ? (
+                        "-"
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block h-3 w-3 rounded-full ${
+                              task.priority === "Hoch"
+                                ? "bg-red-500"
+                                : task.priority === "Niedrig"
+                                  ? "bg-green-500"
+                                  : "bg-yellow-400"
+                            }`}
+                            title={task.priority ?? "Mittel"}
+                          />
+                          <span className="text-sm">{task.priority ?? "Mittel"}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="border p-2">{task.name}</td>
+                    <td className="border p-2">
+                      {isDeleted ? "[DELETED]" : task.description || "-"}
+                    </td>
+                    <td className="border p-2">
+                      {isDeleted
+                        ? "-"
+                        : task.areaId
+                          ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                          : "-"}
+                    </td>
+                    <td className="border p-2">
+                      {isDeleted
+                        ? "-"
+                        : task.dueTo
+                          ? new Date(task.dueTo).toLocaleDateString()
+                          : "-"}
+                    </td>
+                    <td className="flex gap-2 border p-2">
+                      {/* View Button */}
                       <button
                         onClick={() => {
-                          setTaskToDelete(task);
-                          setShowDeleteConfirm(true);
+                          setSelectedTask({
+                            ...task,
+                            area: task.areaId
+                              ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                              : undefined,
+                          });
+                          setShowModal(true);
                         }}
-                        className="relative rounded bg-red-500 px-3 py-1 text-white transition-opacity before:absolute before:inset-0 before:bg-black/10 before:opacity-0 hover:before:opacity-100"
+                        className="rounded bg-blue-500 px-3 py-1 text-white transition-colors hover:bg-blue-600"
+                        disabled={isDeleted}
                       >
-                        Delete
+                        View
                       </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+
+                      {/* Delete Button */}
+                      {!isDeleted && (
+                        <button
+                          onClick={() => {
+                            setTaskToDelete(task);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="relative rounded bg-red-500 px-3 py-1 text-white transition-opacity before:absolute before:inset-0 before:bg-black/10 before:opacity-0 hover:before:opacity-100"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 

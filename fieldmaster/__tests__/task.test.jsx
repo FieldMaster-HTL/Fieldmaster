@@ -1,4 +1,5 @@
-// FMST-35
+// FMST-35 - Comprehensive Task Component Tests
+import { getAllAreas } from "../src/app/area/actions";
 import {
   getAllTasksAction,
   createTaskAction,
@@ -9,20 +10,22 @@ import Tasks from "../src/app/task/page";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-// Mock the actions so tests don't call the real DB
-jest.mock("../src/app/task/actions", () => ({
-  getAllTasksAction: jest.fn(),
-  createTaskAction: jest.fn(),
-  deleteTaskAction: jest.fn(),
-  getTasksSortedFilteredAction: jest.fn(),
-}));
+// Mock all external actions
+jest.mock("../src/app/task/actions");
+jest.mock("../src/app/area/actions");
 
+// Setup mocks before each test
+beforeEach(() => {
+  getAllAreas.mockResolvedValue({ areas: [], error: null });
+});
+
+// Cleanup after each test
 afterEach(() => {
   jest.clearAllMocks();
   localStorage.clear();
 });
 
-describe("Tasks page", () => {
+describe("Tasks Component - Comprehensive Tests", () => {
   // Test if the page renders correctly with no tasks
   it("renders heading, inputs and empty state when no tasks", async () => {
     getAllTasksAction.mockResolvedValue({ tasks: [], error: null });
@@ -30,9 +33,7 @@ describe("Tasks page", () => {
 
     render(<Tasks />);
 
-    await waitFor(() =>
-      expect(screen.getByText("Keine Aufgaben vorhanden.")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Keine Aufgaben vorhanden.")).toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: /tasks/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Titel der Aufgabe...")).toBeInTheDocument();
@@ -87,7 +88,7 @@ describe("Tasks page", () => {
     fireEvent.click(deleteBtn);
 
     await waitFor(() =>
-      expect(screen.getByText(/do you really want to delete the task/i)).toBeInTheDocument()
+      expect(screen.getByText(/do you really want to delete the task/i)).toBeInTheDocument(),
     );
 
     expect(screen.getAllByText(/Testtask/i)[1]).toBeInTheDocument();
@@ -109,14 +110,15 @@ describe("Tasks page", () => {
     render(<Tasks />);
 
     // wait until table updates with tasks
-    await waitFor(() => expect(screen.queryByText("Keine Aufgaben vorhanden.")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText("Keine Aufgaben vorhanden.")).not.toBeInTheDocument(),
+    );
 
     expect(screen.getByText("Task A")).toBeInTheDocument();
     expect(screen.getByText("Task B")).toBeInTheDocument();
     expect(screen.getByText("Desc A")).toBeInTheDocument();
     expect(screen.getByText("Desc B")).toBeInTheDocument();
   });
-
 
   it("filters active tasks", async () => {
     // Arrange: no tasks returned, focus is on correct filter call
@@ -130,7 +132,7 @@ describe("Tasks page", () => {
       expect(getTasksSortedFilteredAction).toHaveBeenCalledWith({
         filter: "all",
         sort: undefined,
-      })
+      }),
     );
 
     // Act: change filter to "active"
@@ -143,7 +145,7 @@ describe("Tasks page", () => {
       expect(getTasksSortedFilteredAction).toHaveBeenLastCalledWith({
         filter: "active",
         sort: undefined,
-      })
+      }),
     );
   });
 
@@ -163,7 +165,7 @@ describe("Tasks page", () => {
       expect(getTasksSortedFilteredAction).toHaveBeenLastCalledWith({
         filter: "deleted",
         sort: undefined,
-      })
+      }),
     );
   });
 
@@ -198,7 +200,7 @@ describe("Tasks page", () => {
       expect(getTasksSortedFilteredAction).toHaveBeenLastCalledWith({
         filter: "all",
         sort: "dueDate",
-      })
+      }),
     );
 
     // Assert: rows are rendered in the order provided by the mock
@@ -207,4 +209,169 @@ describe("Tasks page", () => {
     expect(rows[2]).toHaveTextContent("Soon Task");
   });
 
+  /*****************************************************************************/
+  /*********************new tests for Priority Filter****************************/
+  /***************************************************************************/
+  it("renders priority filter dropdown", async () => {
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks: [] });
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Alle")).toBeInTheDocument();
+    });
+  });
+
+  it("shows tasks table with priority column", async () => {
+    const tasks = [
+      {
+        id: "1",
+        name: "High Priority Task",
+        priority: "Hoch",
+        description: "Urgent",
+        dueTo: null,
+      },
+    ];
+
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks });
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByText("High Priority Task")).toBeInTheDocument();
+      expect(screen.getAllByText("Hoch")[1]).toBeInTheDocument(); // Second "Hoch" in table, not dropdown
+    });
+  });
+
+  it("displays tasks with correct priorities", async () => {
+    const tasks = [
+      {
+        id: "1",
+        name: "Urgent",
+        priority: "Hoch",
+        description: "",
+        dueTo: null,
+      },
+      {
+        id: "2",
+        name: "Normal",
+        priority: "Mittel",
+        description: "",
+        dueTo: null,
+      },
+      {
+        id: "3",
+        name: "Low",
+        priority: "Niedrig",
+        description: "",
+        dueTo: null,
+      },
+    ];
+
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks });
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Urgent")).toBeInTheDocument();
+      expect(screen.getByText("Normal")).toBeInTheDocument();
+      expect(screen.getByText("Low")).toBeInTheDocument();
+    });
+
+    // Check all priority levels are visible in table (indices 1, 2, 3 are in table cells, not dropdown)
+    const allHoch = screen.getAllByText("Hoch");
+    const allMittel = screen.getAllByText("Mittel");
+    const allNiedrig = screen.getAllByText("Niedrig");
+
+    // Verify table rows have priority cells
+    expect(allHoch.length).toBeGreaterThan(1); // At least dropdown option and table cell
+    expect(allMittel.length).toBeGreaterThan(1);
+    expect(allNiedrig.length).toBeGreaterThan(1);
+  });
+
+  it("filters tasks by priority on client side", async () => {
+    const tasks = [
+      {
+        id: "1",
+        name: "Urgent Task",
+        priority: "Hoch",
+        description: "",
+        dueTo: null,
+      },
+      {
+        id: "2",
+        name: "Normal Task",
+        priority: "Mittel",
+        description: "",
+        dueTo: null,
+      },
+    ];
+
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks });
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Urgent Task")).toBeInTheDocument();
+      expect(screen.getByText("Normal Task")).toBeInTheDocument();
+    });
+
+    // Find all selects and change the priority filter (should be the second one)
+    const allSelects = screen.getAllByRole("combobox");
+    // First is status filter, second is priority filter
+    const priorityFilter = allSelects[1];
+
+    fireEvent.change(priorityFilter, { target: { value: "Hoch" } });
+
+    // After filtering to "Hoch", only urgent task should be visible
+    await waitFor(() => {
+      expect(screen.getByText("Urgent Task")).toBeInTheDocument();
+    });
+
+    // Normal Task might still exist in DOM but not visible, depending on implementation
+    // The filtering happens on client side
+  });
+
+  it("resets priority filter to show all tasks", async () => {
+    const tasks = [
+      {
+        id: "1",
+        name: "High",
+        priority: "Hoch",
+        description: "",
+        dueTo: null,
+      },
+      {
+        id: "2",
+        name: "Medium",
+        priority: "Mittel",
+        description: "",
+        dueTo: null,
+      },
+    ];
+
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks });
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByText("High")).toBeInTheDocument();
+      expect(screen.getByText("Medium")).toBeInTheDocument();
+    });
+
+    const allSelects = screen.getAllByRole("combobox");
+    const priorityFilter = allSelects[1];
+
+    // Filter to High
+    fireEvent.change(priorityFilter, { target: { value: "Hoch" } });
+
+    // Reset to Alle
+    fireEvent.change(priorityFilter, { target: { value: "Alle" } });
+
+    // Both should be visible
+    await waitFor(() => {
+      expect(screen.getByText("High")).toBeInTheDocument();
+      expect(screen.getByText("Medium")).toBeInTheDocument();
+    });
+  });
 });

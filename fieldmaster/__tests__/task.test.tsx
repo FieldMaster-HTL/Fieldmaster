@@ -145,7 +145,7 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
 
     render(<Tasks />);
 
-    await waitFor(() => expect(screen.getByText("Feld: Feld A")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Feld A")).toBeInTheDocument());
   });
 
   // FMST-11: Test if modal displays area name
@@ -232,7 +232,7 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
 
     await waitFor(() => expect(screen.getByText("Task 1")).toBeInTheDocument());
 
-    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /löschen/i })).toBeInTheDocument();
   });
 
   // FMST-50: Test if delete confirmation modal appears
@@ -256,7 +256,7 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
 
     await waitFor(() => expect(screen.getByText("Task 1")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: /delete/i }));
+    fireEvent.click(screen.getByRole("button", { name: /löschen/i }));
 
     await waitFor(() => {
       const modals = screen.getAllByText(/do you really want to delete the task/i);
@@ -288,7 +288,7 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
     await waitFor(() => expect(screen.getByText("Task 1")).toBeInTheDocument());
 
     // Klicke auf DELETE Button in Task-Liste
-    fireEvent.click(screen.getByRole("button", { name: /delete/i }));
+    fireEvent.click(screen.getByRole("button", { name: /löschen/i }));
 
     // Warte bis Modal sichtbar ist
     await waitFor(() => {

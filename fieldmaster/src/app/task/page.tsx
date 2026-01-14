@@ -31,6 +31,7 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState<"Alle" | "Hoch" | "Mittel" | "Niedrig">(
     "Alle",
   ); // priority filter
+  const [newTaskPriority, setNewTaskPriority] = useState<"Hoch" | "Mittel" | "Niedrig">("Mittel"); // new task priority
 
   // fetch all tasks from server
   const fetchTasks = async (filterParam = filter, sortParam = sort) => {
@@ -77,12 +78,19 @@ export default function Tasks() {
         setError("");
         const creatorClerkId = localStorage.getItem("creatorClerkId") ?? undefined;
         const dueDate = dueTo ? new Date(dueTo) : undefined;
-        await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate);
+        await createTaskAction(
+          newTaskName,
+          newTaskDescription,
+          creatorClerkId,
+          dueDate,
+          newTaskPriority,
+        );
         await fetchTasks();
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
         setNewTaskAreaId(""); // FMST-11
+        setNewTaskPriority("Mittel");
       } catch {
         setError("Failed to create task. Please try again.");
       }
@@ -145,6 +153,19 @@ export default function Tasks() {
               </option>
             ))}
           </select>
+
+          {/* Priority selection dropdown */}
+          <select
+            value={newTaskPriority}
+            onChange={(e) => setNewTaskPriority(e.target.value as "Hoch" | "Mittel" | "Niedrig")}
+            className="rounded-md border p-2"
+            aria-label="Priorität auswählen"
+          >
+            <option value="Hoch">Priorität: Hoch</option>
+            <option value="Mittel">Priorität: Mittel</option>
+            <option value="Niedrig">Priorität: Niedrig</option>
+          </select>
+
           {error && <div className="mb-2 text-sm text-red-500">{error}</div>}
           <button
             type="submit"

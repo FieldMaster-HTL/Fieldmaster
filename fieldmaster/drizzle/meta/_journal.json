@@ -22,6 +22,13 @@
       "when": 1762978450795,
       "tag": "0002_steep_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764754730507,
+      "tag": "0003_panoramic_the_anarchist",
+      "breakpoints": true
     }
   ]
 }

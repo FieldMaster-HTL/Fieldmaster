@@ -34,6 +34,7 @@ export default function Tasks() {
       setTasks([]);
       return;
     }
+
     setTasks(res.tasks);
   };
 
@@ -160,7 +161,7 @@ export default function Tasks() {
           </button>
         </form>
 
-      {/* FMST-64: Area priority */}
+        {/* FMST-64: Task priority */}
         {/* Controls */}
         <div className="mb-3 flex items-center gap-3">
           <label className="text-sm">Filter:</label>
@@ -192,7 +193,8 @@ export default function Tasks() {
             if (sortByPriority) {
               const order: Record<string, number> = { Hoch: 0, Mittel: 1, Niedrig: 2 };
               list.sort(
-                (a, b) => (order[a.priority ?? "Mittel"] ?? 1) - (order[b.priority ?? "Mittel"] ?? 1),
+                (a, b) =>
+                  (order[a.priority ?? "Mittel"] ?? 1) - (order[b.priority ?? "Mittel"] ?? 1),
               );
             }
             return list;
@@ -310,6 +312,56 @@ export default function Tasks() {
             <li className="text-foreground/70 italic">Keine Aufgaben vorhanden.</li>
           )}
         </ul>
+
+        {/* DELETE CONFIRM MODAL */}
+        {showDeleteConfirm && taskToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
+            >
+              <h2 className="text-lg font-semibold text-gray-800">
+                Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+                >
+                  exit
+                </button>
+
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        const result = await deleteTaskAction(taskToDelete.id);
+                        if (result.error) {
+                          setError(result.error || "Failed to delete task.");
+                          return;
+                        }
+                        await fetchTasks();
+                      } catch {
+                        setError("Failed to delete task. Please try again.");
+                      } finally {
+                        setShowDeleteConfirm(false);
+                        setTaskToDelete(null);
+                      }
+                    });
+                  }}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Task Detail Modal */}
@@ -358,7 +410,9 @@ export default function Tasks() {
                     onClick={() => {
                       startTransition(async () => {
                         try {
-                          const res = await updateTaskAction(selectedTask.id, { priority: selectedTaskPriority });
+                          const res = await updateTaskAction(selectedTask.id, {
+                            priority: selectedTaskPriority,
+                          });
                           if (!res.error && res.task) {
                             await fetchTasks();
                             setSelectedTask({ ...selectedTask, priority: selectedTaskPriority });
@@ -368,7 +422,7 @@ export default function Tasks() {
                         }
                       });
                     }}
-                    className="rounded bg-primary-500 px-3 py-1 text-white"
+                    className="bg-primary-500 rounded px-3 py-1 text-white"
                   >
                     Speichern
                   </button>

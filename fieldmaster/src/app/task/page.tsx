@@ -4,8 +4,8 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { getAllTasksAction, createTaskAction, deleteTaskAction } from "./actions";
-import {getAllAreas} from "../area/actions";
+import { getAllAreas } from "../area/actions";
+import { getAllTasksAction, createTaskAction, deleteTaskAction, updateTaskAction } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
@@ -14,13 +14,17 @@ export default function Tasks() {
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
+  const [newTaskPriority, setNewTaskPriority] = useState("Mittel"); // new task priority
   const [newTaskAreaId, setNewTaskAreaId] = useState(""); // new task area | FMST-11
   const [showModal, setShowModal] = useState(false); // show task details modal
   const [selectedTask, setSelectedTask] = useState<(Task & { area?: string }) | null>(null); // currently selected task
+  const [selectedTaskPriority, setSelectedTaskPriority] = useState("Mittel");
   const [isPending, startTransition] = useTransition(); // transition for async updates
   const [error, setError] = useState(""); // error message for the form
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
+  const [filterPriority, setFilterPriority] = useState("Alle");
+  const [sortByPriority, setSortByPriority] = useState(false);
 
   // fetch all tasks from server
   const fetchTasks = async () => {
@@ -61,12 +65,18 @@ export default function Tasks() {
       try {
         setError("");
         const creatorClerkId = localStorage.getItem("creatorClerkId") ?? undefined;
-        const dueDate = dueTo ? new Date(dueTo) : undefined;
-        await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate);
+        await createTaskAction(
+          newTaskName,
+          newTaskDescription,
+          creatorClerkId,
+          dueTo || undefined,
+          newTaskPriority,
+        );
         await fetchTasks();
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
+        setNewTaskPriority("Mittel");
         setNewTaskAreaId(""); // FMST-11
       } catch {
         setError("Failed to create task. Please try again.");
@@ -75,19 +85,19 @@ export default function Tasks() {
   };
 
   return (
-    <main className="flex justify-center items-center bg-surface p-6 min-h-screen">
-      <section className="relative bg-elevated shadow-md p-8 border rounded-lg w-full max-w-3xl">
-        <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
+    <main className="bg-surface flex min-h-screen items-center justify-center p-6">
+      <section className="bg-elevated relative w-full max-w-3xl rounded-lg border p-8 shadow-md">
+        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="font-extrabold text-primary-500 text-3xl md:text-4xl">Tasks</h1>
-            <p className="mt-2 text-foreground/90 text-sm">
+            <h1 className="text-primary-500 text-3xl font-extrabold md:text-4xl">Tasks</h1>
+            <p className="text-foreground/90 mt-2 text-sm">
               Verwaltungstool für Felder und Einsätze — schnell, übersichtlich und zuverlässig.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/about"
-              className="inline-block bg-secondary-100 px-4 py-2 border border-secondary-500 rounded-md text-white"
+              className="bg-secondary-100 border-secondary-500 inline-block rounded-md border px-4 py-2 text-white"
             >
               Mehr erfahren
             </Link>
@@ -95,32 +105,42 @@ export default function Tasks() {
         </header>
 
         {/* Add new Task form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-6">
+        <form onSubmit={handleSubmit} className="mb-6 flex flex-col gap-2">
           <input
             type="text"
             value={newTaskName}
             onChange={(e) => setNewTaskName(e.target.value)}
             placeholder="Titel der Aufgabe..."
-            className="p-2 border rounded-md"
+            className="rounded-md border p-2"
           />
           <textarea
             value={newTaskDescription}
             onChange={(e) => setNewTaskDescription(e.target.value)}
             placeholder="Beschreibung (optional)..."
-            className="p-2 border rounded-md min-h-[80px]"
+            className="min-h-[80px] rounded-md border p-2"
           />
+          <label className="mt-2 text-sm">Priorität (optional)</label>
+          <select
+            value={newTaskPriority}
+            onChange={(e) => setNewTaskPriority(e.target.value)}
+            className="max-w-xs rounded-md border p-2"
+          >
+            <option>Hoch</option>
+            <option>Mittel</option>
+            <option>Niedrig</option>
+          </select>
           <input
             type="date"
             value={dueTo}
             onChange={(e) => setDueTo(e.target.value)}
-            className="p-2 border rounded-md"
+            className="rounded-md border p-2"
             placeholder="Enddatum (optional)"
           />
           {/* FMST-11: Area selection dropdown */}
           <select
             value={newTaskAreaId}
             onChange={(e) => setNewTaskAreaId(e.target.value)}
-            className="p-2 border rounded-md"
+            className="rounded-md border p-2"
             aria-label="Feld auswählen (optional)"
           >
             <option value="">-- Feld auswählen (optional) --</option>
@@ -130,22 +150,56 @@ export default function Tasks() {
               </option>
             ))}
           </select>
-          {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
+          {error && <div className="mb-2 text-sm text-red-500">{error}</div>}
           <button
             type="submit"
             disabled={isPending}
-            className="self-start bg-primary-500 hover:opacity-95 shadow-sm px-4 py-2 rounded-md text-white"
+            className="bg-primary-500 self-start rounded-md px-4 py-2 text-white shadow-sm hover:opacity-95"
           >
             {isPending ? "Speichern..." : "Hinzufügen"}
           </button>
         </form>
 
+      {/* FMST-64: Area priority */}
+        {/* Controls */}
+        <div className="mb-3 flex items-center gap-3">
+          <label className="text-sm">Filter:</label>
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            className="rounded-md border p-2"
+          >
+            <option>Alle</option>
+            <option>Hoch</option>
+            <option>Mittel</option>
+            <option>Niedrig</option>
+          </select>
+          <label className="ml-4 text-sm">Nach Priorität sortieren:</label>
+          <input
+            type="checkbox"
+            checked={sortByPriority}
+            onChange={(e) => setSortByPriority(e.target.checked)}
+          />
+        </div>
+
         {/* Task List */}
         <ul className="space-y-2">
-          {tasks.map((task) => (
+          {(() => {
+            let list = [...tasks];
+            if (filterPriority && filterPriority !== "Alle") {
+              list = list.filter((t) => (t.priority ?? "Mittel") === filterPriority);
+            }
+            if (sortByPriority) {
+              const order: Record<string, number> = { Hoch: 0, Mittel: 1, Niedrig: 2 };
+              list.sort(
+                (a, b) => (order[a.priority ?? "Mittel"] ?? 1) - (order[b.priority ?? "Mittel"] ?? 1),
+              );
+            }
+            return list;
+          })().map((task) => (
             <li
               key={task.id}
-              className="relative bg-background hover:bg-foreground/5 p-3 border border-foreground/20 rounded-md"
+              className="bg-background hover:bg-foreground/5 border-foreground/20 relative rounded-md border p-3"
             >
               <div
                 className="cursor-pointer"
@@ -153,12 +207,24 @@ export default function Tasks() {
                   setSelectedTask({
                     ...task,
                     // FMST-11: Show area name in modal
-                    area: task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : undefined,
+                    area: task.areaId
+                      ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                      : undefined,
                   });
+                  setSelectedTaskPriority(task.priority ?? "Mittel");
                   setShowModal(true);
                 }}
               >
-                <div className="font-semibold">{task.name}</div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch" ? "bg-red-500" : task.priority === "Niedrig" ? "bg-green-500" : "bg-yellow-400"}`}
+                    title={task.priority ?? "Mittel"}
+                  />
+                  <div className="font-semibold">{task.name}</div>
+                  {task.priority && (
+                    <span className="text-foreground/70 text-xs">({task.priority})</span>
+                  )}
+                </div>
                 {task.description && (
                   <div className="text-foreground/80 text-sm">{task.description}</div>
                 )}
@@ -169,7 +235,7 @@ export default function Tasks() {
                   </div>
                 )}
                 {task.dueTo && (
-                  <div className="mt-1 text-foreground/70 text-xs">
+                  <div className="text-foreground/70 mt-1 text-xs">
                     Bis: {new Date(task.dueTo).toLocaleDateString()}
                   </div>
                 )}
@@ -182,7 +248,7 @@ export default function Tasks() {
                   setTaskToDelete(task);
                   setShowDeleteConfirm(true);
                 }}
-                className="top-2 right-2 absolute font-semibold text-red-600 hover:text-red-800 text-sm"
+                className="absolute top-2 right-2 text-sm font-semibold text-red-600 hover:text-red-800"
               >
                 DELETE
               </button>
@@ -190,23 +256,23 @@ export default function Tasks() {
               {/* DELETE CONFIRM MODAL */}
               {showDeleteConfirm && taskToDelete?.id === task.id && (
                 <div
-                  className="z-50 fixed inset-0 flex justify-center items-center bg-black/40 backdrop-blur-sm"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
                   onClick={() => setShowDeleteConfirm(false)}
                 >
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-white shadow-xl p-6 rounded-xl w-80 animate-fadeIn"
+                    className="animate-fadeIn w-80 rounded-xl bg-white p-6 shadow-xl"
                   >
-                    <h2 className="font-semibold text-gray-800 text-lg">
+                    <h2 className="text-lg font-semibold text-gray-800">
                       Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
                     </h2>
-                    <p className="mt-2 text-gray-600 text-sm">This action cannot be undone.</p>
+                    <p className="mt-2 text-sm text-gray-600">This action cannot be undone.</p>
 
                     {/* BUTTONS */}
-                    <div className="flex justify-end space-x-3 mt-6">
+                    <div className="mt-6 flex justify-end space-x-3">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
+                        className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
                       >
                         exit
                       </button>
@@ -229,7 +295,7 @@ export default function Tasks() {
                             }
                           });
                         }}
-                        className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white"
+                        className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
                       >
                         Delete
                       </button>
@@ -248,22 +314,24 @@ export default function Tasks() {
 
       {/* Task Detail Modal */}
       {showModal && selectedTask && (
-        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
-          <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="from-primary-900 to-secondary-800 relative w-full max-w-md rounded-2xl border border-gray-700 bg-gradient-to-br via-gray-800 p-6 text-white shadow-2xl">
             <button
               onClick={() => setShowModal(false)}
-              className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
+              className="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
             >
               ✕
             </button>
 
-            <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
-            <p className="mb-4 text-gray-300 text-sm">
+            <h2 className="text-primary-400 mb-2 text-2xl font-bold">{selectedTask.name}</h2>
+            <p className="mb-4 text-sm text-gray-300">
               {selectedTask.description || "Keine Beschreibung."}
             </p>
             {/* FMST-11: Display area in modal */}
-            {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
-            <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
+            {selectedTask.area && (
+              <p className="mb-4 text-sm text-gray-300">Feld: {selectedTask.area}</p>
+            )}
+            <div className="border-t border-gray-700 pt-2 text-xs text-gray-400">
               <p>ID: {selectedTask.id}</p>
               <p>
                 Erstellt:{" "}
@@ -274,6 +342,38 @@ export default function Tasks() {
               {selectedTask.dueTo && (
                 <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
               )}
+              <div className="mt-3">
+                <label className="text-xs text-gray-300">Priorität</label>
+                <div className="mt-1 flex items-center gap-2">
+                  <select
+                    value={selectedTaskPriority}
+                    onChange={(e) => setSelectedTaskPriority(e.target.value)}
+                    className="rounded-md p-2 text-black"
+                  >
+                    <option>Hoch</option>
+                    <option>Mittel</option>
+                    <option>Niedrig</option>
+                  </select>
+                  <button
+                    onClick={() => {
+                      startTransition(async () => {
+                        try {
+                          const res = await updateTaskAction(selectedTask.id, { priority: selectedTaskPriority });
+                          if (!res.error && res.task) {
+                            await fetchTasks();
+                            setSelectedTask({ ...selectedTask, priority: selectedTaskPriority });
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      });
+                    }}
+                    className="rounded bg-primary-500 px-3 py-1 text-white"
+                  >
+                    Speichern
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

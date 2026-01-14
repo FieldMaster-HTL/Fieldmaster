@@ -4,25 +4,34 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction } from "./actions";
+import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction, getAllToolsAction, getAllTaskToolsAction, getToolsForTaskAction, setTaskToolsAction, updateTaskAction } from "./actions";
+import { storeTools } from "../tools/actions";
 import { getAllAreas } from "../area/actions";
-import { Task } from "@/src/server/db/type/DBTypes";
+// Task type is not exported from DBTypes; use `any` here for client state
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([]); // store all tasks
+  const [tasks, setTasks] = useState<any[]>([]); // store all tasks
   const [areas, setAreas] = useState<any[]>([]); // store all areas | FMST-11
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
   const [newTaskAreaId, setNewTaskAreaId] = useState(""); // new task area | FMST-11
+  const [newTaskToolIds, setNewTaskToolIds] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false); // show task details modal
-  const [selectedTask, setSelectedTask] = useState<(Task & { area?: string }) | null>(null); // currently selected task
+  const [selectedTask, setSelectedTask] = useState<(any & { area?: string }) | null>(null); // currently selected task
   const [isPending, startTransition] = useTransition(); // transition for async updates
   const [error, setError] = useState(""); // error message for the form
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
+  const [taskToDelete, setTaskToDelete] = useState<any | null>(null); // task selected for deletion
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
   const [filter, setFilter] = useState<"all" | "active" | "deleted">("all"); // sorting states
   const [sort, setSort] = useState<"dueDate" | undefined>(undefined); // sorting after due date
+  // Tools state (FMST-12)
+  const [tools, setTools] = useState<any[]>([]);
+  const [taskTools, setTaskTools] = useState<any[]>([]);
+  const [modalToolIds, setModalToolIds] = useState<string[]>([]);
+  const [modalAreaId, setModalAreaId] = useState("");
+  const [newToolName, setNewToolName] = useState("");
+  const [newToolCategory, setNewToolCategory] = useState("Maschine");
 
   // fetch all tasks from server
   const fetchTasks = async (
@@ -54,10 +63,44 @@ export default function Tasks() {
     setAreas(res.areas);
   };
 
+  // fetch tools and task-tools (FMST-12)
+  const fetchTools = async () => {
+    try {
+      const res = await getAllToolsAction();
+      setTools(res || []);
+    } catch (err) {
+      console.error("Failed to fetch tools:", err);
+      setTools([]);
+    }
+  };
+
+  const fetchTaskTools = async () => {
+    try {
+      const res = await getAllTaskToolsAction();
+      setTaskTools(res || []);
+    } catch (err) {
+      console.error("Failed to fetch task-tools:", err);
+      setTaskTools([]);
+    }
+  };
+
+  const loadToolsForTask = async (taskId: string) => {
+    try {
+      const assigned = await getToolsForTaskAction(taskId as any);
+      setModalToolIds(assigned.map((t: any) => t.id));
+    } catch (err) {
+      // fallback to client-side mapping if server call fails
+      const assigned = taskTools.filter((e) => e.taskId === taskId).map((e) => e.toolId);
+      setModalToolIds(assigned);
+    }
+  };
+
   useEffect(() => {
     const fetchAllData = async () => {
       await fetchTasks();
       await fetchAreas();
+      await fetchTools();
+      await fetchTaskTools();
     };
     fetchAllData();
   }, [filter, sort]);
@@ -72,12 +115,21 @@ export default function Tasks() {
         setError("");
         const creatorClerkId = localStorage.getItem("creatorClerkId") ?? undefined;
         const dueDate = dueTo ? new Date(dueTo) : undefined;
-        await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate);
+        const created = await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate, newTaskAreaId || undefined);
+        // assign selected tools to the newly created task
+        if (created && newTaskToolIds && newTaskToolIds.length > 0) {
+          try {
+            await setTaskToolsAction(created.id as any, newTaskToolIds);
+          } catch (err) {
+            console.error('Failed to set tools for new task:', err);
+          }
+        }
         await fetchTasks();
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
         setNewTaskAreaId(""); // FMST-11
+        setNewTaskToolIds([]);
       } catch {
         setError("Failed to create task. Please try again.");
       }
@@ -140,6 +192,19 @@ export default function Tasks() {
               </option>
             ))}
           </select>
+          <select
+            value={newTaskToolIds}
+            onChange={(e) => setNewTaskToolIds(e.target.value.split(","))}
+            className="p-2 border rounded-md"
+            aria-label="Werkzeuge auswählen (optional)"
+          >
+            <option value="">-- Werkzeuge auswählen (optional) --</option>
+            {tools.map((tool) => (
+              <option key={tool.id} value={tool.id}>
+                {tool.name}
+              </option>
+            ))}
+          </select>
           {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
@@ -183,6 +248,7 @@ export default function Tasks() {
               <th className="p-2 border text-left">Name</th>
               <th className="p-2 border text-left">Description</th>
               <th className="p-2 border text-left">Feld</th>
+              <th className="p-2 border text-left">Werkzeuge</th>
               <th className="p-2 border text-left">Due Date</th>
               <th className="p-2 border text-left">Actions</th>
             </tr>
@@ -208,15 +274,29 @@ export default function Tasks() {
                   <td className="p-2 border">
                     {isDeleted ? "-" : task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : "-"}
                   </td>
-                  <td className="p-2 border">{isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}</td>
+                    <td className="p-2 border">
+                      {isDeleted
+                        ? "-"
+                        : (() => {
+                            const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
+                            const assignedNames = assignedIds
+                              .map((id) => tools.find((t) => t.id === id)?.name)
+                              .filter(Boolean);
+                            return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
+                          })()
+                      }
+                    </td>
+                    <td className="p-2 border">{isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}</td>
                   <td className="flex gap-2 p-2 border">
                     {/* View Button */}
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedTask({
                           ...task,
                           area: task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : undefined,
                         });
+                        setModalAreaId(task.areaId ?? "");
+                        await loadToolsForTask(task.id);
                         setShowModal(true);
                       }}
                       className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
@@ -319,6 +399,91 @@ export default function Tasks() {
             </p>
             {/* FMST-11: Display area in modal */}
             {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-300 mb-1">Werkzeuge zuordnen</label>
+              <div className="max-h-40 overflow-auto p-2 bg-gray-900/30 rounded">
+                {tools.map((t) => (
+                  <label key={t.id} className="flex items-center gap-2 text-sm mb-1">
+                    <input
+                      type="checkbox"
+                      checked={modalToolIds.includes(t.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setModalToolIds((s) => [...s, t.id]);
+                        else setModalToolIds((s) => s.filter((id) => id !== t.id));
+                      }}
+                    />
+                    <span>{t.name}</span>
+                  </label>
+                ))}
+              </div>
+              {/* Inline add tool form */}
+              <div className="mt-3 p-2 bg-gray-900/20 rounded">
+                <label className="text-xs text-gray-300">Neues Werkzeug hinzufügen</label>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={newToolName}
+                    onChange={(e) => setNewToolName(e.target.value)}
+                    className="p-1 rounded text-black"
+                  />
+                  <select
+                    value={newToolCategory}
+                    onChange={(e) => setNewToolCategory(e.target.value)}
+                    className="p-1 rounded text-black"
+                  >
+                    <option value="Maschine">Maschine</option>
+                    <option value="Handwerkzeug">Handwerkzeug</option>
+                  </select>
+                  <button
+                    onClick={async () => {
+                      if (!newToolName.trim()) return;
+                      try {
+                        const created = await storeTools({ name: newToolName.trim(), category: newToolCategory }, true);
+                        // refresh local tools list and select the new tool
+                        setTools((s) => (s ? [created, ...s] : [created]));
+                        setModalToolIds((s) => [...s, created.id]);
+                        setNewToolName("");
+                        setNewToolCategory("Maschine");
+                      } catch (err) {
+                        console.error('Failed to create tool inline:', err);
+                      }
+                    }}
+                    className="bg-secondary-100 px-2 py-1 rounded text-white"
+                  >
+                    Hinzufügen
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        // update area if changed
+                        await updateTaskAction(selectedTask!.id, { areaId: modalAreaId || undefined });
+                        await setTaskToolsAction(selectedTask!.id as any, modalToolIds);
+                        await fetchTasks();
+                        await fetchTaskTools();
+                        setShowModal(false);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    });
+                  }}
+                  className="bg-primary-500 px-3 py-1 rounded text-white"
+                >
+                  Speichern
+                </button>
+                <button
+                  onClick={() => setModalToolIds(taskTools.filter((e) => e.taskId === selectedTask!.id).map((e) => e.toolId))}
+                  className="bg-secondary-100 px-3 py-1 rounded text-white"
+                >
+                  Zurücksetzen
+                </button>
+              </div>
+            </div>
+
             <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
               <p>ID: {selectedTask.id}</p>
               <p>

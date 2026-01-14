@@ -7,6 +7,7 @@ import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query
 import {TASKTOOL_QUERIES, TASKTOOL_MUTATIONS} from '@/src/server/db/queries/taskTool.query'
 import { TOOL_QUERIES } from '@/src/server/db/queries/tools.query'
 import type { UUID } from 'crypto'
+import type { Task } from '@/src/server/db/type/DBTypes'
 
 // Fetch all tasks
 // Server action wrappers used by client components.

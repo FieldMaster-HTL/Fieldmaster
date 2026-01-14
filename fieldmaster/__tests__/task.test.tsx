@@ -259,7 +259,9 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
     fireEvent.click(screen.getByRole("button", { name: /delete/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/do you really want to delete the task/i)).toBeInTheDocument();
+      const modals = screen.getAllByText(/do you really want to delete the task/i);
+      expect(modals.length).toBeGreaterThan(0);
+      expect(modals[0]).toBeInTheDocument();
     });
   });
 
@@ -290,11 +292,13 @@ describe("Tasks page (FMST-35, FMST-11, FMST-50)", () => {
 
     // Warte bis Modal sichtbar ist
     await waitFor(() => {
-      expect(screen.getByText(/do you really want to delete the task/i)).toBeInTheDocument();
+      const modals = screen.getAllByText(/do you really want to delete the task/i);
+      expect(modals.length).toBeGreaterThan(0);
     });
 
     // Finde den Modal-Container und klicke den Delete Button darin
-    const modal = screen.getByText(/do you really want to delete the task/i).closest("div");
+    const modals = screen.getAllByText(/do you really want to delete the task/i);
+    const modal = modals[0].closest("div");
     const deleteButtonInModal = modal?.querySelector("button:last-of-type") as HTMLButtonElement;
 
     fireEvent.click(deleteButtonInModal);

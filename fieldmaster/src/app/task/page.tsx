@@ -9,7 +9,6 @@ import {
   getAllTasksAction,
   createTaskAction,
   deleteTaskAction,
-  updateTaskAction,
   getTasksSortedFilteredAction,
 } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
@@ -20,20 +19,22 @@ export default function Tasks() {
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
-  const [newTaskPriority, setNewTaskPriority] = useState("Mittel"); // new task priority
   const [newTaskAreaId, setNewTaskAreaId] = useState(""); // new task area | FMST-11
   const [showModal, setShowModal] = useState(false); // show task details modal
   const [selectedTask, setSelectedTask] = useState<(Task & { area?: string }) | null>(null); // currently selected task
-  const [selectedTaskPriority, setSelectedTaskPriority] = useState("Mittel");
   const [isPending, startTransition] = useTransition(); // transition for async updates
   const [error, setError] = useState(""); // error message for the form
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
-  const [filterPriority, setFilterPriority] = useState("Alle");
+  const [filter, setFilter] = useState<"all" | "active" | "deleted">("all"); // sorting states
+  const [sort, setSort] = useState<"dueDate" | undefined>(undefined); // sorting after due date
 
   // fetch all tasks from server
-  const fetchTasks = async () => {
-    const res = await getAllTasksAction();
+  const fetchTasks = async (filterParam = filter, sortParam = sort) => {
+    const res = await getTasksSortedFilteredAction({
+      filter: filterParam,
+      sort: sortParam,
+    });
 
     if (res.error || !res.tasks) {
       console.error("Failed to fetch tasks:", res.error);
@@ -56,12 +57,12 @@ export default function Tasks() {
   };
 
   useEffect(() => {
-    const fetchAllTasks = async () => {
+    const fetchAllData = async () => {
       await fetchTasks();
       await fetchAreas();
     };
-    fetchAllTasks();
-  }, []);
+    fetchAllData();
+  }, [filter, sort]);
 
   // handle form submission to add new task
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,18 +73,12 @@ export default function Tasks() {
       try {
         setError("");
         const creatorClerkId = localStorage.getItem("creatorClerkId") ?? undefined;
-        await createTaskAction(
-          newTaskName,
-          newTaskDescription,
-          creatorClerkId,
-          dueTo ? new Date(dueTo) : undefined,
-          newTaskPriority,
-        );
+        const dueDate = dueTo ? new Date(dueTo) : undefined;
+        await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate);
         await fetchTasks();
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
-        setNewTaskPriority("Mittel");
         setNewTaskAreaId(""); // FMST-11
       } catch {
         setError("Failed to create task. Please try again.");
@@ -126,16 +121,6 @@ export default function Tasks() {
             placeholder="Beschreibung (optional)..."
             className="min-h-[80px] rounded-md border p-2"
           />
-          <label className="mt-2 text-sm">Priorität (optional)</label>
-          <select
-            value={newTaskPriority}
-            onChange={(e) => setNewTaskPriority(e.target.value)}
-            className="max-w-xs rounded-md border p-2"
-          >
-            <option>Hoch</option>
-            <option>Mittel</option>
-            <option>Niedrig</option>
-          </select>
           <input
             type="date"
             value={dueTo}
@@ -167,19 +152,27 @@ export default function Tasks() {
           </button>
         </form>
 
-        {/* FMST-64: Task priority */}
-        {/* Controls */}
-        <div className="mb-3 flex items-center gap-3">
-          <label className="text-sm">Filter:</label>
+        {/* Filter and Sort Controls */}
+        <div className="mb-4 flex flex-wrap gap-3">
+          {/* FILTER */}
           <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as any)}
             className="rounded-md border p-2"
           >
-            <option>Alle</option>
-            <option>Hoch</option>
-            <option>Mittel</option>
-            <option>Niedrig</option>
+            <option value="all">Alle Aufgaben</option>
+            <option value="active">Aktiv</option>
+            <option value="deleted">Gelöscht</option>
+          </select>
+
+          {/* SORT */}
+          <select
+            value={sort ?? ""}
+            onChange={(e) => setSort(e.target.value ? "dueDate" : undefined)}
+            className="rounded-md border p-2"
+          >
+            <option value="">Keine Sortierung</option>
+            <option value="dueDate">Nach Fälligkeitsdatum</option>
           </select>
         </div>
 
@@ -189,10 +182,10 @@ export default function Tasks() {
             <tr className="bg-gray-200/50">
               <th className="border p-2 text-left">Priorität</th>
               <th className="border p-2 text-left">Name</th>
-              <th className="border p-2 text-left">Beschreibung</th>
+              <th className="border p-2 text-left">Description</th>
               <th className="border p-2 text-left">Feld</th>
-              <th className="border p-2 text-left">Fällig am</th>
-              <th className="border p-2 text-left">Aktionen</th>
+              <th className="border p-2 text-left">Due Date</th>
+              <th className="border p-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -204,69 +197,80 @@ export default function Tasks() {
               </tr>
             )}
 
-            {(() => {
-              let list = [...tasks];
-              if (filterPriority && filterPriority !== "Alle") {
-                list = list.filter((t) => (t.priority ?? "Mittel") === filterPriority);
-              }
-              return list;
-            })().map((task) => (
-              <tr key={task.id} className="transition-colors hover:bg-gray-200/20">
-                <td className="border p-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-block h-3 w-3 rounded-full ${
-                        task.priority === "Hoch"
-                          ? "bg-red-500"
-                          : task.priority === "Niedrig"
-                            ? "bg-green-500"
-                            : "bg-yellow-400"
-                      }`}
-                      title={task.priority ?? "Mittel"}
-                    />
-                    <span className="text-sm">{task.priority ?? "Mittel"}</span>
-                  </div>
-                </td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => {
-                      setSelectedTask({
-                        ...task,
-                        area: task.areaId
-                          ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                          : undefined,
-                      });
-                      setSelectedTaskPriority(task.priority ?? "Mittel");
-                      setShowModal(true);
-                    }}
-                    className="text-left text-blue-600 hover:underline"
-                  >
-                    {task.name}
-                  </button>
-                </td>
-                <td className="border p-2 text-sm text-gray-600">{task.description || "-"}</td>
-                <td className="border p-2 text-sm">
-                  {task.areaId
-                    ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                    : "-"}
-                </td>
-                <td className="border p-2 text-sm">
-                  {task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}
-                </td>
-                <td className="border p-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTaskToDelete(task);
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="text-sm font-semibold text-red-600 hover:text-red-800"
-                  >
-                    DELETE
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {tasks.map((task) => {
+              const isDeleted = task.description === "[DELETED]";
+              return (
+                <tr
+                  key={task.id}
+                  className={`transition-colors ${isDeleted ? "hover:bg-gray-400/10" : "hover:bg-gray-200/20"}`}
+                >
+                  <td className="border p-2">
+                    {isDeleted ? (
+                      "-"
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-block h-3 w-3 rounded-full ${
+                            task.priority === "Hoch"
+                              ? "bg-red-500"
+                              : task.priority === "Niedrig"
+                                ? "bg-green-500"
+                                : "bg-yellow-400"
+                          }`}
+                          title={task.priority ?? "Mittel"}
+                        />
+                        <span className="text-sm">{task.priority ?? "Mittel"}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="border p-2">{task.name}</td>
+                  <td className="border p-2">
+                    {isDeleted ? "[DELETED]" : task.description || "-"}
+                  </td>
+                  <td className="border p-2">
+                    {isDeleted
+                      ? "-"
+                      : task.areaId
+                        ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                        : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}
+                  </td>
+                  <td className="flex gap-2 border p-2">
+                    {/* View Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedTask({
+                          ...task,
+                          area: task.areaId
+                            ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                            : undefined,
+                        });
+                        setShowModal(true);
+                      }}
+                      className="rounded bg-blue-500 px-3 py-1 text-white transition-colors hover:bg-blue-600"
+                      disabled={isDeleted}
+                    >
+                      View
+                    </button>
+
+                    {/* Delete Button */}
+                    {!isDeleted && (
+                      <button
+                        onClick={() => {
+                          setTaskToDelete(task);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="relative rounded bg-red-500 px-3 py-1 text-white transition-opacity before:absolute before:inset-0 before:bg-black/10 before:opacity-0 hover:before:opacity-100"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -359,40 +363,6 @@ export default function Tasks() {
               {selectedTask.dueTo && (
                 <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
               )}
-              <div className="mt-3">
-                <label className="text-xs text-gray-300">Priorität</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <select
-                    value={selectedTaskPriority}
-                    onChange={(e) => setSelectedTaskPriority(e.target.value)}
-                    className="rounded-md p-2 text-black"
-                  >
-                    <option>Hoch</option>
-                    <option>Mittel</option>
-                    <option>Niedrig</option>
-                  </select>
-                  <button
-                    onClick={() => {
-                      startTransition(async () => {
-                        try {
-                          const res = await updateTaskAction(selectedTask.id, {
-                            priority: selectedTaskPriority,
-                          });
-                          if (!res.error && res.task) {
-                            await fetchTasks();
-                            setSelectedTask({ ...selectedTask, priority: selectedTaskPriority });
-                          }
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      });
-                    }}
-                    className="bg-primary-500 rounded px-3 py-1 text-white"
-                  >
-                    Speichern
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>

@@ -39,6 +39,7 @@ export async function createTaskAction(
   description?: string,
   creatorClerkId?: string,
   due_to?: Date,
+  priority?: string,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -49,6 +50,7 @@ export async function createTaskAction(
       description ?? "",
       creatorClerkId,
       due_to,
+      priority,
     );
     if (!newTask) throw Error("unknown error db/ orm");
     return {
@@ -72,7 +74,7 @@ export async function createTaskAction(
 // Update a task
 export async function updateTaskAction(
   id: string,
-  values: Partial<{ name: string; description: string; dueTo: Date }>,
+  values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -163,11 +165,11 @@ export async function getTasksSortedFilteredAction(params: {
     --------------------------*/
     switch (params.filter) {
       case "active":
-        tasks = tasks.filter(task => task.description !== "[DELETED]");
+        tasks = tasks.filter((task) => task.description !== "[DELETED]");
         break;
 
       case "deleted":
-        tasks = tasks.filter(task => task.description === "[DELETED]");
+        tasks = tasks.filter((task) => task.description === "[DELETED]");
         break;
 
       case "all":

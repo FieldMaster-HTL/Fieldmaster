@@ -1,11 +1,4 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  boolean,
-  doublePrecision,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, doublePrecision } from "drizzle-orm/pg-core";
 
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -55,4 +48,5 @@ export const Task = pgTable("task", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   dueTo: timestamp("dueTo"),
   areaId: uuid("areaId").references(() => Area.id),
+  priority: text("priority"),
 });

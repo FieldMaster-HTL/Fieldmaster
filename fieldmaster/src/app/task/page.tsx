@@ -30,7 +30,6 @@ export default function Tasks() {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null); // task selected for deletion
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
   const [filterPriority, setFilterPriority] = useState("Alle");
-  const [sortByPriority, setSortByPriority] = useState(false);
 
   // fetch all tasks from server
   const fetchTasks = async () => {
@@ -182,92 +181,94 @@ export default function Tasks() {
             <option>Mittel</option>
             <option>Niedrig</option>
           </select>
-          <label className="ml-4 text-sm">Nach Priorität sortieren:</label>
-          <input
-            type="checkbox"
-            checked={sortByPriority}
-            onChange={(e) => setSortByPriority(e.target.checked)}
-          />
         </div>
 
-        {/* Task List */}
-        <ul className="space-y-2">
-          {(() => {
-            let list = [...tasks];
-            if (filterPriority && filterPriority !== "Alle") {
-              list = list.filter((t) => (t.priority ?? "Mittel") === filterPriority);
-            }
-            if (sortByPriority) {
-              const order: Record<string, number> = { Hoch: 0, Mittel: 1, Niedrig: 2 };
-              list.sort(
-                (a, b) =>
-                  (order[a.priority ?? "Mittel"] ?? 1) - (order[b.priority ?? "Mittel"] ?? 1),
-              );
-            }
-            return list;
-          })().map((task) => (
-            <li
-              key={task.id}
-              className="border-foreground/20 bg-background hover:bg-foreground/5 relative rounded-md border p-3"
-            >
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  setSelectedTask({
-                    ...task,
-                    // FMST-11: Show area name in modal
-                    area: task.areaId
-                      ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                      : undefined,
-                  });
-                  setSelectedTaskPriority(task.priority ?? "Mittel");
-                  setShowModal(true);
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch" ? "bg-red-500" : task.priority === "Niedrig" ? "bg-green-500" : "bg-yellow-400"}`}
-                    title={task.priority ?? "Mittel"}
-                  />
-                  <div className="font-semibold">{task.name}</div>
-                  {task.priority && (
-                    <span className="text-foreground/70 text-xs">({task.priority})</span>
-                  )}
-                </div>
-                {task.description && (
-                  <div className="text-foreground/80 text-sm">{task.description}</div>
-                )}
-                {/* FMST-11: Display area name in task list */}
-                {task.areaId && (
-                  <div className="text-foreground/80 text-sm">
-                    Feld: {areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt"}
-                  </div>
-                )}
-                {task.dueTo && (
-                  <div className="text-foreground/70 mt-1 text-xs">
-                    Bis: {new Date(task.dueTo).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
+        {/* FMST-75: Task Table */}
+        <table className="w-full border-collapse border border-gray-50">
+          <thead>
+            <tr className="bg-gray-200/50">
+              <th className="border p-2 text-left">Priorität</th>
+              <th className="border p-2 text-left">Name</th>
+              <th className="border p-2 text-left">Beschreibung</th>
+              <th className="border p-2 text-left">Feld</th>
+              <th className="border p-2 text-left">Fällig am</th>
+              <th className="border p-2 text-left">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-4 text-center text-gray-500 italic">
+                  Keine Aufgaben vorhanden.
+                </td>
+              </tr>
+            )}
 
-              {/* FMST-50 Task-Task delete - DELETE BUTTON */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTaskToDelete(task);
-                  setShowDeleteConfirm(true);
-                }}
-                className="absolute top-2 right-2 text-sm font-semibold text-red-600 hover:text-red-800"
-              >
-                DELETE
-              </button>
-            </li>
-          ))}
-
-          {tasks.length === 0 && (
-            <li className="text-foreground/70 italic">Keine Aufgaben vorhanden.</li>
-          )}
-        </ul>
+            {(() => {
+              let list = [...tasks];
+              if (filterPriority && filterPriority !== "Alle") {
+                list = list.filter((t) => (t.priority ?? "Mittel") === filterPriority);
+              }
+              return list;
+            })().map((task) => (
+              <tr key={task.id} className="transition-colors hover:bg-gray-200/20">
+                <td className="border p-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-block h-3 w-3 rounded-full ${
+                        task.priority === "Hoch"
+                          ? "bg-red-500"
+                          : task.priority === "Niedrig"
+                            ? "bg-green-500"
+                            : "bg-yellow-400"
+                      }`}
+                      title={task.priority ?? "Mittel"}
+                    />
+                    <span className="text-sm">{task.priority ?? "Mittel"}</span>
+                  </div>
+                </td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => {
+                      setSelectedTask({
+                        ...task,
+                        area: task.areaId
+                          ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                          : undefined,
+                      });
+                      setSelectedTaskPriority(task.priority ?? "Mittel");
+                      setShowModal(true);
+                    }}
+                    className="text-left text-blue-600 hover:underline"
+                  >
+                    {task.name}
+                  </button>
+                </td>
+                <td className="border p-2 text-sm text-gray-600">{task.description || "-"}</td>
+                <td className="border p-2 text-sm">
+                  {task.areaId
+                    ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                    : "-"}
+                </td>
+                <td className="border p-2 text-sm">
+                  {task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}
+                </td>
+                <td className="border p-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTaskToDelete(task);
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="text-sm font-semibold text-red-600 hover:text-red-800"
+                  >
+                    DELETE
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
         {/* DELETE CONFIRM MODAL */}
         {showDeleteConfirm && taskToDelete && (

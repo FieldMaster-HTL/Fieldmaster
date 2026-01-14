@@ -12,7 +12,7 @@ export default function CategoriesPage() {
   const [isLoading, setIsLoading] = useState(false) //Ladezustand
 
   useEffect(() => {
-    loadCategoriesFromDB() // kategorien aus db laden bei erster renderung
+    loadCategoriesFromDB() // kategorien aus db laden bei erster renderung0
   }, [])
 
   async function loadCategoriesFromDB() { // kategorien laden

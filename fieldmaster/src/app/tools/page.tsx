@@ -1,36 +1,64 @@
-'use client' // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
+'use client' // Markiert diese Datei als Client Component (läuft im Browser)
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 import './style.css'
-import { loadTools, storeTools, loadCategories } from './actions' // Funktionen zum Laden und Speichern von Tools und Kategorien
+import { loadTools, storeTools, loadCategories } from './actions'
 
+// ======================================
+// PAGE: Werkzeuge / Maschinen
+// ======================================
 export default function Page() {
-  // React State Hooks:
-  const [tools, setTools] = useState<any[]>([]) // Liste der gespeicherten Tools
-  const [categories, setCategories] = useState<any[]>([]) // Liste der Kategorien
-  const [showWindow, setShowWindow] = useState(false) // Steuert, ob das Modal-Fenster angezeigt wird
-  const [form, setForm] = useState({ name: '', category: '' }) // Formularzustand für neues Tool
 
-  // Lädt die Tools und Kategorien beim ersten Rendern der Seite
+  // =====================
+  // STATE
+  // =====================
+
+  // Liste aller Tools aus der DB
+  const [tools, setTools] = useState<any[]>([])
+
+  // Liste der Kategorien
+  const [categories, setCategories] = useState<any[]>([])
+
+  // Modal sichtbar / unsichtbar
+  const [showWindow, setShowWindow] = useState(false)
+
+  // Formularzustand für neues Tool
+  const [form, setForm] = useState({ name: '', category: '' })
+
+  // Filter & Suche
+  const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterAvailable, setFilterAvailable] = useState('')
+
+  // =====================
+  // EFFECTS
+  // =====================
+
+  // Lädt Tools & Kategorien beim ersten Rendern
   useEffect(() => {
     loadToolsfromDB()
     loadCategoriesFromDB()
   }, [])
 
-  // Asynchrone Funktion, um Tools aus der Datenbank zu laden
+  // =====================
+  // DATA LOADING
+  // =====================
+
+  // Tools aus der DB laden
   async function loadToolsfromDB() {
-    const data = await loadTools() // Daten aus DB holen
-    setTools(data) // Tools im State speichern
+    const data = await loadTools()
+    setTools(data)
   }
 
-  // Asynchrone Funktion, um Kategorien aus der Datenbank zu laden - FMST-19 (Polt Leonie)
+  // Kategorien aus der DB laden
   async function loadCategoriesFromDB() {
     try {
-      const data = await loadCategories() // Kategorien aus DB holen
-      setCategories(data) // Kategorien im State speichern
-      // Setze die erste Kategorie als Standard, wenn vorhanden
+      const data = await loadCategories()
+      setCategories(data)
+
+      // Erste Kategorie automatisch auswählen
       if (data.length > 0 && !form.category) {
         setForm(prev => ({ ...prev, category: data[0].name }))
       }
@@ -39,86 +67,197 @@ export default function Page() {
     }
   }
 
-  // Formular absenden
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault() // Standardformularverhalten verhindern
+  // =====================
+  // ACTIONS
+  // =====================
 
-    // Eingabevalidierung: Kein leerer Name erlaubt
+  // Bearbeiten → Weiterleitung zur Edit-Seite
+  function handleEdit(toolId: string) {
+    window.location.href = `/tools/${toolId}/edit`
+  }
+
+  // Löschen mit Abhängigkeitsprüfung
+  async function handleDelete(tool: any) {
+    if (tool.activeTasksCount > 0) {
+      alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
+      return
+    }
+
+    const confirmed = confirm(`"${tool.name}" wirklich löschen?`)
+    if (!confirmed) return
+
+    // TODO: deleteTool(tool.id)
+    await loadToolsfromDB()
+  }
+
+  // Neues Tool speichern
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
     if (!form.name.trim()) {
       alert('Bitte gib einen Tool-Namen ein.')
       return
     }
 
-    // Tool speichern (true könnte z. B. ein "create" Flag sein)
     await storeTools(form, true)
-    
-    // Formular zurücksetzen und Modal schließen
-    setForm({ name: '', category: categories.length > 0 ? categories[0].name : '' })
+
+    // Formular zurücksetzen & Modal schließen
+    setForm({ name: '', category: categories[0]?.name ?? '' })
     setShowWindow(false)
 
-    // Liste neu laden, um das neue Tool anzuzeigen
+    // Liste neu laden
     await loadToolsfromDB()
   }
 
+  // =====================
+  // FILTER LOGIC
+  // =====================
+
+  // Gefilterte Tools für Tabellenanzeige
+  const filteredTools = tools.filter(tool => {
+    return (
+      tool.name.toLowerCase().includes(search.toLowerCase()) &&
+      (!filterCategory || tool.category === filterCategory) &&
+      (
+        !filterAvailable ||
+        (filterAvailable === 'available' && tool.available) ||
+        (filterAvailable === 'unavailable' && !tool.available)
+      )
+    )
+  })
+
+  // =====================
+  // RENDER
+  // =====================
+
   return (
     <div className="page-container">
-      <h1 className="page-title">Tools</h1>
-      <Link className="page-link" href="/categories">Kategorien verwalten</Link>
 
-      {/* BUTTON zum Öffnen des Erstellungsfensters */}
-      <button onClick={() => setShowWindow(true)} className="create-button">
+      {/* Filter & Suche */}
+      <div className="filters">
+        <input
+          placeholder="Suche nach Name"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+
+        <select onChange={e => setFilterCategory(e.target.value)}>
+          <option value="">Alle Kategorien</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+
+        <select onChange={e => setFilterAvailable(e.target.value)}>
+          <option value="">Alle</option>
+          <option value="available">Verfügbar</option>
+          <option value="unavailable">Nicht verfügbar</option>
+        </select>
+
+        {/* Create Button */}
+      <button
+        onClick={() => setShowWindow(true)}
+        className="create-button"
+      >
         Create Tool
       </button>
+      </div>
 
-      {/* FMST-16: Werkzeug - Maschinen/Werkzeuge anzeigen 
-          (Kulmer Klara) */}
-      <ul className="tool-names">
-        {tools.map((tool) => (
-          <li key={tool.id}>{tool.name}</li>
-        ))}
-      </ul>
+      {/* Tabelle */}
+      <div className="table-wrapper">
+        <table className="tools-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Kategorie</th>
+              <th>Bild</th>
+              <th>Beschreibung</th>
+              <th>Verfügbarkeit</th>
+              <th>Area</th>
+              <th>Aktive Tasks</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
 
-      {/* MODAL-FENSTER zum Erstellen eines neuen Tools */}
+          <tbody>
+            {filteredTools.map(tool => (
+              <tr key={tool.id}>
+                <td>{tool.name}</td>
+                <td>{tool.category}</td>
+
+                <td>
+                  {tool.imageUrl ? (
+                    <img
+                      src={tool.imageUrl}
+                      alt={tool.name}
+                      className="thumb"
+                    />
+                  ) : '-'}
+                </td>
+
+                <td>
+                  {tool.description
+                    ? tool.description.slice(0, 40) + '…'
+                    : '-'}
+                </td>
+
+                <td>
+                  <span className={tool.available ? 'status-ok' : 'status-bad'}>
+                    {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}
+                  </span>
+                </td>
+
+                <td>{tool.area ?? '-'}</td>
+                <td>{tool.activeTasksCount ?? 0}</td>
+
+                <td className="actions">
+                  <button onClick={() => handleEdit(tool.id)}>
+                    Bearbeiten
+                  </button>
+                  <button onClick={() => handleDelete(tool)}>
+                    Löschen
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* MODAL: Neues Tool erstellen */}
       {showWindow && (
         <div className="modal-overlay">
           <div className="modal-window">
             <h2 className="modal-title">Neues Tool erstellen</h2>
 
-            {/* Formular für Name + Kategorie */}
             <form onSubmit={handleSubmit} className="modal-form">
-
-              {/* 
-                FMST-17: Werkzeug - Name wählen 
-                (Kulmer Klara)
-              */}
               <input
                 type="text"
                 placeholder="Tool-Name"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={e => setForm({ ...form, name: e.target.value })}
                 required
                 className="modal-input"
               />
 
               <select
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                onChange={e => setForm({ ...form, category: e.target.value })}
                 className="modal-select"
               >
-                {categories.length > 0 ? (
-                  categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">Keine Kategorien verfügbar</option>
-                )}
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
 
-              {/* Buttons im Modal */}
               <div className="modal-buttons">
-                <button type="submit" className="modal-save">Speichern</button>
+                <button type="submit" className="modal-save">
+                  Speichern
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowWindow(false)}
@@ -131,23 +270,7 @@ export default function Page() {
           </div>
         </div>
       )}
-      
-      {/* 
-        FMST-18: Werkzeug - Beschreibung 
-        (Kulmer Klara)
-      */}
-      {/* Detailansicht der Tools mit Kategorie & Verfügbarkeitsstatus */}
-      <ul className="tool-list">
-        {tools.map((tool) => (
-          <li key={tool.id} className="tool-item">
-            <h2 className="tool-name">{tool.name}</h2>
-            <p className="tool-category">Kategorie: {tool.category}</p>
-            <p className="tool-status">
-              Status: {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}
-            </p>
-          </li>
-        ))}
-      </ul>
+
     </div>
   )
 }

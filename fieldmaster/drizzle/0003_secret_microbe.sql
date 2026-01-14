@@ -1,1 +1,0 @@
-ALTER TABLE "task" ADD COLUMN "priority" text DEFAULT 'Mittel' NOT NULL;

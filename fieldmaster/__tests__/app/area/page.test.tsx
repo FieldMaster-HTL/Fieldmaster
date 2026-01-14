@@ -3,7 +3,7 @@ import Page from "../../../src/app/area/page";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-//Area FMST-30  / FMST-31 Area Creation Simon Opriessnig
+//Area FMST-30  / FMST-31
 jest.mock("../../../src/app/area/actions", () => ({
   createArea: jest
     .fn()

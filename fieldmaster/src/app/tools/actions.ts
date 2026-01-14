@@ -30,3 +30,30 @@ export async function storeTools(form: { name: string; category: string }, avail
       throw new Error('Unable to create tool')
     }
 }
+
+export async function updateTool(
+  id: string,
+  name: string,
+  category: string,
+  available: boolean
+) {
+  // Validate inputs
+  if (!name?.trim()) {
+    return { tool: null, error: "Tool name is required" };
+  }
+  if (!category?.trim()) {
+    return { tool: null, error: "Tool category is required" };
+  }
+
+  try {
+    const updatedTool = await QUERIES.TOOL.updateToolInDB(id, {
+      name: name.trim(),
+      category: category.trim(),
+      available,
+    });
+    return { tool: updatedTool, error: null };
+  } catch (error) {
+    console.error("Failed to update tool:", error);
+    return { tool: null, error: "Unable to update tool" };
+  }
+}

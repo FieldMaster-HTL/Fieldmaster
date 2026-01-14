@@ -4,8 +4,6 @@ import { db } from "@/src/server/db/index";
 import { Farm } from "@/src/server/db/schema/schema";
 import { toolsTable } from "@/src/server/db/schema/schema";
 import { eq } from "drizzle-orm";
-import { UUID } from "crypto";
-
 
 // Definiert den Typ eines Tools (wird beim Erstellen eines neuen Tools verwendet)
 type Tool = {
@@ -32,13 +30,25 @@ export const TOOL_QUERIES = {
             }
     },
 
-    // Erstellt ein neues Tool in der Datenbank
-    async createToolInDB(tool: Tool) {
-        // INSERT INTO toolsTable (name, category, available) VALUES (...)
-        await db.insert(toolsTable).values({
-            name: tool.name,
-            category: tool.category,
-            available: tool.available,
-        })
-    }
-}
+  // Erstellt ein neues Tool in der Datenbank
+  async createToolInDB(tool: Tool) {
+    // INSERT INTO toolsTable (name, category, available) VALUES (...)
+    const result = await db.insert(toolsTable).values({
+      name: tool.name,
+      category: tool.category,
+      available: tool.available,
+    }).returning();
+    return result[0];
+  },
+
+  // Aktualisiert ein Tool in der Datenbank
+  async updateToolInDB(id: string, tool: Partial<Tool>) {
+    // UPDATE toolsTable SET ... WHERE id = ...
+    const result = await db
+      .update(toolsTable)
+      .set(tool)
+      .where(eq(toolsTable.id, id))
+      .returning();
+    return result[0];
+  },
+};

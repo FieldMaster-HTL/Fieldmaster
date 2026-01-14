@@ -4,7 +4,7 @@ import { AREA_MUTATIONS, AREA_QUERIES } from "@/src/server/db/queries/area.query
 import { Area } from "@/src/server/db/type/DBTypes";
 import { UUID } from "crypto";
 
-// Area FMST-30  / FMST-31 Area Creation Simon Opriessnig
+// Area FMST-30  / FMST-31
 
 export async function createArea(
   name: string,
@@ -36,7 +36,7 @@ export async function getAllAreas(): Promise<{
   }
 }
 
-// FMST-43 
+// FMST-43
 export async function updateArea(
   id: string,
   name: string,
@@ -61,7 +61,7 @@ export async function updateArea(
     return { area: null, error: "an error occurred" };
   }
 }
-// FMST-44 Delete Area
+
 export async function deleteArea(areaId: string): Promise<{
   success: boolean;
   area?: Area | null;

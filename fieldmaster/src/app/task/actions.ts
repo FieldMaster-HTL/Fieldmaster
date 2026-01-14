@@ -38,20 +38,17 @@ export async function createTaskAction(
   name: string,
   description?: string,
   creatorClerkId?: string,
-  dueTo?: string,
-  priority?: string,
+  due_to?: Date,
 ): Promise<{
   task: Task | null;
   error?: string;
 }> {
   try {
-    const dueDate = dueTo ? new Date(dueTo) : undefined;
     const newTask = await TASK_MUTATIONS.createTask(
       name,
       description ?? "",
       creatorClerkId,
-      dueDate,
-      priority,
+      due_to,
     );
     if (!newTask) throw Error("unknown error db/ orm");
     return {
@@ -75,7 +72,7 @@ export async function createTaskAction(
 // Update a task
 export async function updateTaskAction(
   id: string,
-  values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>,
+  values: Partial<{ name: string; description: string; dueTo: Date }>,
 ): Promise<{
   task: Task | null;
   error?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-//Area FMST-30  / FMST-31
+//Area FMST-30  / FMST-31 Area Creation Simon Opriessnig
 import { Area } from "../../server/db/type/DBTypes";
 import { createArea, getAllAreas, updateArea, deleteArea } from "../area/actions";
 import React from "react";
@@ -217,7 +217,7 @@ export default function Page() {
                         >
                           Bearbeiten
                         </button>
-
+{/*FMST-44 */}
                         <button
                           onClick={() => handleDeleteClick(a.id)}
                           className="text-red-400 hover:underline"

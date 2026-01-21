@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction, getAllToolsAction, getAllTaskToolsAction, getToolsForTaskAction, setTaskToolsAction, updateTaskAction } from "./actions";
+import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction, getAllToolsAction, getAllTaskToolsAction, getToolsForTaskAction, setTaskToolsAction, updateTaskAction, markTaskCompletedAction } from "./actions";
 import { storeTools } from "../tools/actions";
 import { getAllAreas } from "../area/actions";
 // Task type is not exported from DBTypes; use `any` here for client state
@@ -192,6 +192,7 @@ export default function Tasks() {
               </option>
             ))}
           </select>
+          {/* FMST-12 | Pachler Tobias */}
           <select
             multiple
             value={newTaskToolIds}
@@ -269,10 +270,15 @@ export default function Tasks() {
             {tasks.map((task) => {
               const isDeleted = task.description === "[DELETED]";
               return (
-                <tr
-                  key={task.id}
-                  className={`transition-colors ${isDeleted ? "hover:bg-gray-400/10" : "hover:bg-gray-200/20"}`}
-                >
+                  <tr
+                    key={task.id}
+                    className={`
+                      transition-colors
+                      ${isDeleted ? "opacity-50" : ""}
+                      ${task.completed ? "opacity-60 line-through" : ""}
+                      hover:bg-gray-200/20
+                    `}
+                  >
                   <td className="p-2 border">{task.name}</td>
                   <td className="p-2 border">{isDeleted ? "[DELETED]" : task.description || "-"}</td>
                   <td className="p-2 border">
@@ -292,6 +298,19 @@ export default function Tasks() {
                     </td>
                     <td className="p-2 border">{isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}</td>
                   <td className="flex gap-2 p-2 border">
+                    {/* Mark as completed */}
+                    {!task.completed && !isDeleted && (
+                      <button
+                        onClick={async () => {
+                          await markTaskCompletedAction(task.id);
+                          await fetchTasks();
+                        }}
+                        className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white transition-colors"
+                      >
+                        ✓ Done
+                      </button>
+                    )}
+                    
                     {/* View Button */}
                     <button
                       onClick={async () => {
@@ -319,6 +338,8 @@ export default function Tasks() {
                       </button>
                     )}
                   </td>
+                      
+                  
                 </tr>
               );
             })}

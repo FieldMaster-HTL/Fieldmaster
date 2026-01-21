@@ -134,6 +134,17 @@ export async function deleteTaskAction(id: UUID) {
   }
 }
 
+// Mark task as completed | FMST-54 Pachler
+export async function markTaskCompletedAction(id: UUID) {
+  try {
+    return await TASK_MUTATIONS.markTaskCompleted(id);
+  } catch (err) {
+    console.error("Failed to mark task completed:", err);
+    return { error: "Could not complete task." };
+  }
+}
+
+
 // *******************************************
 // FMST-75: Sort and filter tasks (extended)
 // *******************************************

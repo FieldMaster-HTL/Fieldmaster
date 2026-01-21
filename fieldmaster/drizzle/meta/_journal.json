@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762962612725,
-      "tag": "0000_lean_annihilus",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1762976140992,
-      "tag": "0001_smiling_patriot",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762978450795,
-      "tag": "0002_steep_stark_industries",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1767776786051,
-      "tag": "0003_jazzy_steel_serpent",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1768378418737,
-      "tag": "0004_lowly_red_skull",
+      "when": 1768979739885,
+      "tag": "0000_swift_quicksilver",
       "breakpoints": true
     }
   ]

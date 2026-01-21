@@ -6,12 +6,8 @@ import React from 'react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createArea, getAllAreas, deleteArea } from '../area/actions'
+import { Area } from '@/src/server/db/type/DBTypes';
 
-type Area = {
-  id: string
-  name: string
-  size: number
-}
 
 export default function Page() {
   const [name, setName] = useState('')
@@ -37,13 +33,13 @@ export default function Page() {
     try {
       setError(null)
       const { success, error: deleteError } = await deleteArea(areaId)
-      
+
       if (!success) {
         setError(deleteError || 'Fehler beim Löschen der Area.')
         setDeletingId(null)
         return
       }
-      
+
       setAreas((prevAreas: Area[]) => prevAreas.filter((a: Area) => a.id !== areaId))
       setSuccessMessage('Area erfolgreich gelöscht.')
       setDeletingId(null)
@@ -77,26 +73,22 @@ export default function Page() {
 
     try {
 
-     const { area: newArea, error: createError } = await createArea(name.trim(), numericSize)
-     
-     if (createError || !newArea) {
-       setError(createError || 'Fehler beim Anlegen des Feldes.')
-       return
-     }
-     
-     setAreas((prevAreas: Area[]) => [...prevAreas, { 
-       id: newArea.id, 
-       name: newArea.name, 
-       size: Number(newArea.size) 
-     }])
-     
-     setSuccessMessage('Area erfolgreich erstellt.')
-     resetForm()
-     setTimeout(() => setSuccessMessage(null), 3000)
-   } catch (err) {
-     setError('Fehler beim Anlegen des Feldes.')
-     console.error('Error creating area:', err)
-   }
+      const { area: newArea, error: createError } = await createArea(name.trim(), numericSize)
+
+      if (createError || !newArea) {
+        setError(createError || 'Fehler beim Anlegen des Feldes.')
+        return
+      }
+
+      setAreas((prevAreas: Area[]) => [...prevAreas, newArea])
+
+      setSuccessMessage('Area erfolgreich erstellt.')
+      resetForm()
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError('Fehler beim Anlegen des Feldes.')
+      console.error('Error creating area:', err)
+    }
   }
   useEffect(() => {
     async function fetchAreas() {
@@ -209,7 +201,7 @@ export default function Page() {
                       maxWidth: '400px'
                     }}>
                       <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>Area löschen?</h3>
-                      <p style={{ marginBottom: '24px', color: '#666' }}>Möchtest du die Area "{a.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                      <p style={{ marginBottom: '24px', color: '#666' }}>Möchtest du die Area &quot;{a.name}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
                       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                         <button
                           onClick={() => confirmDelete(a.id)}

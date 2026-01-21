@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from 'react'
 import { getAllAreas } from '@/src/app/area/actions'
 import { getAllTasksAction } from '@/src/app/task/actions'
+import { Area, Task } from "@/src/server/db/type/DBTypes"
 
 /**
  * Dashboard page component.
@@ -24,23 +25,6 @@ import { getAllTasksAction } from '@/src/app/task/actions'
  * - Keep tests for: loading states, empty-list states, populated-list states, error handling, and toggle behavior.
  * - Date formatting uses toLocaleDateString('de-DE') for German display.
  */
-
-/** Minimal Area type used by this component */
-type Area = { id: string; name: string; size: number }
-
-/**
- * Minimal Task type used by this component.
- * - dueTo can be null; when present it is displayed as a localized date.
- */
-type Task = {
-  id: string
-  name: string
-  description: string | null
-  creatorId: string | null
-  createdAt: Date
-  dueTo: Date | null
-  areaId: string | null
-}
 
 /**
  * Dashboard React client component.
@@ -76,8 +60,14 @@ export default function Page(): React.JSX.Element {
         // Defensive: fallback to empty arrays if responses are falsy
         setAreas(areas || [])
         setTasks(tasksRes || [])
-      } catch (err: any) {
-        setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')
+      } catch (err: unknown) {
+
+        if (typeof err === "string") {
+          setError(err ?? 'Unbekannter Fehler beim Laden der Daten')
+          err.toUpperCase()
+        } else if (err instanceof Error) {
+          setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')
+        }
         console.error('Dashboard load error:', err)
       } finally {
         setLoadingAreas(false)
@@ -102,18 +92,16 @@ export default function Page(): React.JSX.Element {
             <button
               aria-pressed={view === 'areas'}
               onClick={() => setView('areas')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                view === 'areas' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
-              }`}
+              className={`px-4 py-2 rounded-md font-medium transition ${view === 'areas' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
+                }`}
             >
               Areas ({areas.length})
             </button>
             <button
               aria-pressed={view === 'tasks'}
               onClick={() => setView('tasks')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                view === 'tasks' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
-              }`}
+              className={`px-4 py-2 rounded-md font-medium transition ${view === 'tasks' ? 'bg-primary-500 text-white' : 'bg-surface border border-primary-500/20'
+                }`}
             >
               Tasks ({tasks.length})
             </button>

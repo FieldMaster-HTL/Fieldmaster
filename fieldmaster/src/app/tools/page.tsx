@@ -1,27 +1,32 @@
 'use client' // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 
 import './style.css'
 import { loadTools, storeTools } from './actions' // Import von asynchronen Funktionen zur Datenbank-Interaktion
+import { Tool } from '@/src/server/db/type/DBTypes'
 
 export default function Page() {
   // React State Hooks:
-  const [tools, setTools] = useState<any[]>([]) // Liste der gespeicherten Tools
+  const [tools, setTools] = useState<Tool[]>([]) // Liste der gespeicherten Tools
   const [showWindow, setShowWindow] = useState(false) // Steuert, ob das Modal-Fenster angezeigt wird
   const [form, setForm] = useState({ name: '', category: 'Maschine' }) // Formularzustand für neues Tool
 
-  // Lädt die Tools beim ersten Rendern der Seite
-  useEffect(() => {
-    loadToolsfromDB()
-  }, [])
 
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
     const data = await loadTools() // Daten aus DB holen
     setTools(data) // Tools im State speichern
   }
+
+  // Lädt die Tools beim ersten Rendern der Seite
+  useEffect(() => {
+    async function fetchTools() {
+      const data = await loadTools() // Daten aus DB holen
+      setTools(data) // Tools im State speichern
+    }
+    fetchTools()
+  }, [])
 
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
@@ -35,7 +40,7 @@ export default function Page() {
 
     // Tool speichern (available = true, da neu erstellte Tools standardmäßig verfügbar sind)
     await storeTools(form, true)
-    
+
     // Formular zurücksetzen und Modal schließen
     setForm({ name: '', category: 'Maschine' })
     setShowWindow(false)
@@ -107,7 +112,7 @@ export default function Page() {
           </div>
         </div>
       )}
-      
+
       {/* 
         FMST-18: Werkzeug - Beschreibung 
         (Kulmer Klara)

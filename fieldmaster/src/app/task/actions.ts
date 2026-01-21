@@ -4,25 +4,14 @@
 
 import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
 import type { UUID } from 'crypto'
-
-function serializeTask(task: any) {
-  return {
-    id: String(task.id),
-    name: task.name,
-    description: task.description ?? null,
-    createdAt: task.createdAt ? task.createdAt.toISOString() : null,
-    dueTo: task.dueTo ? task.dueTo.toISOString() : null,
-    creatorId: task.creatorId ?? null,
-  }
-}
+import { Task } from "@/src/server/db/type/DBTypes"
 
 // Fetch all tasks
-export async function getAllTasksAction() {
+export async function getAllTasksAction(): Promise<Task[]> {
   try {
     const tasks = await TASK_QUERIES.getAll()
-    const tasksSerialized = tasks.map(serializeTask)
 
-    return tasksSerialized
+    return tasks
   } catch (err) {
     console.error('Error loading tasks:', err)
     return []
@@ -44,7 +33,7 @@ export async function createTaskAction(
       due_to
     )
     if (!newTask) return null
-    return serializeTask(newTask)
+    return newTask
   } catch (err) {
     console.error('Error creating task:', err)
     throw err
@@ -55,11 +44,11 @@ export async function createTaskAction(
 export async function updateTaskAction(
   id: UUID,
   values: Partial<{ name: string; description: string; due_to: Date }>
-) {
+): Promise<Task> {
   try {
     await TASK_MUTATIONS.updateTask(id, values)
     const updated = await TASK_QUERIES.mapIdToTask(id)
-    return serializeTask(updated)
+    return updated
   } catch (err) {
     console.error('Error updating task:', err)
     throw err
@@ -70,12 +59,12 @@ export async function updateTaskAction(
 /******************FMST-50*******************/
 // *******************************************
 // Delete a task
-export async function deleteTaskAction(id: UUID) {
+export async function deleteTaskAction(id: UUID): Promise<Task> {
   try {
     await TASK_MUTATIONS.deleteTask(id)
 
     const deleted = await TASK_QUERIES.mapIdToTask(id)
-    return serializeTask(deleted)
+    return deleted
   } catch (err) {
     console.error('Error deleting task:', err)
     throw err

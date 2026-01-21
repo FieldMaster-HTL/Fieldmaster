@@ -4,15 +4,19 @@ import { db } from "@/src/server/db/index";
 import { Farm } from "@/src/server/db/schema/schema";
 import { toolsTable } from "@/src/server/db/schema/schema";
 import { categoriesTable } from "@/src/server/db/schema/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { UUID } from "crypto";
 
 // Definiert den Typ eines Tools (wird beim Erstellen eines neuen Tools verwendet)
 type Tool = {
-    name: string
-    category: string 
-    available: boolean
+  name: string
+  category: string
+  description?: string
+  imageUrl?: string
+  available: boolean
+  area?: string
 }
+
 
 // ---------- Datenbankabfragen ----------
 
@@ -22,7 +26,7 @@ export const TOOL_QUERIES = {
     // Lädt alle Tools aus der Datenbank
     async getToolsFromDB() {
         // SELECT * FROM toolsTable
-        const tools = await db.select().from(toolsTable)
+        const tools = await db.select().from(toolsTable).where(eq(toolsTable.deleted, false)) // Nur nicht gelöschte Tools
         return tools // Gibt das Array der Tools zurück
     },
 
@@ -32,15 +36,39 @@ export const TOOL_QUERIES = {
         return categories
     },
 
+    // soft löschen eines tools
+    async softDeleteToolInDB(id: string) {
+        await db
+        .update(toolsTable)
+        .set({ deleted: true })
+        .where(eq(toolsTable.id, id))
+    },
+
     // Erstellt ein neues Tool in der Datenbank
     async createToolInDB(tool: Tool) {
-        // INSERT INTO toolsTable (name, category, available) VALUES (...)
         await db.insert(toolsTable).values({
-            name: tool.name,
-            category: tool.category,
-            available: tool.available,
-        })
+        name: tool.name,
+        category: tool.category,
+        description: tool.description,
+        imageUrl: tool.imageUrl,
+        available: tool.available,
+        area: tool.area,
+    })
     },
+
+
+    async updateToolInDB(id: string, tool: any) {
+        await db.update(toolsTable).set({
+        name: tool.name,
+        category: tool.category,
+        description: tool.description,
+        imageUrl: tool.imageUrl,
+        available: tool.available,
+        area: tool.area,
+        })
+        .where(eq(toolsTable.id, id))
+        },
+
 
     // Neue Kategorie erstellen - FMST-19 (Polt Leonie)
     async createCategoryInDB(name: string) {

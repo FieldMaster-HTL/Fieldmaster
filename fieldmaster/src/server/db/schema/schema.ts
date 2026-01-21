@@ -36,13 +36,19 @@ export const Area = pgTable("area", {
   deletedAt: timestamp("deletedAt"),
 });
 
-// Tools Table
+// Tools Table - FMST-76 (Polt Leonie) - überarbeitung von db
 export const toolsTable = pgTable("tools", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   category: text("category").notNull(),
+  description: text("description"),   
+  imageUrl: text("image_url"),         
   available: boolean("available").notNull(),
+  area: text("area"),      
+  deleted: boolean('deleted').default(false).notNull(), // FMST-76 (Polt Leonie) - Spalte für soft delete
+                
 });
+
 
 //FMST-35
 export const Task = pgTable("task", {

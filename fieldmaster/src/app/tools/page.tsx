@@ -4,16 +4,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 import './style.css'
-import { loadTools, storeTools, loadCategories } from './actions'
+import { loadTools, storeTools, loadCategories, deleteTool } from './actions'
+import { getAllAreas } from '../area/actions'
 
-// ======================================
-// PAGE: Werkzeuge / Maschinen
-// ======================================
 export default function Page() {
 
-  // =====================
-  // STATE
-  // =====================
 
   // Liste aller Tools aus der DB
   const [tools, setTools] = useState<any[]>([])
@@ -24,27 +19,56 @@ export default function Page() {
   // Modal sichtbar / unsichtbar
   const [showWindow, setShowWindow] = useState(false)
 
-  // Formularzustand für neues Tool
-  const [form, setForm] = useState({ name: '', category: '' })
+  // Liste der Areas
+  const [areas, setAreas] = useState<string[]>([])
 
+  // Modalfelder für bearbeiten/erstellen
+  const emptyForm = {
+    name: '',
+    category: '',
+    description: '',
+    imageUrl: '',
+    available: true,
+    area: ''
+  }
+
+  const [form, setForm] = useState(emptyForm)
+
+  // Tool das gerade bearbeitet wird
+  const [editingTool, setEditingTool] = useState<any | null>(null)
+
+  //drag and drop
+  const [dragActive, setDragActive] = useState(false)
+  const [imagePreview, setImagePreview] = useState('')
+  
   // Filter & Suche
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [filterAvailable, setFilterAvailable] = useState('')
 
-  // =====================
-  // EFFECTS
-  // =====================
 
   // Lädt Tools & Kategorien beim ersten Rendern
   useEffect(() => {
-    loadToolsfromDB()
-    loadCategoriesFromDB()
-  }, [])
+    async function init() {
+      // Kategorien laden
+      const categoriesData = await loadCategories()
+      setCategories(categoriesData)
 
-  // =====================
-  // DATA LOADING
-  // =====================
+
+      // Setze die erste Kategorie im Form, falls noch keine ausgewählt
+      if (categoriesData.length > 0) {
+      setForm(prev => ({
+        ...prev,
+        category: categoriesData[0].name
+      }))
+    }
+
+      // Tools laden
+      await loadToolsfromDB()
+    }
+
+    init()
+  }, [])
 
   // Tools aus der DB laden
   async function loadToolsfromDB() {
@@ -52,66 +76,60 @@ export default function Page() {
     setTools(data)
   }
 
-  // Kategorien aus der DB laden
-  async function loadCategoriesFromDB() {
-    try {
-      const data = await loadCategories()
-      setCategories(data)
 
-      // Erste Kategorie automatisch auswählen
-      if (data.length > 0 && !form.category) {
-        setForm(prev => ({ ...prev, category: data[0].name }))
-      }
-    } catch (error) {
-      console.error('Failed to load categories:', error)
-    }
-  }
+  // funtktion zum Bearbeiten
+  function handleEdit(tool: any) {
+    setEditingTool(tool)
 
-  // =====================
-  // ACTIONS
-  // =====================
+    setForm({
+      name: tool.name ?? '',
+      category: tool.category ?? '',
+      description: tool.description ?? '',
+      imageUrl: tool.imageUrl ?? '',
+      available: tool.available ?? true,
+      area: tool.area ?? ''
+    })
 
-  // Bearbeiten → Weiterleitung zur Edit-Seite
-  function handleEdit(toolId: string) {
-    window.location.href = `/tools/${toolId}/edit`
+    setShowWindow(true)
   }
 
   // Löschen mit Abhängigkeitsprüfung
-  async function handleDelete(tool: any) {
-    if (tool.activeTasksCount > 0) {
-      alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
-      return
-    }
-
-    const confirmed = confirm(`"${tool.name}" wirklich löschen?`)
-    if (!confirmed) return
-
-    // TODO: deleteTool(tool.id)
-    await loadToolsfromDB()
+ async function handleDelete(tool: any) {
+  if (tool.activeTasksCount > 0) {
+    alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
+    return
   }
 
-  // Neues Tool speichern
+  const confirmed = confirm(`"${tool.name}" wirklich löschen?`)
+  if (!confirmed) return
+
+  await deleteTool(tool.id)
+  await loadToolsfromDB()
+ }
+  // Neues Tool speichern / Tool bearbeiten
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!form.name.trim()) {
-      alert('Bitte gib einen Tool-Namen ein.')
+      alert('Name ist erforderlich')
       return
     }
 
-    await storeTools(form, true)
+    if (!form.category.trim()) {
+    alert('Kategorie ist erforderlich')
+    return
+  }
 
-    // Formular zurücksetzen & Modal schließen
-    setForm({ name: '', category: categories[0]?.name ?? '' })
+    // Wenn editingTool gesetzt ist → UPDATE, sonst CREATE
+    await storeTools(form, editingTool?.id)
+
     setShowWindow(false)
+    setEditingTool(null)
+    setForm(emptyForm)
 
-    // Liste neu laden
     await loadToolsfromDB()
   }
 
-  // =====================
-  // FILTER LOGIC
-  // =====================
 
   // Gefilterte Tools für Tabellenanzeige
   const filteredTools = tools.filter(tool => {
@@ -126,9 +144,6 @@ export default function Page() {
     )
   })
 
-  // =====================
-  // RENDER
-  // =====================
 
   return (
     <div className="page-container">
@@ -157,12 +172,16 @@ export default function Page() {
         </select>
 
         {/* Create Button */}
-      <button
-        onClick={() => setShowWindow(true)}
-        className="create-button"
-      >
-        Create Tool
-      </button>
+        <button
+          onClick={() => {
+            setEditingTool(null)
+            setForm({...emptyForm,category: categories[0]?.name || ''})
+            setShowWindow(true)
+          }}
+          className="create-button"
+        >
+          Create Tool
+        </button>
       </div>
 
       {/* Tabelle */}
@@ -213,7 +232,7 @@ export default function Page() {
                 <td>{tool.activeTasksCount ?? 0}</td>
 
                 <td className="actions">
-                  <button onClick={() => handleEdit(tool.id)}>
+                  <button onClick={() => handleEdit(tool)}>
                     Bearbeiten
                   </button>
                   <button onClick={() => handleDelete(tool)}>
@@ -226,26 +245,25 @@ export default function Page() {
         </table>
       </div>
 
-      {/* MODAL: Neues Tool erstellen */}
+      {/* MODAL: Neues Tool erstellen / bearbeiten */}
       {showWindow && (
         <div className="modal-overlay">
           <div className="modal-window">
-            <h2 className="modal-title">Neues Tool erstellen</h2>
-
+            <h2 className="modal-title">{editingTool ? 'Tool bearbeiten' : 'Neues Tool erstellen'}</h2>
             <form onSubmit={handleSubmit} className="modal-form">
+
               <input
                 type="text"
                 placeholder="Tool-Name"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 required
-                className="modal-input"
               />
 
               <select
                 value={form.category}
                 onChange={e => setForm({ ...form, category: e.target.value })}
-                className="modal-select"
+                required
               >
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.name}>
@@ -254,18 +272,53 @@ export default function Page() {
                 ))}
               </select>
 
+              <textarea
+                placeholder="Beschreibung"
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+              />
+
+              <input
+                type="text"
+                placeholder="Bild-URL"
+                value={form.imageUrl}
+                onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+              />
+
+              <input
+                type="text"
+                placeholder="Area"
+                value={form.area}
+                onChange={e => setForm({ ...form, area: e.target.value })}
+              />
+
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.available}
+                  onChange={e => setForm({ ...form, available: e.target.checked })}
+                />
+                Verfügbar
+              </label>
+
               <div className="modal-buttons">
                 <button type="submit" className="modal-save">
-                  Speichern
+                  {editingTool ? 'Speichern' : 'Erstellen'}
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => setShowWindow(false)}
+                  onClick={() => {
+                    setShowWindow(false)
+                    setEditingTool(null)
+                    setForm(emptyForm)
+                  }}
                   className="modal-cancel"
                 >
                   Abbrechen
                 </button>
               </div>
+
             </form>
           </div>
         </div>

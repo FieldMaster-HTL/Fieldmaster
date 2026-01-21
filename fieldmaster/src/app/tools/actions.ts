@@ -11,24 +11,33 @@ export async function loadTools() {
     }
 }
 
-export async function storeTools(form: { name: string; category: string }, available: boolean) {
-    // Validate inputs
-    if (!form.name?.trim()) {
-        throw new Error('Tool name is required')
-    }
-    if (!form.category?.trim()) {
-        throw new Error('Tool category is required')
+export async function storeTools(
+  tool: {
+    name: string
+    category: string
+    description?: string
+    imageUrl?: string
+    available: boolean
+    area?: string
+  },
+  toolId?: string
+) {
+  if (!tool.name?.trim()) throw new Error('Tool name is required')
+  if (!tool.category?.trim()) throw new Error('Tool category is required')
+
+  try {
+    if (!toolId) {
+      return await QUERIES.TOOL.createToolInDB(tool)
     }
 
-    const tool = { ...form, available }
-
-    try {
-        return await QUERIES.TOOL.createToolInDB(tool)
-    } catch (error) {
-        console.error('Failed to create tool:', error)
-        throw new Error('Unable to create tool')
-    }
+    return await QUERIES.TOOL.updateToolInDB(toolId, tool)
+  } catch (error) {
+    console.error('Failed to store tool:', error)
+    throw new Error('Unable to store tool')
+  }
 }
+
+
 
 export async function loadCategories() { // FMST-19 (Polt Leonie) - Laden von Kategorien aus DB
     try {
@@ -55,4 +64,15 @@ export async function storeCategory(name: string) {
         }
         throw error
     }
+}
+
+// FMST-76 (Polt Leonie) - Funktion zum soft löschen eines tools
+export async function deleteTool(toolId: string) {
+  try {
+    await QUERIES.TOOL.softDeleteToolInDB(toolId)
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete tool:', error)
+    throw new Error('Unable to delete tool')
+  }
 }

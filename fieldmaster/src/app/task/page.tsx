@@ -193,18 +193,22 @@ export default function Tasks() {
             ))}
           </select>
           <select
+            multiple
             value={newTaskToolIds}
-            onChange={(e) => setNewTaskToolIds(e.target.value.split(","))}
+            onChange={(e) =>
+              setNewTaskToolIds(
+                Array.from(e.target.selectedOptions).map((o) => o.value)
+              )
+            }
             className="p-2 border rounded-md"
-            aria-label="Werkzeuge auswählen (optional)"
           >
-            <option value="">-- Werkzeuge auswählen (optional) --</option>
-            {tools.map((tool) => (
-              <option key={tool.id} value={tool.id}>
-                {tool.name}
-              </option>
-            ))}
+          {tools.map((tool) => (
+            <option key={tool.id} value={tool.id}>
+              {tool.name}
+            </option>
+          ))}
           </select>
+
           {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
           <button
             type="submit"

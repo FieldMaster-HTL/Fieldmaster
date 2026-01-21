@@ -8,6 +8,13 @@
       "when": 1768979739885,
       "tag": "0000_swift_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1768383398689,
+      "tag": "0003_fine_wildside",
+      "breakpoints": true
     }
   ]
 }

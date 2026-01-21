@@ -4,10 +4,15 @@
 
 import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { getAllTasksAction, createTaskAction, deleteTaskAction, getTasksSortedFilteredAction, getAllToolsAction, getAllTaskToolsAction, getToolsForTaskAction, setTaskToolsAction, updateTaskAction, markTaskCompletedAction } from "./actions";
 import { storeTools } from "../tools/actions";
 import { getAllAreas } from "../area/actions";
-// Task type is not exported from DBTypes; use `any` here for client state
+import {
+  getAllTasksAction,
+  createTaskAction,
+  deleteTaskAction,
+  getTasksSortedFilteredAction,
+} from "./actions";
+import { Task } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<any[]>([]); // store all tasks
@@ -25,6 +30,11 @@ export default function Tasks() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // show delete confirmation modal
   const [filter, setFilter] = useState<"all" | "active" | "deleted">("all"); // sorting states
   const [sort, setSort] = useState<"dueDate" | undefined>(undefined); // sorting after due date
+  const [filterPriority, setFilterPriority] = useState<"Alle" | "Hoch" | "Mittel" | "Niedrig">(
+    "Alle",
+  ); // priority filter
+  const [newTaskPriority, setNewTaskPriority] = useState<"Hoch" | "Mittel" | "Niedrig">("Mittel"); // new task priority
+
   // Tools state (FMST-12)
   const [tools, setTools] = useState<any[]>([]);
   const [taskTools, setTaskTools] = useState<any[]>([]);
@@ -32,12 +42,8 @@ export default function Tasks() {
   const [modalAreaId, setModalAreaId] = useState("");
   const [newToolName, setNewToolName] = useState("");
   const [newToolCategory, setNewToolCategory] = useState("Maschine");
-
   // fetch all tasks from server
-  const fetchTasks = async (
-    filterParam = filter,
-    sortParam = sort,
-  ) => {
+  const fetchTasks = async (filterParam = filter, sortParam = sort) => {
     const res = await getTasksSortedFilteredAction({
       filter: filterParam,
       sort: sortParam,
@@ -115,7 +121,15 @@ export default function Tasks() {
         setError("");
         const creatorClerkId = localStorage.getItem("creatorClerkId") ?? undefined;
         const dueDate = dueTo ? new Date(dueTo) : undefined;
-        const created = await createTaskAction(newTaskName, newTaskDescription, creatorClerkId, dueDate, newTaskAreaId || undefined);
+        const areaIdValue = newTaskAreaId || undefined;
+        const created = await createTaskAction(
+          newTaskName,
+          newTaskDescription,
+          creatorClerkId,
+          dueDate, newTaskAreaId || undefined,
+          newTaskPriority,
+          areaIdValue,
+        );
         // assign selected tools to the newly created task
         if (created && newTaskToolIds && newTaskToolIds.length > 0) {
           try {
@@ -129,6 +143,7 @@ export default function Tasks() {
         setNewTaskDescription("");
         setDueTo("");
         setNewTaskAreaId(""); // FMST-11
+        setNewTaskPriority("Mittel");
         setNewTaskToolIds([]);
       } catch {
         setError("Failed to create task. Please try again.");
@@ -192,6 +207,19 @@ export default function Tasks() {
               </option>
             ))}
           </select>
+
+          {/* Priority selection dropdown */}
+          <select
+            value={newTaskPriority}
+            onChange={(e) => setNewTaskPriority(e.target.value as "Hoch" | "Mittel" | "Niedrig")}
+            className="p-2 border rounded-md"
+            aria-label="Priorität auswählen"
+          >
+            <option value="Hoch">Priorität: Hoch</option>
+            <option value="Mittel">Priorität: Mittel</option>
+            <option value="Niedrig">Priorität: Niedrig</option>
+          </select>
+
           {/* FMST-12 | Pachler Tobias */}
           <select
             multiple
@@ -233,12 +261,22 @@ export default function Tasks() {
             <option value="deleted">Gelöscht</option>
           </select>
 
+          {/* PRIORITY FILTER */}
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as any)}
+            className="p-2 border rounded-md"
+          >
+            <option>Alle</option>
+            <option>Hoch</option>
+            <option>Mittel</option>
+            <option>Niedrig</option>
+          </select>
+
           {/* SORT */}
           <select
             value={sort ?? ""}
-            onChange={(e) =>
-              setSort(e.target.value ? "dueDate" : undefined)
-            }
+            onChange={(e) => setSort(e.target.value ? "dueDate" : undefined)}
             className="p-2 border rounded-md"
           >
             <option value="">Keine Sortierung</option>
@@ -250,6 +288,7 @@ export default function Tasks() {
         <table className="border border-gray-50 w-full border-collapse">
           <thead>
             <tr className="bg-gray-200/50">
+              <th className="p-2 border text-left">Priorität</th>
               <th className="p-2 border text-left">Name</th>
               <th className="p-2 border text-left">Description</th>
               <th className="p-2 border text-left">Feld</th>
@@ -261,29 +300,63 @@ export default function Tasks() {
           <tbody>
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-4 text-gray-500 text-center italic">
+                <td colSpan={6} className="p-4 text-gray-500 text-center italic">
                   Keine Aufgaben vorhanden.
                 </td>
               </tr>
             )}
 
-            {tasks.map((task) => {
-              const isDeleted = task.description === "[DELETED]";
-              return (
-                  <tr
-                    key={task.id}
-                    className={`
+            {tasks
+              .filter((task) => filterPriority === "Alle" || task.priority === filterPriority)
+              .map((task) => {
+                const isDeleted = task.description === "[DELETED]";
+                return (
+                    <tr
+                      key={task.id}
+                      className={`
                       transition-colors
                       ${isDeleted ? "opacity-50" : ""}
                       ${task.completed ? "opacity-60 line-through" : ""}
                       hover:bg-gray-200/20
                     `}
-                  >
-                  <td className="p-2 border">{task.name}</td>
-                  <td className="p-2 border">{isDeleted ? "[DELETED]" : task.description || "-"}</td>
-                  <td className="p-2 border">
-                    {isDeleted ? "-" : task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : "-"}
-                  </td>
+                    >
+                    <td className="p-2 border">
+                      {isDeleted ? (
+                        "-"
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block h-3 w-3 rounded-full ${
+                              task.priority === "Hoch"
+                                ? "bg-red-500"
+                                : task.priority === "Niedrig"
+                                  ? "bg-green-500"
+                                  : "bg-yellow-400"
+                            }`}
+                            title={task.priority ?? "Mittel"}
+                          />
+                          <span className="text-sm">{task.priority ?? "Mittel"}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-2 border">{task.name}</td>
+                    <td className="p-2 border">
+                      {isDeleted ? "[DELETED]" : task.description || "-"}
+                    </td>
+                    <td className="p-2 border">
+                      {isDeleted
+                        ? "-"
+                        : task.areaId
+                          ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                          : "-"}
+                    </td>
+                    <td className="p-2 border">
+                      {isDeleted
+                        ? "-"
+                        : task.dueTo
+                          ? new Date(task.dueTo).toLocaleDateString()
+                          : "-"}
+                    </td>
                     <td className="p-2 border">
                       {isDeleted
                         ? "-"
@@ -296,9 +369,8 @@ export default function Tasks() {
                           })()
                       }
                     </td>
-                    <td className="p-2 border">{isDeleted ? "-" : task.dueTo ? new Date(task.dueTo).toLocaleDateString() : "-"}</td>
-                  <td className="flex gap-2 p-2 border">
-                    {/* Mark as completed */}
+                      <td className="flex gap-2 p-2 border">
+                      {/* Mark as completed */}
                     {!task.completed && !isDeleted && (
                       <button
                         onClick={async () => {
@@ -312,37 +384,40 @@ export default function Tasks() {
                     )}
                     
                     {/* View Button */}
-                    <button
-                      onClick={async () => {
-                        setSelectedTask({
-                          ...task,
-                          area: task.areaId ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt") : undefined,
-                        });
-                        setModalAreaId(task.areaId ?? "");
+                      <button
+                        onClick={async () => {
+                          setSelectedTask({
+                            ...task,
+                            area: task.areaId
+                              ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                              : undefined,
+                          });
+                          setModalAreaId(task.areaId ?? "");
                         await loadToolsForTask(task.id);
                         setShowModal(true);
-                      }}
-                      className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
-                      disabled={isDeleted}
-                    >
-                      View
-                    </button>
-
-                    {/* Delete Button */}
-                    {!isDeleted && (
-                      <button
-                        onClick={() => { setTaskToDelete(task); setShowDeleteConfirm(true); }}
-                        className="before:absolute relative before:inset-0 bg-red-500 before:bg-black/10 before:opacity-0 hover:before:opacity-100 px-3 py-1 rounded text-white transition-opacity"
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
+                        disabled={isDeleted}
                       >
-                        Delete
+                        View
                       </button>
-                    )}
-                  </td>
-                      
-                  
-                </tr>
-              );
-            })}
+
+                      {/* Delete Button */}
+                      {!isDeleted && (
+                        <button
+                          onClick={() => {
+                            setTaskToDelete(task);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="before:absolute relative before:inset-0 bg-red-500 before:bg-black/10 before:opacity-0 hover:before:opacity-100 px-3 py-1 rounded text-white transition-opacity"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 
@@ -380,12 +455,12 @@ export default function Tasks() {
                           return;
                         }
                         // Soft Delete im State markieren
-                        setTasks(prev =>
-                          prev.map(t =>
+                        setTasks((prev) =>
+                          prev.map((t) =>
                             t.id === taskToDelete.id
                               ? { ...t, description: "[DELETED]", dueTo: null }
-                              : t
-                          )
+                              : t,
+                          ),
                         );
                       } catch {
                         setError("Failed to delete task. Please try again.");
@@ -404,8 +479,6 @@ export default function Tasks() {
           </div>
         )}
       </section>
-
-
 
       {/* Task Detail Modal */}
       {showModal && selectedTask && (

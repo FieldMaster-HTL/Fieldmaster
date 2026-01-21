@@ -74,19 +74,25 @@ export async function createTaskAction(
   description?: string,
   creatorClerkId?: string,
   due_to?: Date,
-  // Area ID to link task to specific area | FMST-11
-  areaId?: string 
-) {
+  priority?: string,
+  areaId?: string,
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
   try {
     const newTask = await TASK_MUTATIONS.createTask(
       name,
       description ?? '',
       creatorClerkId,
       due_to,
-      areaId ?? undefined
-    )
-    // Return created task as plain JSON so client can use the new id
-    return JSON.parse(JSON.stringify(newTask))
+      priority,
+      areaId,
+    );
+    if (!newTask) throw Error("unknown error db/ orm");
+    return {
+      task: newTask,
+    };
   } catch (err) {
     console.error('Error creating task:', err)
     throw err
@@ -109,20 +115,44 @@ export async function setTaskToolsAction(taskId: UUID, toolIds: string[]) {
 // Update a task
 
 export async function updateTaskAction(
-  id: UUID,
-  values: Partial<{ name: string; description: string; dueTo: Date; areaId: string }>
-) {
+   id: UUID,
+  values: Partial<{ name: string; description: string; dueTo: Date; areaId: string, priority: string; }>
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
+  if (!isUUID(id)) {
+    return {
+      task: null,
+      error: `id is not a valid UUID: ${id}`,
+    };
+  }
+  const taskId = id as UUID;
   try {
-    // Update the task row. Values are filtered server-side so undefined
-    // fields are not set. Return a plain result for the client.
-    const res = await TASK_MUTATIONS.updateTask(id, values)
-    return JSON.parse(JSON.stringify(res))
-  } catch (err) {
-    console.error('Error updating task:', err)
-    throw err
+    await TASK_MUTATIONS.updateTask(taskId, values);
+
+    const updated = await TASK_QUERIES.mapIdToTask(taskId);
+    return {
+      task: updated,
+    };
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 
+// *******************************************
+/******************FMST-50*******************/
+// *******************************************
 // Delete a task
 export async function deleteTaskAction(id: UUID) {
   try {
@@ -164,11 +194,11 @@ export async function getTasksSortedFilteredAction(params: {
     --------------------------*/
     switch (params.filter) {
       case "active":
-        tasks = tasks.filter(task => task.description !== "[DELETED]");
+        tasks = tasks.filter((task) => task.description !== "[DELETED]");
         break;
 
       case "deleted":
-        tasks = tasks.filter(task => task.description === "[DELETED]");
+        tasks = tasks.filter((task) => task.description === "[DELETED]");
         break;
 
       case "all":
@@ -202,3 +232,5 @@ export async function getTasksSortedFilteredAction(params: {
     }
   }
 }
+
+

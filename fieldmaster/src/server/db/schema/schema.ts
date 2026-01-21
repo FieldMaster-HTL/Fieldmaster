@@ -55,6 +55,7 @@ export const Task = pgTable("task", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   dueTo: timestamp("dueTo"),
   areaId: uuid("areaId").references(() => Area.id),
+  priority: text("priority"),
   completed: boolean("completed").default(false).notNull(),
   deletedAt: timestamp("deletedAt"),
 });

@@ -40,6 +40,7 @@ export async function createTaskAction(
   creatorClerkId?: string,
   due_to?: Date,
   priority?: string,
+  areaId?: string,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -51,6 +52,7 @@ export async function createTaskAction(
       creatorClerkId,
       due_to,
       priority,
+      areaId,
     );
     if (!newTask) throw Error("unknown error db/ orm");
     return {

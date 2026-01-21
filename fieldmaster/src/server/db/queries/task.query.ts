@@ -35,6 +35,7 @@ export const TASK_MUTATIONS = {
     creatorClerkId?: string,
     dueTo?: Date,
     priority?: string,
+    areaId?: string,
   ) {
     const creatorId = creatorClerkId
       ? await USER_QUERIES.mapClerkIdtoLocalId(creatorClerkId).catch((err) => {
@@ -51,6 +52,7 @@ export const TASK_MUTATIONS = {
         ...(creatorId !== null && { creatorId }), // add creatorId if exists
         ...(dueTo && { dueTo: dueTo }), // add due date if provided
         ...(priority && { priority }), // add priority if provided
+        ...(areaId && { areaId }), // add area if provided
       })
       .returning();
     return task;

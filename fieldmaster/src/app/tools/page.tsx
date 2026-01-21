@@ -12,7 +12,6 @@ export default function Page() {
   const [showWindow, setShowWindow] = useState(false) // Steuert, ob das Modal-Fenster angezeigt wird
   const [form, setForm] = useState({ name: '', category: 'Maschine' }) // Formularzustand für neues Tool
 
-
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
     const data = await loadTools() // Daten aus DB holen

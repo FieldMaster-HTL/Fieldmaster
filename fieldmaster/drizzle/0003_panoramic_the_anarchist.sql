@@ -1,0 +1,1 @@
+ALTER TABLE "area" ADD COLUMN "category" text DEFAULT 'WIESE' NOT NULL;

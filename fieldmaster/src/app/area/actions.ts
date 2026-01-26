@@ -4,20 +4,22 @@ import { AREA_MUTATIONS, AREA_QUERIES } from "@/src/server/db/queries/area.query
 import { Area } from "@/src/server/db/type/DBTypes";
 import { UUID } from "crypto";
 
+// Server actions for Areas (FMST-42).
+// Minimal English inline comments.
 // Area FMST-30  / FMST-31
 
 export async function createArea(
   name: string,
   size: number,
+  category?: string,
 ): Promise<{
   area: Area | null;
   error?: string;
 }> {
   try {
-    const res = await AREA_MUTATIONS.CreateArea(name, size);
-    if (!res) {
-      throw Error();
-    }
+    // Forward data to mutation layer (which validates category).
+    const res = await MUTATIONS.AREA.CreateArea(name, size, undefined, category);
+    if (!res) throw Error();
     return { area: res };
   } catch {
     return { area: null, error: "an error occurred" };
@@ -29,7 +31,8 @@ export async function getAllAreas(): Promise<{
   error?: string;
 }> {
   try {
-    const res = await AREA_QUERIES.getAllAreas();
+    // Return all areas from query layer.
+    const res = await QUERIES.AREA.getAllAreas();
     return { areas: res };
   } catch {
     return { areas: null, error: "an error occurred" };

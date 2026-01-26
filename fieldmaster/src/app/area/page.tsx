@@ -344,7 +344,7 @@ export default function Page() {
             >
               <h3 style={{ marginTop: 0, marginBottom: "16px", color: "#333" }}>Area löschen?</h3>
               <p style={{ marginBottom: "24px", color: "#666" }}>
-                Möchtest du die Area "{areas.find((x) => x.id === deletingId)?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                Möchtest du die Area &quot;{areas.find((x) => x.id === deletingId)?.name}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
               <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
                 <button

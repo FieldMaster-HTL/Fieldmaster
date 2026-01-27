@@ -1,14 +1,14 @@
 //FMST-35
 
-'use server'
+"use server";
 
-import { AREA_QUERIES } from '@/src/server/db/queries/area.query'
-import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
+import { AREA_QUERIES } from "@/src/server/db/queries/area.query";
+import { TASK_QUERIES, TASK_MUTATIONS } from "@/src/server/db/queries/task.query";
+import { TASKTOOL_QUERIES, TASKTOOL_MUTATIONS } from "@/src/server/db/queries/taskTool.query";
+import { TOOL_QUERIES } from "@/src/server/db/queries/tools.query";
+import type { Task } from "@/src/server/db/type/DBTypes";
 import { isUUID } from "@/src/util/uuidValidator";
-import {TASKTOOL_QUERIES, TASKTOOL_MUTATIONS} from '@/src/server/db/queries/taskTool.query'
-import { TOOL_QUERIES } from '@/src/server/db/queries/tools.query'
-import type { UUID } from 'crypto'
-import type { Task } from '@/src/server/db/type/DBTypes'
+import type { UUID } from "crypto";
 
 // Fetch all tasks
 // Server action wrappers used by client components.
@@ -18,55 +18,54 @@ import type { Task } from '@/src/server/db/type/DBTypes'
 
 export async function getAllTasksAction() {
   try {
-    const tasks = await TASK_QUERIES.getAll()
-    return JSON.parse(JSON.stringify(tasks))
+    const tasks = await TASK_QUERIES.getAll();
+    return JSON.parse(JSON.stringify(tasks));
   } catch (err) {
-    console.error('Error loading tasks:', err)
-    throw err
+    console.error("Error loading tasks:", err);
+    throw err;
   }
 }
 // Fetch all areas
 export async function getAllAreasAction() {
   try {
-    const areas = await AREA_QUERIES.getAllAreas()
-    return JSON.parse(JSON.stringify(areas))
+    const areas = await AREA_QUERIES.getAllAreas();
+    return JSON.parse(JSON.stringify(areas));
   } catch (err) {
-    console.error('Error loading areas:', err)
-    throw err
+    console.error("Error loading areas:", err);
+    throw err;
   }
 }
 // Fetch all tools - FMST-12 | Pachler
 export async function getAllToolsAction() {
   try {
-    const tools = await TOOL_QUERIES.getToolsFromDB()
-    return JSON.parse(JSON.stringify(tools))
+    const tools = await TOOL_QUERIES.getToolsFromDB();
+    return JSON.parse(JSON.stringify(tools));
   } catch (err) {
-    console.error('Error loading tools:', err)
-    throw err
+    console.error("Error loading tools:", err);
+    throw err;
   }
 }
 // Fetch all task tools - FMST-12 | Pachler
 export async function getAllTaskToolsAction() {
   try {
-    const taskTools = await TASKTOOL_QUERIES.getAllTaskTools()
-    return JSON.parse(JSON.stringify(taskTools))
+    const taskTools = await TASKTOOL_QUERIES.getAllTaskTools();
+    return JSON.parse(JSON.stringify(taskTools));
   } catch (err) {
-    console.error('Error loading task tools:', err)
-    throw err
+    console.error("Error loading task tools:", err);
+    throw err;
   }
 }
 
 // Fetch tools for a specific task - FMST-12 | Pachler
 export async function getToolsForTaskAction(taskId: UUID) {
   try {
-    const tools = await TASKTOOL_QUERIES.getToolsForTask(taskId)
-    return JSON.parse(JSON.stringify(tools))
+    const tools = await TASKTOOL_QUERIES.getToolsForTask(taskId);
+    return JSON.parse(JSON.stringify(tools));
   } catch (err) {
-    console.error('Error loading tools for task:', err)
-    throw err
+    console.error("Error loading tools for task:", err);
+    throw err;
   }
 }
-
 
 // Create a new task
 
@@ -84,7 +83,7 @@ export async function createTaskAction(
   try {
     const newTask = await TASK_MUTATIONS.createTask(
       name,
-      description ?? '',
+      description ?? "",
       creatorClerkId,
       due_to,
       priority,
@@ -95,8 +94,8 @@ export async function createTaskAction(
       task: newTask,
     };
   } catch (err) {
-    console.error('Error creating task:', err)
-    throw err
+    console.error("Error creating task:", err);
+    throw err;
   }
 }
 
@@ -104,20 +103,25 @@ export async function createTaskAction(
 export async function setTaskToolsAction(taskId: UUID, toolIds: string[]) {
   try {
     // Replace associations for a task (delete existing, insert new)
-    const res = await TASKTOOL_MUTATIONS.setToolsForTask(taskId, toolIds)
-    return JSON.parse(JSON.stringify(res))
+    const res = await TASKTOOL_MUTATIONS.setToolsForTask(taskId, toolIds);
+    return JSON.parse(JSON.stringify(res));
   } catch (err) {
-    console.error('Error setting tools for task:', err)
-    throw err
+    console.error("Error setting tools for task:", err);
+    throw err;
   }
 }
-
 
 // Update a task
 
 export async function updateTaskAction(
-   id: UUID,
-  values: Partial<{ name: string; description: string; dueTo: Date; areaId: string, priority: string; }>
+  id: UUID,
+  values: Partial<{
+    name: string;
+    description: string;
+    dueTo: Date;
+    areaId: string;
+    priority: string;
+  }>,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -207,7 +211,6 @@ export async function markTaskCompletedAction(
   }
 }
 
-
 // *******************************************
 // FMST-75: Sort and filter tasks (extended)
 // *******************************************
@@ -265,5 +268,3 @@ export async function getTasksSortedFilteredAction(params: {
     }
   }
 }
-
-

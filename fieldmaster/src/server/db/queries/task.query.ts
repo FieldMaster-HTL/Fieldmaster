@@ -24,10 +24,10 @@ export const TASK_QUERIES = {
   // Get all tasks
   async getAll() {
     try {
-      return await db.select().from(Task)
+      return await db.select().from(Task);
     } catch (err) {
-      console.error('Error in TASK_QUERIES.getAll:', err)
-      throw err
+      console.error("Error in TASK_QUERIES.getAll:", err);
+      throw err;
     }
   },
 };
@@ -77,9 +77,6 @@ export const TASK_MUTATIONS = {
   },
   // Mark task as completed/uncompleted | FMST-54 Pachler
   async markTaskCompleted(id: UUID, completed: boolean) {
-    return db
-      .update(Task)
-      .set({ completed })
-      .where(eq(Task.id, id));
+    return db.update(Task).set({ completed }).where(eq(Task.id, id));
   },
-}
+};

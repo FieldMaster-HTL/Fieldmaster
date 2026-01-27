@@ -213,7 +213,7 @@ export default function Page() {
                 <th>Name</th>
                 <th>Kategorie</th>
                 <th>Status</th>
-                
+
                 <th>Aktionen</th>
               </tr>
             </thead>
@@ -223,7 +223,7 @@ export default function Page() {
                   <td>{tool.name}</td>
                   <td>{tool.category}</td>
                   <td>{tool.available ? "Verfügbar" : "Nicht verfügbar"}</td>
-              
+
                   <td className="actions-cell">
                     <button
                       onClick={() => openModal(tool)}

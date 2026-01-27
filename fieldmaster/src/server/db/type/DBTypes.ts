@@ -1,4 +1,3 @@
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import {
   User as DBUser,
   Area as DBArea,
@@ -6,6 +5,7 @@ import {
   Task as DBTask,
   toolsTable as DBTool,
 } from "../schema/schema";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export type User = InferSelectModel<typeof DBUser>;
 export type NewUser = InferInsertModel<typeof DBUser>;

@@ -1,5 +1,5 @@
 {
-  "id": "58fb0a95-e83f-45b7-bf22-cdc01584a29f",
+  "id": "de838405-5f73-443f-a7bd-8a5900b17e19",
   "prevId": "8dc35b81-11b5-4bbd-8454-80a6df477951",
   "version": "7",
   "dialect": "postgresql",
@@ -26,6 +26,13 @@
           "type": "double precision",
           "primaryKey": false,
           "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'WIESE'"
         },
         "creatorId": {
           "name": "creatorId",

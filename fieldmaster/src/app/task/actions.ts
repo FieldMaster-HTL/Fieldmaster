@@ -4,6 +4,7 @@
 
 import { AREA_QUERIES } from '@/src/server/db/queries/area.query'
 import { TASK_QUERIES, TASK_MUTATIONS } from '@/src/server/db/queries/task.query'
+import { isUUID } from "@/src/util/uuidValidator";
 import {TASKTOOL_QUERIES, TASKTOOL_MUTATIONS} from '@/src/server/db/queries/taskTool.query'
 import { TOOL_QUERIES } from '@/src/server/db/queries/tools.query'
 import type { UUID } from 'crypto'
@@ -154,13 +155,37 @@ export async function updateTaskAction(
 /******************FMST-50*******************/
 // *******************************************
 // Delete a task
-export async function deleteTaskAction(id: UUID) {
+export async function deleteTaskAction(id: string): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
+  if (!isUUID(id)) {
+    return {
+      task: null,
+      error: `id is not a valide UUID: ${id}`,
+    };
+  }
+  const taskId = id as UUID;
+
   try {
-    const res = await TASK_MUTATIONS.deleteTask(id)
-    return JSON.parse(JSON.stringify(res))
+    await TASK_MUTATIONS.deleteTask(taskId);
+
+    const deleted = await TASK_QUERIES.mapIdToTask(taskId);
+    return {
+      task: deleted,
+    };
   } catch (err) {
-    console.error('Error deleting task:', err)
-    throw err
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 

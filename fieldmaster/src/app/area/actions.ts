@@ -3,17 +3,18 @@
 import { MUTATIONS, QUERIES } from "@/src/server/db/queries/queries";
 import { Area } from "@/src/server/db/type/DBTypes";
 
-//Area FMST-30  / FMST-31
+// Area FMST-30  / FMST-31
 
 export async function createArea(
   name: string,
   size: number,
+  category?: string,
 ): Promise<{
   area: Area | null;
   error?: string;
 }> {
   try {
-    const res = await MUTATIONS.AREA.CreateArea(name, size);
+    const res = await AREA_MUTATIONS.CreateArea(name, size);
     if (!res) {
       throw Error();
     }
@@ -28,7 +29,7 @@ export async function getAllAreas(): Promise<{
   error?: string;
 }> {
   try {
-    const res = await QUERIES.AREA.getAllAreas();
+    const res = await AREA_QUERIES.getAllAreas();
     return { areas: res };
   } catch {
     return { areas: null, error: "an error occurred" };

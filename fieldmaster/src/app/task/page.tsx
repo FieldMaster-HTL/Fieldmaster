@@ -11,6 +11,12 @@ import {
   createTaskAction,
   deleteTaskAction,
   getTasksSortedFilteredAction,
+  getAllToolsAction, 
+  getAllTaskToolsAction, 
+  getToolsForTaskAction, 
+  setTaskToolsAction, 
+  updateTaskAction, 
+  markTaskCompletedAction
 } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
 
@@ -128,7 +134,7 @@ export default function Tasks() {
           creatorClerkId,
           dueDate, newTaskAreaId || undefined,
           newTaskPriority,
-          areaIdValue,
+          
         );
         // assign selected tools to the newly created task
         if (created && newTaskToolIds && newTaskToolIds.length > 0) {
@@ -231,11 +237,11 @@ export default function Tasks() {
             }
             className="p-2 border rounded-md"
           >
-          {tools.map((tool) => (
-            <option key={tool.id} value={tool.id}>
-              {tool.name}
-            </option>
-          ))}
+            {tools.map((tool) => (
+              <option key={tool.id} value={tool.id}>
+                {tool.name}
+              </option>
+            ))}
           </select>
 
           {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
@@ -311,28 +317,27 @@ export default function Tasks() {
               .map((task) => {
                 const isDeleted = task.description === "[DELETED]";
                 return (
-                    <tr
-                      key={task.id}
-                      className={`
+                  <tr
+                    key={task.id}
+                    className={`
                       transition-colors
                       ${isDeleted ? "opacity-50" : ""}
                       ${task.completed ? "opacity-60 line-through" : ""}
                       hover:bg-gray-200/20
                     `}
-                    >
+                  >
                     <td className="p-2 border">
                       {isDeleted ? (
                         "-"
                       ) : (
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-block h-3 w-3 rounded-full ${
-                              task.priority === "Hoch"
-                                ? "bg-red-500"
-                                : task.priority === "Niedrig"
-                                  ? "bg-green-500"
-                                  : "bg-yellow-400"
-                            }`}
+                            className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch"
+                              ? "bg-red-500"
+                              : task.priority === "Niedrig"
+                                ? "bg-green-500"
+                                : "bg-yellow-400"
+                              }`}
                             title={task.priority ?? "Mittel"}
                           />
                           <span className="text-sm">{task.priority ?? "Mittel"}</span>
@@ -361,29 +366,29 @@ export default function Tasks() {
                       {isDeleted
                         ? "-"
                         : (() => {
-                            const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
-                            const assignedNames = assignedIds
-                              .map((id) => tools.find((t) => t.id === id)?.name)
-                              .filter(Boolean);
-                            return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
-                          })()
+                          const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
+                          const assignedNames = assignedIds
+                            .map((id) => tools.find((t) => t.id === id)?.name)
+                            .filter(Boolean);
+                          return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
+                        })()
                       }
                     </td>
-                      <td className="flex gap-2 p-2 border">
+                    <td className="flex gap-2 p-2 border">
                       {/* Mark as completed */}
-                    {!task.completed && !isDeleted && (
-                      <button
-                        onClick={async () => {
-                          await markTaskCompletedAction(task.id);
-                          await fetchTasks();
-                        }}
-                        className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white transition-colors"
-                      >
-                        ✓ Done
-                      </button>
-                    )}
-                    
-                    {/* View Button */}
+                      {!task.completed && !isDeleted && (
+                        <button
+                          onClick={async () => {
+                            await markTaskCompletedAction(task.id);
+                            await fetchTasks();
+                          }}
+                          className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white transition-colors"
+                        >
+                          ✓ Done
+                        </button>
+                      )}
+
+                      {/* View Button */}
                       <button
                         onClick={async () => {
                           setSelectedTask({
@@ -393,8 +398,8 @@ export default function Tasks() {
                               : undefined,
                           });
                           setModalAreaId(task.areaId ?? "");
-                        await loadToolsForTask(task.id);
-                        setShowModal(true);
+                          await loadToolsForTask(task.id);
+                          setShowModal(true);
                         }}
                         className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
                         disabled={isDeleted}

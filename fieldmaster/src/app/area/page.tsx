@@ -43,6 +43,11 @@ const deleteAreaFn: (id: string) => Promise<DeleteAreaResult> = (((AreaActions a
   return { success: false, error: 'deleteArea not available' };
 })) as (id: string) => Promise<DeleteAreaResult>;
 
+/**
+ * Page component for managing Areas: provides a form to create areas, toggleable list/table views, edit modal, and delete confirmation.
+ *
+ * @returns The React element for the Area management page.
+ */
 export default function Page(): React.JSX.Element {
   // Form state
   const [name, setName] = useState("");

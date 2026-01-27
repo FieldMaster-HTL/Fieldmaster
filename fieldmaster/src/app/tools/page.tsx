@@ -4,7 +4,14 @@ import { Tool } from "../../server/db/type/DBTypes";
 import { loadTools, storeTools, updateTool } from "./actions";
 import "./style.css";
 
-// Import von asynchronen Funktionen zur Datenbank-Interaktion
+/**
+ * Client component that provides a UI for viewing, creating, and editing tools via modal dialogs.
+ *
+ * Loads tools on mount, manages form and modal state, and displays success or error messages while
+ * performing create and update operations.
+ *
+ * @returns The JSX element that renders the tools management interface (list, create modal, edit modal).
+ */
 
 export default function Page() {
   // React State Hooks:
@@ -24,7 +31,11 @@ export default function Page() {
     loadToolsfromDB()
   }, [])
 
-  // Asynchrone Funktion, um Tools aus der Datenbank zu laden
+  /**
+   * Loads tools from the database and updates component state with the retrieved list.
+   *
+   * On failure, records an error message in the component state so the UI can display it.
+   */
   async function loadToolsfromDB() {
     try {
       const data = await loadTools();
@@ -42,7 +53,11 @@ export default function Page() {
     fetchTools();
   }, []);
 
-  // Formular absenden
+  /**
+   * Handle the create-tool form submission: validate the name, persist the new tool, reset form state, close the modal, and reload tools from the database.
+   *
+   * @param e - The form submit event
+   */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault() // Standardformularverhalten verhindern
 

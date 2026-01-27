@@ -20,6 +20,13 @@ import {
 } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
 
+/**
+ * Client-side React component that renders a tasks management UI with creation, filtering, sorting, detail and deletion workflows.
+ *
+ * Renders a form to create tasks (including area, priority, due date, and multi-tool assignment), a filterable/sortable task table showing assigned areas and tools, a delete confirmation modal, and a task detail modal that supports assigning/unassigning tools and inline tool creation. Synchronizes UI state with the server for fetching, creating, updating, deleting tasks and managing tool assignments.
+ *
+ * @returns The component's rendered JSX element for the tasks management interface.
+ */
 export default function Tasks() {
   const [tasks, setTasks] = useState<any[]>([]); // store all tasks
   const [areas, setAreas] = useState<any[]>([]); // store all areas | FMST-11

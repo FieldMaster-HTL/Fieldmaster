@@ -139,6 +139,11 @@ export default function Page(): React.JSX.Element {
   // Load areas and tasks in parallel on first render.
   // The try/catch sets an error message and the finally ensures loading flags are cleared.
   useEffect(() => {
+    /**
+     * Load areas and tasks in parallel and update the component state accordingly.
+     *
+     * Sets per-resource loading flags to true, clears any existing error, fetches areas and tasks concurrently, and updates the corresponding state values (falling back to empty arrays if responses are falsy). On error, sets the error state to the error message or the default German message "Unbekannter Fehler beim Laden der Daten" and logs the error to the console. Always clears both loading flags when finished.
+     */
     async function load() {
       try {
         setError(null)

@@ -1,5 +1,12 @@
 import Link from 'next/link'
 
+/**
+ * Render the Fieldmaster landing page layout with navigation and feature cards.
+ *
+ * Renders a centered container with a header (title, description, action links to /dashboard and /new), a responsive three-card feature grid (Übersicht, Verwaltung, Organisation), and a footer with a quick-start message.
+ *
+ * @returns The page's JSX element containing the header, action links, feature cards, and footer.
+ */
 export default function Page() {
   return (
     <main className="flex justify-center items-center bg-surface p-6 min-h-screen">

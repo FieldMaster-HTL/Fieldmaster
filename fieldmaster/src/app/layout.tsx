@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   description: 'Fieldmaster: Verwaltung von Flächen, Einsätzen und Werkzeugen — schnell, übersichtlich und zuverlässig.',
 }
 
+/**
+ * Root layout component that provides authentication context and renders the application shell.
+ *
+ * @param children - The page content to render inside the root layout
+ * @returns The root JSX element containing a header with authentication controls and the provided children
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

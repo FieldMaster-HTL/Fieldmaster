@@ -40,6 +40,8 @@ export default function Tasks() {
     "Alle",
   ); // priority filter
   const [newTaskPriority, setNewTaskPriority] = useState<"Hoch" | "Mittel" | "Niedrig">("Mittel"); // new task priority
+  const [filterCompleted, setFilterCompleted] = useState<"all" | "open" | "completed">("all"); // FMST-54 | Pachler: Filter for completed tasks
+  const [successMessage, setSuccessMessage] = useState(""); // FMST-54 | Pachler: Success message
 
   // Tools state (FMST-12)
   const [tools, setTools] = useState<any[]>([]);
@@ -74,6 +76,14 @@ export default function Tasks() {
     }
     setAreas(res.areas);
   };
+
+  // FMST-54 | Pachler: Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // fetch tools and task-tools (FMST-12)
   const fetchTools = async () => {
@@ -161,7 +171,7 @@ export default function Tasks() {
 
   return (
     <main className="flex justify-center items-center bg-surface p-6 min-h-screen">
-      <section className="relative bg-elevated shadow-md p-8 border rounded-lg w-full max-w-3xl">
+      <section className="relative bg-elevated shadow-md p-8 border rounded-lg w-full max-w-5xl">
         <header className="flex md:flex-row flex-col md:justify-between md:items-center gap-4 mb-6">
           <div>
             <h1 className="font-extrabold text-primary-500 text-3xl md:text-4xl">Tasks</h1>
@@ -227,7 +237,7 @@ export default function Tasks() {
             <option value="Mittel">Priorität: Mittel</option>
             <option value="Niedrig">Priorität: Niedrig</option>
           </select>
-          
+
           {/* FMST-12: Tool selection multi-select | Pachler Tobias */}
           <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -324,141 +334,259 @@ export default function Tasks() {
           </select>
         </div>
 
-        {/* FMST-75: Task Table */}
-        <table className="border border-gray-50 w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-200/50">
-              <th className="p-2 border text-left">Priorität</th>
-              <th className="p-2 border text-left">Name</th>
-              <th className="p-2 border text-left">Description</th>
-              <th className="p-2 border text-left">Feld</th>
-              <th className="p-2 border text-left">Werkzeuge</th>
-              <th className="p-2 border text-left">Due Date</th>
-              <th className="p-2 border text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.length === 0 && (
-              <tr>
-                <td colSpan={6} className="p-4 text-gray-500 text-center italic">
-                  Keine Aufgaben vorhanden.
-                </td>
-              </tr>
+        {/* FMST-54 | Pachler: Filter by completion status */}
+        <div className="flex gap-2 mb-4">
+          <span className="text-sm text-gray-600 self-center mr-2 font-medium">Status:</span>
+          {[
+            { value: "all", label: "Alle Tasks" },
+            { value: "open", label: "Offen" },
+            { value: "completed", label: "Erledigt" },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setFilterCompleted(item.value as typeof filterCompleted)}
+              className={`px-3 py-1 rounded transition-colors ${filterCompleted === item.value
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* FMST-54 | Pachler: Active Filter Chips */}
+        {(filterPriority !== "Alle" || filterCompleted !== "all" || filter !== "all" || sort) && (
+          <div className="flex flex-wrap gap-2 mb-4 items-center">
+            <span className="text-sm text-gray-600 font-medium">Aktive Filter:</span>
+
+            {filterPriority !== "Alle" && (
+              <div className="flex items-center gap-1 bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span>Priorität: {filterPriority}</span>
+                <button
+                  onClick={() => setFilterPriority("Alle")}
+                  className="ml-1 hover:bg-primary-200 rounded-full p-0.5 transition-colors"
+                  aria-label="Filter entfernen"
+                >
+                  ✕
+                </button>
+              </div>
             )}
 
-            {tasks
-              .filter((task) => filterPriority === "Alle" || task.priority === filterPriority)
-              .map((task) => {
-                const isDeleted = task.description === "[DELETED]";
-                return (
-                  <tr
-                    key={task.id}
-                    className={`
-                      transition-colors
-                      ${isDeleted ? "opacity-50" : ""}
-                      ${task.completed ? "opacity-60 line-through" : ""}
-                      hover:bg-gray-200/20
+            {filterCompleted !== "all" && (
+              <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span>Status: {filterCompleted === "open" ? "Offen" : "Erledigt"}</span>
+                <button
+                  onClick={() => setFilterCompleted("all")}
+                  className="ml-1 hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                  aria-label="Filter entfernen"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {filter !== "all" && (
+              <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span>{filter === "active" ? "Aktiv" : "Gelöscht"}</span>
+                <button
+                  onClick={() => setFilter("all")}
+                  className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                  aria-label="Filter entfernen"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {sort && (
+              <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span>Sortiert: Nach Fälligkeitsdatum</span>
+                <button
+                  onClick={() => setSort(undefined)}
+                  className="ml-1 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+                  aria-label="Sortierung entfernen"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setFilterPriority("Alle");
+                setFilterCompleted("all");
+                setFilter("all");
+                setSort(undefined);
+              }}
+              className="ml-2 text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+            >
+              Alle Filter zurücksetzen
+            </button>
+          </div>
+        )}
+
+        {/* FMST-75: Task Table | Rework by Pachler to show status in table */}
+        <div className="overflow-x-auto">
+          <table className="border border-gray-50 w-full border-collapse min-w-full">
+            <thead>
+              <tr className="bg-gray-200/50">
+                <th className="p-2 border text-left">Status</th>
+                <th className="p-2 border text-left">Priorität</th>
+                <th className="p-2 border text-left">Name</th>
+                <th className="p-2 border text-left">Description</th>
+                <th className="p-2 border text-left">Feld</th>
+                <th className="p-2 border text-left">Werkzeuge</th>
+                <th className="p-2 border text-left">Due Date</th>
+                <th className="p-2 border text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-4 text-gray-500 text-center italic">
+                    Keine Aufgaben vorhanden.
+                  </td>
+                </tr>
+              )}
+
+              {tasks
+                .filter((task) => filterPriority === "Alle" || task.priority === filterPriority)
+                .filter((task) => {
+                  if (filterCompleted === "open") return !task.completed;
+                  if (filterCompleted === "completed") return task.completed;
+                  return true;
+                })
+                .map((task) => {
+                  const isDeleted = task.description === "[DELETED]";
+                  return (
+                    <tr
+                      key={task.id}
+                      className={`
+                      transition-all duration-200 ease-in-out
+                      ${isDeleted ? "opacity-50 bg-gray-100 text-gray-800" : ""}
+                      ${task.completed && !isDeleted ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-md" : "bg-white text-gray-900 hover:bg-gray-50 hover:shadow-sm"}
+                      cursor-pointer
                     `}
-                  >
-                    <td className="p-2 border">
-                      {isDeleted ? (
-                        "-"
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch"
-                              ? "bg-red-500"
-                              : task.priority === "Niedrig"
-                                ? "bg-green-500"
-                                : "bg-yellow-400"
+                    >
+                      <td className="p-2 border text-center">
+                        {isDeleted ? (
+                          "-"
+                        ) : task.completed ? (
+                          <span className="text-white text-2xl font-bold" title="Erledigt">✓</span>
+                        ) : (
+                          <span className="text-gray-400 text-xl" title="Offen">○</span>
+                        )}
+                      </td>
+                      <td className="p-2 border">
+                        {isDeleted ? (
+                          "-"
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch"
+                                ? "bg-red-500"
+                                : task.priority === "Niedrig"
+                                  ? "bg-green-500"
+                                  : "bg-yellow-400"
+                                }`}
+                              title={task.priority ?? "Mittel"}
+                            />
+                            <span className="text-sm">{task.priority ?? "Mittel"}</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2 border">{task.name}</td>
+                      <td className="p-2 border">
+                        {isDeleted ? "[DELETED]" : task.description || "-"}
+                      </td>
+                      <td className="p-2 border">
+                        {isDeleted
+                          ? "-"
+                          : task.areaId
+                            ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                            : "-"}
+                      </td>
+                      <td className="p-2 border">
+                        {isDeleted
+                          ? "-"
+                          : (() => {
+                            const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
+                            const assignedNames = assignedIds
+                              .map((id) => tools.find((t) => t.id === id)?.name)
+                              .filter(Boolean);
+                            return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
+                          })()
+                        }
+                      </td>
+                      <td className="p-2 border">
+                        {isDeleted
+                          ? "-"
+                          : task.dueTo
+                            ? new Date(task.dueTo).toLocaleDateString()
+                            : "-"}
+                      </td>
+                      <td className="flex gap-2 p-2 border">
+                        {/* FMST-54 | Pachler: Mark/Unmark as completed */}
+                        {!isDeleted && (
+                          <button
+                            onClick={async () => {
+                              const newStatus = !task.completed;
+                              await markTaskCompletedAction(task.id, newStatus);
+                              await fetchTasks();
+                              setSuccessMessage(
+                                newStatus
+                                  ? `Task "${task.name}" wurde als erledigt markiert.`
+                                  : `Task "${task.name}" wurde als offen markiert.`
+                              );
+                            }}
+                            className={`px-3 py-1 rounded text-white transition-colors ${task.completed
+                              ? "bg-orange-500 hover:bg-orange-600"
+                              : "bg-green-600 hover:bg-green-700"
                               }`}
-                            title={task.priority ?? "Mittel"}
-                          />
-                          <span className="text-sm">{task.priority ?? "Mittel"}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-2 border">{task.name}</td>
-                    <td className="p-2 border">
-                      {isDeleted ? "[DELETED]" : task.description || "-"}
-                    </td>
-                    <td className="p-2 border">
-                      {isDeleted
-                        ? "-"
-                        : task.areaId
-                          ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                          : "-"}
-                    </td>
-                    <td className="p-2 border">
-                      {isDeleted
-                        ? "-"
-                        : (() => {
-                          const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
-                          const assignedNames = assignedIds
-                            .map((id) => tools.find((t) => t.id === id)?.name)
-                            .filter(Boolean);
-                          return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
-                        })()
-                      }
-                    </td>
-                    <td className="p-2 border">
-                      {isDeleted
-                        ? "-"
-                        : task.dueTo
-                          ? new Date(task.dueTo).toLocaleDateString()
-                          : "-"}
-                    </td>
-                    <td className="flex gap-2 p-2 border">
-                      {/* Mark as completed */}
-                      {!task.completed && !isDeleted && (
+                          >
+                            {task.completed ? "↶ Erneut öffnen" : "✓ Erledigt"}
+                          </button>
+                        )}
+
+                        {/* View Button */}
                         <button
                           onClick={async () => {
-                            await markTaskCompletedAction(task.id);
-                            await fetchTasks();
+                            setSelectedTask({
+                              ...task,
+                              area: task.areaId
+                                ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
+                                : undefined,
+                            });
+                            setModalAreaId(task.areaId ?? "");
+                            await loadToolsForTask(task.id);
+                            setShowModal(true);
                           }}
-                          className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white transition-colors"
+                          className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
+                          disabled={isDeleted}
                         >
-                          ✓ Done
+                          View
                         </button>
-                      )}
 
-                      {/* View Button */}
-                      <button
-                        onClick={async () => {
-                          setSelectedTask({
-                            ...task,
-                            area: task.areaId
-                              ? (areas.find((a) => a.id === task.areaId)?.name ?? "Unbekannt")
-                              : undefined,
-                          });
-                          setModalAreaId(task.areaId ?? "");
-                          await loadToolsForTask(task.id);
-                          setShowModal(true);
-                        }}
-                        className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white transition-colors"
-                        disabled={isDeleted}
-                      >
-                        View
-                      </button>
-
-                      {/* Delete Button */}
-                      {!isDeleted && (
-                        <button
-                          onClick={() => {
-                            setTaskToDelete(task);
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="before:absolute relative before:inset-0 bg-red-500 before:bg-black/10 before:opacity-0 hover:before:opacity-100 px-3 py-1 rounded text-white transition-opacity"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+                        {/* Delete Button */}
+                        {!isDeleted && (
+                          <button
+                            onClick={() => {
+                              setTaskToDelete(task);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="before:absolute relative before:inset-0 bg-red-500 before:bg-black/10 before:opacity-0 hover:before:opacity-100 px-3 py-1 rounded text-white transition-opacity"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
 
         {/* DELETE CONFIRM MODAL */}
         {showDeleteConfirm && taskToDelete && (
@@ -633,6 +761,16 @@ export default function Tasks() {
                 <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* FMST-54 | Pachler: Toast Success Message - bottom left */}
+      {successMessage && (
+        <div className="fixed bottom-4 left-4 z-50 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg max-w-sm animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✓</span>
+            <span className="text-sm">{successMessage}</span>
           </div>
         </div>
       )}

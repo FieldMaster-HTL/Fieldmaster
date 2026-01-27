@@ -75,7 +75,7 @@ export const TASK_MUTATIONS = {
   async deleteTask(id: UUID) {
     return db.update(Task).set({ description: "[DELETED]", dueTo: null }).where(eq(Task.id, id));
   },
-  // Mark task as completed/uncompleted | FMST-54 Pachler
+  // Mark task as completed/uncompleted | FMST-54 | Pachler
   async markTaskCompleted(id: UUID, completed: boolean) {
     return db.update(Task).set({ completed }).where(eq(Task.id, id));
   },

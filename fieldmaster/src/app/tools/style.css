@@ -235,6 +235,93 @@
   color: #000000;
 }
 
+/* Drag & Drop Bereich */
+.image-upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.image-upload-area.drag-active {
+  border-color: #4CAF50;
+  background: #e8f5e9;
+}
+
+.image-upload-area:hover {
+  border-color: #999;
+  background: #f0f0f0;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #2196F3;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.file-input-label:hover {
+  background: #1976D2;
+}
+
+.image-preview-container {
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(255, 0, 0, 1);
+}
+
 /* Mobile – nur wichtigste Spalten */
 @media (max-width: 768px) {
   .tools-table th:nth-child(3),

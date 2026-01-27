@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 import './style.css'
-import { loadTools, storeTools, loadCategories, deleteTool } from './actions'
+import { loadTools, storeTools, loadCategories, deleteTool, loadAreas } from './actions'
 import { getAllAreas } from '../area/actions'
+import { AnyAaaaRecord } from 'dns'
 
 export default function Page() {
 
@@ -20,7 +21,7 @@ export default function Page() {
   const [showWindow, setShowWindow] = useState(false)
 
   // Liste der Areas
-  const [areas, setAreas] = useState<string[]>([])
+  const [areas, setAreas] = useState<any[]>([])
 
   // Modalfelder für bearbeiten/erstellen
   const emptyForm = {
@@ -46,6 +47,55 @@ export default function Page() {
   const [filterCategory, setFilterCategory] = useState('')
   const [filterAvailable, setFilterAvailable] = useState('')
 
+  // Drag & Drop Handler
+const handleDrag = (e: React.DragEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
+  if (e.type === "dragenter" || e.type === "dragover") {
+    setDragActive(true)
+  } else if (e.type === "dragleave") {
+    setDragActive(false)
+  }
+}
+
+const handleDrop = async (e: React.DragEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
+  setDragActive(false)
+
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    await handleImageFile(e.dataTransfer.files[0])
+  }
+}
+
+const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    await handleImageFile(e.target.files[0])
+  }
+}
+
+const handleImageFile = async (file: File) => {
+  // Validierung
+  if (!file.type.startsWith('image/')) {
+    alert('Bitte nur Bilddateien hochladen')
+    return
+  }
+
+  // Max 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Bild ist zu groß (max 5MB)')
+    return
+  }
+
+  // Konvertiere zu Base64
+  const reader = new FileReader()
+  reader.onloadend = () => {
+    const base64String = reader.result as string
+    setImagePreview(base64String)
+    setForm({ ...form, imageUrl: base64String })
+  }
+  reader.readAsDataURL(file)
+}
 
   // Lädt Tools & Kategorien beim ersten Rendern
   useEffect(() => {
@@ -54,6 +104,9 @@ export default function Page() {
       const categoriesData = await loadCategories()
       setCategories(categoriesData)
 
+      // Areas laden
+      const areasData = await loadAreas()
+      setAreas(areasData)
 
       // Setze die erste Kategorie im Form, falls noch keine ausgewählt
       if (categoriesData.length > 0) {
@@ -79,19 +132,20 @@ export default function Page() {
 
   // funtktion zum Bearbeiten
   function handleEdit(tool: any) {
-    setEditingTool(tool)
-
-    setForm({
-      name: tool.name ?? '',
-      category: tool.category ?? '',
-      description: tool.description ?? '',
-      imageUrl: tool.imageUrl ?? '',
-      available: tool.available ?? true,
-      area: tool.area ?? ''
-    })
-
-    setShowWindow(true)
-  }
+  setEditingTool(tool)
+  
+  setForm({
+    name: tool.name ?? '',
+    category: tool.category ?? '',
+    description: tool.description ?? '',
+    imageUrl: tool.imageUrl ?? '',
+    available: tool.available ?? true,
+    area: tool.area ?? ''
+  })
+  
+  setImagePreview('') // Preview zurücksetzen
+  setShowWindow(true)
+}
 
   // Löschen mit Abhängigkeitsprüfung
  async function handleDelete(tool: any) {
@@ -175,11 +229,12 @@ export default function Page() {
         <button
           onClick={() => {
             setEditingTool(null)
-            setForm({...emptyForm,category: categories[0]?.name || ''})
+            setForm({...emptyForm, category: categories[0]?.name || ''})
+            setImagePreview('') // Preview zurücksetzen
             setShowWindow(true)
           }}
           className="create-button"
-        >
+          >
           Create Tool
         </button>
       </div>
@@ -278,19 +333,63 @@ export default function Page() {
                 onChange={e => setForm({ ...form, description: e.target.value })}
               />
 
-              <input
-                type="text"
-                placeholder="Bild-URL"
-                value={form.imageUrl}
-                onChange={e => setForm({ ...form, imageUrl: e.target.value })}
-              />
+              {/* Drag & Drop Bereich */}
+              <div
+                className={`image-upload-area ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                {imagePreview || form.imageUrl ? (
+                  <div className="image-preview-container">
+                    <img 
+                      src={imagePreview || form.imageUrl} 
+                      alt="Preview" 
+                      className="image-preview"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview('')
+                        setForm({ ...form, imageUrl: '' })
+                      }}
+                      className="remove-image-btn"
+                    >
+                      ✕ Bild entfernen
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="upload-icon">📁</div>
+                    <p>Bild hierher ziehen oder klicken zum Auswählen</p>
+                    <p className="upload-hint">Max. 5MB, PNG/JPG/GIF</p>
+                  </>
+                )}
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="file-input-hidden"
+                  id="file-input"
+                />
+                <label htmlFor="file-input" className="file-input-label">
+                  oder Datei auswählen
+                </label>
+              </div>
 
-              <input
-                type="text"
-                placeholder="Area"
+             <select
                 value={form.area}
                 onChange={e => setForm({ ...form, area: e.target.value })}
-              />
+              >
+                <option value="">Keine Area</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.name}>
+                    {area.name}
+                  </option>
+                ))}
+              </select>
 
               <label className="checkbox">
                 <input

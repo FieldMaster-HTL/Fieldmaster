@@ -76,3 +76,13 @@ export async function deleteTool(toolId: string) {
     throw new Error('Unable to delete tool')
   }
 }
+
+// FMST-76 (Polt Leonie) - Funktion zum Laden aller Areas
+export async function loadAreas() {
+    try {
+        return await QUERIES.AREA.getAllAreas()
+    } catch (error) {
+        console.error('Failed to load areas:', error)
+        throw new Error('Unable to load areas')
+    }
+}

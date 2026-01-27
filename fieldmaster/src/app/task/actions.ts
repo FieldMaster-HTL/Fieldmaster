@@ -95,7 +95,17 @@ export async function createTaskAction(
     };
   } catch (err) {
     console.error("Error creating task:", err);
-    throw err;
+    if (err instanceof Error) {
+      return {
+        task: null,
+        error: err.message,
+      };
+    } else {
+      return {
+        task: null,
+        error: "unknown error",
+      };
+    }
   }
 }
 

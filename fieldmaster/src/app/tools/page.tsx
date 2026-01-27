@@ -35,13 +35,6 @@ export default function Page() {
     }
   }
 
-  useEffect(() => {
-    const fetchTools = () => {
-      loadToolsfromDB();
-    };
-    fetchTools();
-  }, []);
-
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault() // Standardformularverhalten verhindern

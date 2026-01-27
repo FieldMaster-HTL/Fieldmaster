@@ -145,10 +145,17 @@ export default function Page(): React.JSX.Element {
         setLoadingAreas(true)
         setLoadingTasks(true)
 
-        const [{ areas }, tasksRes] = await Promise.all([getAllAreas(), getAllTasksAction()])
+        const [areasRes, tasksRes] = await Promise.all([getAllAreas(), getAllTasksAction()])
 
-        // Defensive: fallback to empty arrays if responses are falsy
-        setAreas(areas || [])
+        // Check for backend errors from getAllAreas
+        if (areasRes.error) {
+          setError(areasRes.error)
+          console.error('Dashboard areas load error:', areasRes.error)
+        } else {
+          setAreas(areasRes.areas || [])
+        }
+
+        // Defensive: fallback to empty array if tasksRes is falsy
         setTasks(tasksRes || [])
       } catch (err: any) {
         setError(err?.message ?? 'Unbekannter Fehler beim Laden der Daten')

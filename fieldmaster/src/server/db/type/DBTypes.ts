@@ -4,6 +4,7 @@ import {
   Area as DBArea,
   Farm as DBFarm,
   Task as DBTask,
+  toolsTable as DBTool,
 } from "../schema/schema";
 
 export type User = InferSelectModel<typeof DBUser>;
@@ -17,3 +18,6 @@ export type NewTask = InferInsertModel<typeof DBTask>;
 
 export type Area = InferSelectModel<typeof DBArea>;
 export type NewArea = InferInsertModel<typeof DBArea>;
+
+export type Tool = InferSelectModel<typeof DBTool>;
+export type NewTool = InferInsertModel<typeof DBTool>;

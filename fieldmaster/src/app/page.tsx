@@ -53,8 +53,8 @@ export default function Page() {
         <footer className="mt-8 pt-6 border-t border-foreground/10">
           <p className="text-foreground/80 text-sm">
             👉 Klicke auf{' '}
-            <span className="font-semibold text-primary-500">„Zum Dashboard"</span> um zu starten, oder erstelle neue Areas und Tasks mit{' '}
-            <span className="font-semibold text-primary-500">„Neu anlegen"</span>.
+            <span className="font-semibold text-primary-500">„Zum Dashboard“</span> um zu starten, oder erstelle neue Areas und Tasks mit{' '}
+            <span className="font-semibold text-primary-500">„Neu anlegen“</span>.
           </p>
         </footer>
       </section>

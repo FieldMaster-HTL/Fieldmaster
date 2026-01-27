@@ -190,12 +190,20 @@ export async function deleteTaskAction(id: string): Promise<{
 }
 
 // Mark task as completed | FMST-54 Pachler
-export async function markTaskCompletedAction(id: UUID) {
+export async function markTaskCompletedAction(
+  id: UUID,
+  completed: boolean = true,
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
   try {
-    return await TASK_MUTATIONS.markTaskCompleted(id);
+    await TASK_MUTATIONS.markTaskCompleted(id, completed);
+    const updated = await TASK_QUERIES.mapIdToTask(id);
+    return { task: updated };
   } catch (err) {
     console.error("Failed to mark task completed:", err);
-    return { error: "Could not complete task." };
+    return { task: null, error: "Could not complete task." };
   }
 }
 

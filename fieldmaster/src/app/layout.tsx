@@ -1,4 +1,5 @@
 import { type Metadata } from 'next'
+import Link from 'next/link'
 // Clerk imports for authentication | FMST-25, FMST-27, FMST-28, FMST-29
 import {
   ClerkProvider,
@@ -39,12 +40,26 @@ export default function RootLayout({
             <SignedOut>
               <SignInButton />
               <SignUpButton>
-                <button className="bg-[#6c47ff] px-4 sm:px-5 rounded-full h-10 sm:h-12 font-medium text-ceramic-white text-sm sm:text-base cursor-pointer">
-                  Sign Up
+                <button className="bg-[#6c47ff] px-4 sm:px-5 rounded-full h-10 sm:h-12 font-medium text-white text-sm sm:text-base cursor-pointer">
+                  Registrieren
                 </button>
               </SignUpButton>
             </SignedOut>
             <SignedIn>
+              <nav className="flex items-center gap-4 mr-auto">
+                <Link href="/dashboard" className="text-sm font-medium hover:text-primary-500 transition-colors">
+                  Übersicht
+                </Link>
+                <Link href="/area" className="text-sm font-medium hover:text-primary-500 transition-colors">
+                  Flächen
+                </Link>
+                <Link href="/task" className="text-sm font-medium hover:text-primary-500 transition-colors">
+                  Aufgaben
+                </Link>
+                <Link href="/tools" className="text-sm font-medium hover:text-primary-500 transition-colors">
+                  Werkzeuge
+                </Link>
+              </nav>
               <UserButton />
             </SignedIn>
           </header>

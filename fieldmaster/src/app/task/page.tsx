@@ -11,11 +11,11 @@ import {
   createTaskAction,
   deleteTaskAction,
   getTasksSortedFilteredAction,
-  getAllToolsAction, 
-  getAllTaskToolsAction, 
-  getToolsForTaskAction, 
-  setTaskToolsAction, 
-  updateTaskAction, 
+  getAllToolsAction,
+  getAllTaskToolsAction,
+  getToolsForTaskAction,
+  setTaskToolsAction,
+  updateTaskAction,
   markTaskCompletedAction
 } from "./actions";
 import { Task } from "@/src/server/db/type/DBTypes";
@@ -132,19 +132,21 @@ export default function Tasks() {
           newTaskName,
           newTaskDescription,
           creatorClerkId,
-          dueDate, newTaskAreaId || undefined,
+          dueDate,
           newTaskPriority,
-          
+          areaIdValue,
+
         );
         // assign selected tools to the newly created task
-        if (created && newTaskToolIds && newTaskToolIds.length > 0) {
+        if (created?.task?.id && newTaskToolIds && newTaskToolIds.length > 0) {
           try {
-            await setTaskToolsAction(created.id as any, newTaskToolIds);
+            await setTaskToolsAction(created.task.id as any, newTaskToolIds);
           } catch (err) {
             console.error('Failed to set tools for new task:', err);
           }
         }
         await fetchTasks();
+        await fetchTaskTools();
         setNewTaskName("");
         setNewTaskDescription("");
         setDueTo("");
@@ -225,24 +227,56 @@ export default function Tasks() {
             <option value="Mittel">Priorität: Mittel</option>
             <option value="Niedrig">Priorität: Niedrig</option>
           </select>
-
-          {/* FMST-12 | Pachler Tobias */}
-          <select
-            multiple
-            value={newTaskToolIds}
-            onChange={(e) =>
-              setNewTaskToolIds(
-                Array.from(e.target.selectedOptions).map((o) => o.value)
-              )
-            }
-            className="p-2 border rounded-md"
-          >
-            {tools.map((tool) => (
-              <option key={tool.id} value={tool.id}>
-                {tool.name}
-              </option>
-            ))}
-          </select>
+          
+          {/* FMST-12: Tool selection multi-select | Pachler Tobias */}
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Werkzeuge (optional)
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Mehrfachauswahl mit Strg/Cmd oder Shift. Ausgewählt: {newTaskToolIds.length}
+            </p>
+            <select
+              multiple
+              value={newTaskToolIds}
+              onChange={(e) =>
+                setNewTaskToolIds(
+                  Array.from(e.target.selectedOptions).map((o) => o.value)
+                )
+              }
+              className="w-full rounded border border-gray-300 bg-white p-2 text-sm shadow-inner focus:border-primary-500 focus:outline-none"
+            >
+              {tools.map((tool) => (
+                <option key={tool.id} value={tool.id}>
+                  {tool.name}
+                </option>
+              ))}
+            </select>
+            {newTaskToolIds.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {tools
+                  .filter((t) => newTaskToolIds.includes(t.id))
+                  .map((t) => (
+                    <span
+                      key={t.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2 py-1 text-xs text-primary-700 border border-primary-200"
+                    >
+                      {t.name}
+                      <button
+                        type="button"
+                        aria-label={`Entferne ${t.name}`}
+                        className="text-primary-800 hover:text-primary-900"
+                        onClick={() =>
+                          setNewTaskToolIds((prev) => prev.filter((id) => id !== t.id))
+                        }
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+              </div>
+            )}
+          </div>
 
           {error && <div className="mb-2 text-red-500 text-sm">{error}</div>}
           <button
@@ -358,13 +392,6 @@ export default function Tasks() {
                     <td className="p-2 border">
                       {isDeleted
                         ? "-"
-                        : task.dueTo
-                          ? new Date(task.dueTo).toLocaleDateString()
-                          : "-"}
-                    </td>
-                    <td className="p-2 border">
-                      {isDeleted
-                        ? "-"
                         : (() => {
                           const assignedIds = taskTools.filter((e) => e.taskId === task.id).map((e) => e.toolId);
                           const assignedNames = assignedIds
@@ -373,6 +400,13 @@ export default function Tasks() {
                           return assignedNames.length > 0 ? assignedNames.join(', ') : '-';
                         })()
                       }
+                    </td>
+                    <td className="p-2 border">
+                      {isDeleted
+                        ? "-"
+                        : task.dueTo
+                          ? new Date(task.dueTo).toLocaleDateString()
+                          : "-"}
                     </td>
                     <td className="flex gap-2 p-2 border">
                       {/* Mark as completed */}

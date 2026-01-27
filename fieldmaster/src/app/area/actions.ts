@@ -1,5 +1,6 @@
 "use server";
 
+import { AREA_MUTATIONS, AREA_QUERIES } from "@/src/server/db/queries/area.query";
 import { MUTATIONS, QUERIES } from "@/src/server/db/queries/queries";
 import { Area } from "@/src/server/db/type/DBTypes";
 

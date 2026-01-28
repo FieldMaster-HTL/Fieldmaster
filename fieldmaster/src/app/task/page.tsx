@@ -49,6 +49,7 @@ export default function Tasks() {
   const [modalAreaId, setModalAreaId] = useState("");
   const [newToolName, setNewToolName] = useState("");
   const [newToolCategory, setNewToolCategory] = useState("Maschine");
+
   // fetch all tasks from server
   const fetchTasks = async (filterParam = filter, sortParam = sort) => {
     const res = await getTasksSortedFilteredAction({
@@ -61,7 +62,6 @@ export default function Tasks() {
       setTasks([]);
       return;
     }
-
     setTasks(res.tasks);
   };
 
@@ -653,143 +653,147 @@ export default function Tasks() {
       </section>
 
       {/* Task Detail Modal */}
-      {showModal && selectedTask && (
-        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
-          <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
-            <button
-              onClick={() => setShowModal(false)}
-              className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
-            >
-              ✕
-            </button>
+      {
+        showModal && selectedTask && (
+          <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 backdrop-blur-sm">
+            <div className="relative bg-gradient-to-br from-primary-900 via-gray-800 to-secondary-800 shadow-2xl p-6 border border-gray-700 rounded-2xl w-full max-w-md text-white">
+              <button
+                onClick={() => setShowModal(false)}
+                className="top-2 right-3 absolute text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
 
-            <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
-            <p className="mb-4 text-gray-300 text-sm">
-              {selectedTask.description || "Keine Beschreibung."}
-            </p>
-            {/* FMST-11: Display area in modal */}
-            {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
-            <div className="mb-4">
-              <label className="block mb-1 text-gray-300 text-sm">Werkzeuge zuordnen</label>
-              <div className="bg-gray-900/30 p-2 rounded max-h-40 overflow-auto">
-                {tools.map((t) => (
-                  <label key={t.id} className="flex items-center gap-2 mb-1 text-sm">
+              <h2 className="mb-2 font-bold text-primary-400 text-2xl">{selectedTask.name}</h2>
+              <p className="mb-4 text-gray-300 text-sm">
+                {selectedTask.description || "Keine Beschreibung."}
+              </p>
+              {/* FMST-11: Display area in modal */}
+              {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
+              <div className="mb-4">
+                <label className="block mb-1 text-gray-300 text-sm">Werkzeuge zuordnen</label>
+                <div className="bg-gray-900/30 p-2 rounded max-h-40 overflow-auto">
+                  {tools.map((t) => (
+                    <label key={t.id} className="flex items-center gap-2 mb-1 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={modalToolIds.includes(t.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setModalToolIds((s) => [...s, t.id]);
+                          else setModalToolIds((s) => s.filter((id) => id !== t.id));
+                        }}
+                      />
+                      <span>{t.name}</span>
+                    </label>
+                  ))}
+                </div>
+                {/* Inline add tool form */}
+                <div className="bg-gray-900/20 mt-3 p-2 rounded">
+                  <label className="text-gray-300 text-xs">Neues Werkzeug hinzufügen</label>
+                  <div className="flex gap-2 mt-2">
                     <input
-                      type="checkbox"
-                      checked={modalToolIds.includes(t.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) setModalToolIds((s) => [...s, t.id]);
-                        else setModalToolIds((s) => s.filter((id) => id !== t.id));
-                      }}
+                      type="text"
+                      placeholder="Name"
+                      value={newToolName}
+                      onChange={(e) => setNewToolName(e.target.value)}
+                      className="p-1 rounded text-black"
                     />
-                    <span>{t.name}</span>
-                  </label>
-                ))}
-              </div>
-              {/* Inline add tool form */}
-              <div className="bg-gray-900/20 mt-3 p-2 rounded">
-                <label className="text-gray-300 text-xs">Neues Werkzeug hinzufügen</label>
+                    <select
+                      value={newToolCategory}
+                      onChange={(e) => setNewToolCategory(e.target.value)}
+                      className="p-1 rounded text-black"
+                    >
+                      <option value="Maschine">Maschine</option>
+                      <option value="Handwerkzeug">Handwerkzeug</option>
+                    </select>
+                    <button
+                      onClick={async () => {
+                        if (!newToolName.trim()) return;
+                        try {
+                          const created = await storeTools({ name: newToolName.trim(), category: newToolCategory }, true);
+                          // refresh local tools list and select the new tool
+                          setTools((s) => (s ? [created, ...s] : [created]));
+                          setModalToolIds((s) => [...s, created.id]);
+                          setNewToolName("");
+                          setNewToolCategory("Maschine");
+                        } catch (err) {
+                          console.error('Failed to create tool inline:', err);
+                        }
+                      }}
+                      className="bg-secondary-100 px-2 py-1 rounded text-white"
+                    >
+                      Hinzufügen
+                    </button>
+                  </div>
+                </div>
                 <div className="flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Name"
-                    value={newToolName}
-                    onChange={(e) => setNewToolName(e.target.value)}
-                    className="p-1 rounded text-black"
-                  />
-                  <select
-                    value={newToolCategory}
-                    onChange={(e) => setNewToolCategory(e.target.value)}
-                    className="p-1 rounded text-black"
-                  >
-                    <option value="Maschine">Maschine</option>
-                    <option value="Handwerkzeug">Handwerkzeug</option>
-                  </select>
                   <button
-                    onClick={async () => {
-                      if (!newToolName.trim()) return;
-                      try {
-                        const created = await storeTools({ name: newToolName.trim(), category: newToolCategory }, true);
-                        // refresh local tools list and select the new tool
-                        setTools((s) => (s ? [created, ...s] : [created]));
-                        setModalToolIds((s) => [...s, created.id]);
-                        setNewToolName("");
-                        setNewToolCategory("Maschine");
-                      } catch (err) {
-                        console.error('Failed to create tool inline:', err);
-                      }
+                    onClick={() => {
+                      startTransition(async () => {
+                        try {
+                          // update area if changed
+                          const updateResult = await updateTaskAction(selectedTask!.id, {
+                            areaId: modalAreaId || undefined
+                          });
+
+                          if (updateResult.error) {
+                            setSuccessMessage(`Fehler beim Speichern der Task: ${updateResult.error}`);
+                            return;
+                          }
+
+                          await setTaskToolsAction(selectedTask!.id as any, modalToolIds);
+                          await fetchTasks();
+                          await fetchTaskTools();
+                          setShowModal(false);
+                          setSuccessMessage(`Task wurde erfolgreich gespeichert.`);
+                        } catch (err) {
+                          const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+                          setSuccessMessage(`Fehler beim Speichern: ${errorMessage}`);
+                          console.error(err);
+                        }
+                      });
                     }}
-                    className="bg-secondary-100 px-2 py-1 rounded text-white"
+                    className="bg-primary-500 px-3 py-1 rounded text-white"
                   >
-                    Hinzufügen
+                    Speichern
+                  </button>
+                  <button
+                    onClick={() => setModalToolIds(taskTools.filter((e) => e.taskId === selectedTask!.id).map((e) => e.toolId))}
+                    className="bg-secondary-100 px-3 py-1 rounded text-white"
+                  >
+                    Zurücksetzen
                   </button>
                 </div>
               </div>
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => {
-                    startTransition(async () => {
-                      try {
-                        // update area if changed
-                        const updateResult = await updateTaskAction(selectedTask!.id, {
-                          areaId: modalAreaId || undefined
-                        });
 
-                        if (updateResult.error) {
-                          setSuccessMessage(`Fehler beim Speichern der Task: ${updateResult.error}`);
-                          return;
-                        }
-
-                        await setTaskToolsAction(selectedTask!.id as any, modalToolIds);
-                        await fetchTasks();
-                        await fetchTaskTools();
-                        setShowModal(false);
-                        setSuccessMessage(`Task wurde erfolgreich gespeichert.`);
-                      } catch (err) {
-                        const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-                        setSuccessMessage(`Fehler beim Speichern: ${errorMessage}`);
-                        console.error(err);
-                      }
-                    });
-                  }}
-                  className="bg-primary-500 px-3 py-1 rounded text-white"
-                >
-                  Speichern
-                </button>
-                <button
-                  onClick={() => setModalToolIds(taskTools.filter((e) => e.taskId === selectedTask!.id).map((e) => e.toolId))}
-                  className="bg-secondary-100 px-3 py-1 rounded text-white"
-                >
-                  Zurücksetzen
-                </button>
+              <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
+                <p>ID: {selectedTask.id}</p>
+                <p>
+                  Erstellt:{" "}
+                  {selectedTask.createdAt
+                    ? new Date(selectedTask.createdAt).toLocaleString()
+                    : "Unbekannt"}
+                </p>
+                {selectedTask.dueTo && (
+                  <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
+                )}
               </div>
             </div>
-
-            <div className="pt-2 border-gray-700 border-t text-gray-400 text-xs">
-              <p>ID: {selectedTask.id}</p>
-              <p>
-                Erstellt:{" "}
-                {selectedTask.createdAt
-                  ? new Date(selectedTask.createdAt).toLocaleString()
-                  : "Unbekannt"}
-              </p>
-              {selectedTask.dueTo && (
-                <p>Fällig: {new Date(selectedTask.dueTo).toLocaleDateString()}</p>
-              )}
-            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* FMST-54 | Pachler: Toast Success Message - bottom left */}
-      {successMessage && (
-        <div className="bottom-4 left-4 z-50 fixed bg-green-600 shadow-lg px-4 py-3 rounded-lg max-w-sm text-white animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✓</span>
-            <span className="text-sm">{successMessage}</span>
+      {
+        successMessage && (
+          <div className="bottom-4 left-4 z-50 fixed bg-green-600 shadow-lg px-4 py-3 rounded-lg max-w-sm text-white animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✓</span>
+              <span className="text-sm">{successMessage}</span>
+            </div>
           </div>
-        </div>
-      )}
-    </main>
+        )
+      }
+    </main >
   );
 }

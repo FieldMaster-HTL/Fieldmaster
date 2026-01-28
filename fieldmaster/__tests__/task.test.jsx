@@ -32,45 +32,61 @@ afterEach(() => {
 describe("Tasks Component - Comprehensive Tests", () => {
   // Test if the page renders correctly with no tasks
   it("renders heading, inputs and empty state when no tasks", async () => {
-    getAllTasksAction.mockResolvedValue({ tasks: [], error: null });
-    getTasksSortedFilteredAction.mockResolvedValue({ tasks: [], error: null });
+    getAllTasksAction.mockResolvedValue({ tasks: [] }); // mock empty tasks
 
     render(<Tasks />);
 
     await waitFor(() => expect(screen.getByText("Keine Aufgaben vorhanden.")).toBeInTheDocument());
 
+    // check heading and input fields
     expect(screen.getByRole("heading", { name: /tasks/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Titel der Aufgabe...")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Beschreibung (optional)...")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enddatum (optional)")).toBeInTheDocument();
+
+    // check empty state text
+    expect(screen.getByText("Keine Aufgaben vorhanden.")).toBeInTheDocument();
   });
 
   // Test if creating a task calls the correct action
   it("calls createTaskAction when submitting the new task form", async () => {
     const creatorClerkId = "creator-1";
+
     localStorage.setItem("creatorClerkId", creatorClerkId);
 
-    getAllTasksAction.mockResolvedValue({ tasks: [], error: null });
-    getTasksSortedFilteredAction.mockResolvedValue({ tasks: [], error: null });
-    createTaskAction.mockResolvedValue({ success: true });
+    getAllTasksAction.mockResolvedValue({ tasks: [] }); // no tasks initially
+    createTaskAction.mockResolvedValue(undefined); // mock create
 
     render(<Tasks />);
+
+    await waitFor(() => expect(getAllTasksAction).toHaveBeenCalled());
 
     const nameInput = screen.getByPlaceholderText("Titel der Aufgabe...");
     const descInput = screen.getByPlaceholderText("Beschreibung (optional)...");
     const dateInput = screen.getByPlaceholderText("Enddatum (optional)");
     const button = screen.getByRole("button", { name: /hinzufügen/i });
 
+    // fill out form
     fireEvent.change(nameInput, { target: { value: "Test Task" } });
     fireEvent.change(descInput, { target: { value: "Beschreibung" } });
     fireEvent.change(dateInput, { target: { value: "2025-11-12" } });
+
+    // submit form
     fireEvent.click(button);
 
-    await waitFor(() => expect(createTaskAction).toHaveBeenCalled());
+    // wait for createTaskAction to be called (component uses startTransition)
+    await waitFor(() => {
+      expect(createTaskAction).toHaveBeenCalledWith(
+        "Test Task",
+        "Beschreibung",
+        creatorClerkId,
+        new Date("2025-11-12T00:00:00.000Z"),
+      );
+    });
   });
 
   /*****************************************************************************/
-  /*******************************FMST-50**************************************/
+  /*********************new tests for FMST-50**********************************/
   /***************************************************************************/
   /*DELETE CONFIRM MODAL APPEARS (for FMST-50)*/
   it("shows the delete confirmation modal when clicking Delete", async () => {

@@ -18,7 +18,7 @@ export async function createArea(
 }> {
   try {
     // Forward data to mutation layer (which validates category).
-    const res = await MUTATIONS.AREA.CreateArea(name, size, undefined, category);
+    const res = await AREA_MUTATIONS.CreateArea(name, size, undefined, category);
     if (!res) throw Error();
     return { area: res };
   } catch {
@@ -32,7 +32,7 @@ export async function getAllAreas(): Promise<{
 }> {
   try {
     // Return all areas from query layer.
-    const res = await QUERIES.AREA.getAllAreas();
+    const res = await AREA_QUERIES.getAllAreas();
     return { areas: res };
   } catch {
     return { areas: null, error: "an error occurred" };

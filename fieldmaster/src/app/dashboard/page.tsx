@@ -27,22 +27,6 @@ import { Area, Task } from "@/src/server/db/type/DBTypes";
  * - Date formatting uses toLocaleDateString('de-DE') for German display.
  */
 
-/** Minimal Area type used by this component */
-type Area = { id: string; name: string; size: number; category?: string }
-
-/**
- * Minimal Task type used by this component.
- * - dueTo can be null; when present it is displayed as a localized date.
- */
-type Task = {
-  id: string
-  name: string
-  description: string | null
-  creatorId: string | null
-  createdAt: Date
-  dueTo: Date | null
-  areaId: string | null
-}
 
 /**
  * Dashboard React client component.
@@ -95,7 +79,7 @@ export default function Page(): React.JSX.Element {
   const filteredAreas = areas.filter((a) => {
     const matchesSearch = normalize(a.name).includes(normalize(searchTerm))
     if (selectedCategories.length === 0) return matchesSearch
-    const cat = (a as any).category ?? 'WIESE'
+    const cat = a.category ?? 'WIESE'
     return matchesSearch && selectedCategories.includes(cat)
   })
   // --- Sorting ---
@@ -189,22 +173,20 @@ export default function Page(): React.JSX.Element {
             <button
               aria-pressed={view === "areas"}
               onClick={() => setView("areas")}
-              className={`rounded-md px-4 py-2 font-medium transition ${
-                view === "areas"
-                  ? "bg-primary-500 text-white"
-                  : "bg-surface border-primary-500/20 border"
-              }`}
+              className={`rounded-md px-4 py-2 font-medium transition ${view === "areas"
+                ? "bg-primary-500 text-white"
+                : "bg-surface border-primary-500/20 border"
+                }`}
             >
               Areas ({areas.length})
             </button>
             <button
               aria-pressed={view === "tasks"}
               onClick={() => setView("tasks")}
-              className={`rounded-md px-4 py-2 font-medium transition ${
-                view === "tasks"
-                  ? "bg-primary-500 text-white"
-                  : "bg-surface border-primary-500/20 border"
-              }`}
+              className={`rounded-md px-4 py-2 font-medium transition ${view === "tasks"
+                ? "bg-primary-500 text-white"
+                : "bg-surface border-primary-500/20 border"
+                }`}
             >
               Tasks ({tasks.length})
             </button>

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { getAllAreas } from "../area/actions";
 import {
@@ -33,7 +33,7 @@ export default function Tasks() {
   const [newTaskPriority, setNewTaskPriority] = useState<"Hoch" | "Mittel" | "Niedrig">("Mittel"); // new task priority
 
   // fetch all tasks from server
-  const fetchTasks = async (filterParam = filter, sortParam = sort) => {
+  const fetchTasks = useCallback(async (filterParam = filter, sortParam = sort) => {
     const res = await getTasksSortedFilteredAction({
       filter: filterParam,
       sort: sortParam,
@@ -46,7 +46,7 @@ export default function Tasks() {
     }
 
     setTasks(res.tasks);
-  };
+  }, [filter, sort]);
 
   // fetch all areas from server | FMST-11
   const fetchAreas = async () => {
@@ -65,7 +65,7 @@ export default function Tasks() {
       await fetchAreas();
     };
     fetchAllData();
-  }, [filter, sort]);
+  }, [fetchTasks]);
 
   // handle form submission to add new task
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -23,7 +23,12 @@ export const TASK_QUERIES = {
 
   // Get all tasks
   async getAll() {
-    return db.select().from(Task);
+    try {
+      return await db.select().from(Task);
+    } catch (err) {
+      console.error("Error in TASK_QUERIES.getAll:", err);
+      throw err;
+    }
   },
 };
 
@@ -69,5 +74,9 @@ export const TASK_MUTATIONS = {
   // "Soft delete" a task by marking description and clearing due date
   async deleteTask(id: UUID) {
     return db.update(Task).set({ description: "[DELETED]", dueTo: null }).where(eq(Task.id, id));
+  },
+  // Mark task as completed/uncompleted | FMST-54 | Pachler
+  async markTaskCompleted(id: UUID, completed: boolean) {
+    return db.update(Task).set({ completed }).where(eq(Task.id, id));
   },
 };

@@ -37,6 +37,25 @@ export async function storeTools(
   }
 }
 
+export async function updateTool(id: string, name: string, category: string, available: boolean) {
+  // Validate inputs
+  if (!name?.trim()) {
+    return { tool: null, error: "Tool name is required" };
+  }
+  if (!category?.trim()) {
+    return { tool: null, error: "Tool category is required" };
+  }
+  
+  const tool = { name, category, available };
+  
+  try {
+    return await QUERIES.TOOL.updateToolInDB(id, tool);
+  } catch (error) {
+    console.error("Failed to update tool:", error);
+    throw new Error("Unable to update tool");
+  }
+}
+
 
 
 export async function loadCategories() { // FMST-19 (Polt Leonie) - Laden von Kategorien aus DB

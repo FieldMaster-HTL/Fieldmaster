@@ -1,4 +1,13 @@
-import { pgTable, text, timestamp, uuid, boolean, doublePrecision } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  boolean,
+  doublePrecision,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 export const User = pgTable("user", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -31,7 +40,7 @@ export const Area = pgTable("area", {
   deletedAt: timestamp("deletedAt"),
 });
 
-// Tools Table - FMST-76 (Polt Leonie) - überarbeitung von db
+// Tools Table - FMST-76 (Polt Leonie) - überarbeitung von db & FMST-12 | Pachler
 export const toolsTable = pgTable("tools", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -55,6 +64,8 @@ export const Task = pgTable("task", {
   dueTo: timestamp("dueTo"),
   areaId: uuid("areaId").references(() => Area.id),
   priority: text("priority"),
+  completed: boolean("completed").default(false).notNull(),
+  deletedAt: timestamp("deletedAt"),
 });
 
 // FMST-19 (Polt Leonie) - tabelle mit benötigten Spalten für Kategorien
@@ -64,3 +75,19 @@ export const categoriesTable = pgTable("categories", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
 });
+
+//FMST-12 | Pachler
+export const TaskTool = pgTable("task_tools", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  taskId: uuid("taskId").notNull().references(() => Task.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  toolId: uuid("toolId").notNull().references(() => toolsTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+}, (table) => ({
+  // prevent duplicate assignments of the same tool to the same task
+  unique_task_tool: uniqueIndex("task_tools_taskId_toolId_unique").on(table.taskId, table.toolId),
+  // separate indexes to help lookup by taskId or toolId
+  idx_task_tools_task_id: index("task_tools_task_id_idx").on(table.taskId),
+  idx_task_tools_tool_id: index("task_tools_tool_id_idx").on(table.toolId),
+}));
+
+// Join table linking `task.id` <-> `tools.id` for a many-to-many
+// relationship. Rows represent a single assignment of a tool to a task.

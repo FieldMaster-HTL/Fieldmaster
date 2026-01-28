@@ -10,6 +10,10 @@ import { AnyAaaaRecord } from 'dns'
 
 export default function Page() {
 
+  // Lädt die Tools beim ersten Rendern der Seite
+  useEffect(() => {
+    loadToolsfromDB()
+  }, [])
 
   // Liste aller Tools aus der DB
   const [tools, setTools] = useState<any[]>([])
@@ -41,7 +45,7 @@ export default function Page() {
   //drag and drop
   const [dragActive, setDragActive] = useState(false)
   const [imagePreview, setImagePreview] = useState('')
-  
+
   // Filter & Suche
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -49,56 +53,56 @@ export default function Page() {
 
   // Drag & Drop Handler
   //handle drag
-const handleDrag = (e: React.DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  if (e.type === "dragenter" || e.type === "dragover") {
-    setDragActive(true)
-  } else if (e.type === "dragleave") {
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  //handle drop
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setDragActive(false)
-  }
-}
 
-//handle drop
-const handleDrop = async (e: React.DragEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  setDragActive(false)
-
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    await handleImageFile(e.dataTransfer.files[0])
-  }
-}
-
-//wenn bild geändert wird
-const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files && e.target.files[0]) {
-    await handleImageFile(e.target.files[0])
-  }
-}
-
-const handleImageFile = async (file: File) => {
-  // schaun obs ein bild ist
-  if (!file.type.startsWith('image/')) {
-    alert('Bitte nur Bilddateien hochladen')
-    return
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleImageFile(e.dataTransfer.files[0])
+    }
   }
 
-  // größe beschränken
-  if (file.size > 5 * 1024 * 1024) {
-    alert('Bild ist zu groß (max 5MB)')
-    return
+  //wenn bild geändert wird
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await handleImageFile(e.target.files[0])
+    }
   }
 
-  
-  const reader = new FileReader()
-  reader.onloadend = () => {
-    const base64String = reader.result as string
-    setImagePreview(base64String)//zu base64 konvertieren
-    setForm({ ...form, imageUrl: base64String })
+  const handleImageFile = async (file: File) => {
+    // schaun obs ein bild ist
+    if (!file.type.startsWith('image/')) {
+      alert('Bitte nur Bilddateien hochladen')
+      return
+    }
+
+    // größe beschränken
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Bild ist zu groß (max 5MB)')
+      return
+    }
+
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64String = reader.result as string
+      setImagePreview(base64String)//zu base64 konvertieren
+      setForm({ ...form, imageUrl: base64String })
+    }
+    reader.readAsDataURL(file)
   }
-  reader.readAsDataURL(file)
-}
 
   // Lädt Tools & Kategorien beim ersten Rendern
   useEffect(() => {
@@ -113,11 +117,11 @@ const handleImageFile = async (file: File) => {
 
       // Setze die erste Kategorie im Form, falls noch keine ausgewählt
       if (categoriesData.length > 0) {
-      setForm(prev => ({
-        ...prev,
-        category: categoriesData[0].name
-      }))
-    }
+        setForm(prev => ({
+          ...prev,
+          category: categoriesData[0].name
+        }))
+      }
 
       // Tools laden
       await loadToolsfromDB()
@@ -135,47 +139,49 @@ const handleImageFile = async (file: File) => {
 
   // bearbeitungsfunktion
   function handleEdit(tool: any) {
-  setEditingTool(tool)
-  
-  setForm({
-    name: tool.name ?? '',
-    category: tool.category ?? '',
-    description: tool.description ?? '',
-    imageUrl: tool.imageUrl ?? '',
-    available: tool.available ?? true,
-    area: tool.area ?? ''
-  })
-  
-  setImagePreview('') // preview zurücksetzten
-  setShowWindow(true)
-}
+    setEditingTool(tool)
 
-  // löschen und achten auf abhängigkeit
- async function handleDelete(tool: any) {
-  if (tool.activeTasksCount > 0) {
-    alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
-    return
+    setForm({
+      name: tool.name ?? '',
+      category: tool.category ?? '',
+      description: tool.description ?? '',
+      imageUrl: tool.imageUrl ?? '',
+      available: tool.available ?? true,
+      area: tool.area ?? ''
+    })
+
+    setImagePreview('') // preview zurücksetzten
+    setShowWindow(true)
   }
 
-  const confirmed = confirm(`"${tool.name}" wirklich löschen?`) //noch mal abfragen
-  if (!confirmed) return
+  // löschen und achten auf abhängigkeit
+  async function handleDelete(tool: any) {
+    if (tool.activeTasksCount > 0) {
+      alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
+      return
+    }
 
-  await deleteTool(tool.id)
-  await loadToolsfromDB()
- }
+    const confirmed = confirm(`"${tool.name}" wirklich löschen?`) //noch mal abfragen
+    if (!confirmed) return
+
+    await deleteTool(tool.id)
+    await loadToolsfromDB()
+  }
+
   // neues tool speichern/bearbeiten
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
       alert('Name ist erforderlich')
       return
     }
 
     if (!form.category.trim()) {
-    alert('Kategorie ist erforderlich')
-    return
-  }
+      alert('Kategorie ist erforderlich')
+      return
+    }
 
     // Wenn editingTool dann update sonnst create
     await storeTools(form, editingTool?.id)
@@ -310,6 +316,10 @@ const handleImageFile = async (file: File) => {
             <h2 className="modal-title">{editingTool ? 'Tool bearbeiten' : 'Neues Tool erstellen'}</h2>
             <form onSubmit={handleSubmit} className="modal-form">
 
+              {/* 
+                FMST-17: Werkzeug - Name wählen 
+                (Kulmer Klara)
+              */}
               <input
                 type="text"
                 placeholder="Tool-Name"
@@ -346,9 +356,9 @@ const handleImageFile = async (file: File) => {
               >
                 {imagePreview || form.imageUrl ? (
                   <div className="image-preview-container">
-                    <img 
-                      src={imagePreview || form.imageUrl} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview || form.imageUrl}
+                      alt="Preview"
                       className="image-preview"
                     />
                     <button
@@ -369,7 +379,7 @@ const handleImageFile = async (file: File) => {
                     <p className="upload-hint">Max. 5MB</p>
                   </>
                 )}
-                
+
                 <input
                   type="file"
                   accept="image/*"
@@ -382,7 +392,7 @@ const handleImageFile = async (file: File) => {
                 </label>
               </div>
 
-             <select
+              <select
                 value={form.area}
                 onChange={e => setForm({ ...form, area: e.target.value })}
               >
@@ -425,7 +435,6 @@ const handleImageFile = async (file: File) => {
           </div>
         </div>
       )}
-
     </div>
   )
 }

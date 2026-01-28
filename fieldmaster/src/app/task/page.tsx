@@ -6,16 +6,15 @@ import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { getAllAreas } from "../area/actions";
 import {
-  getAllTasksAction,
   createTaskAction,
   deleteTaskAction,
   getTasksSortedFilteredAction,
 } from "./actions";
-import { Task } from "@/src/server/db/type/DBTypes";
+import { Task, Area } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]); // store all tasks
-  const [areas, setAreas] = useState<any[]>([]); // store all areas | FMST-11
+  const [areas, setAreas] = useState<Area[]>([]); // store all areas | FMST-11
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
@@ -183,7 +182,7 @@ export default function Tasks() {
           {/* FILTER */}
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
+            onChange={(e) => setFilter(e.target.value as "all" | "active" | "deleted")}
             className="p-2 border rounded-md"
           >
             <option value="all">Alle Aufgaben</option>
@@ -194,7 +193,7 @@ export default function Tasks() {
           {/* PRIORITY FILTER */}
           <select
             value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as any)}
+            onChange={(e) => setFilterPriority(e.target.value as "Alle" | "Hoch" | "Mittel" | "Niedrig")}
             className="p-2 border rounded-md"
           >
             <option>Alle</option>
@@ -250,13 +249,12 @@ export default function Tasks() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-block h-3 w-3 rounded-full ${
-                              task.priority === "Hoch"
-                                ? "bg-red-500"
-                                : task.priority === "Niedrig"
-                                  ? "bg-green-500"
-                                  : "bg-yellow-400"
-                            }`}
+                            className={`inline-block h-3 w-3 rounded-full ${task.priority === "Hoch"
+                              ? "bg-red-500"
+                              : task.priority === "Niedrig"
+                                ? "bg-green-500"
+                                : "bg-yellow-400"
+                              }`}
                             title={task.priority ?? "Mittel"}
                           />
                           <span className="text-sm">{task.priority ?? "Mittel"}</span>
@@ -329,7 +327,7 @@ export default function Tasks() {
               className="bg-white shadow-xl p-6 rounded-xl w-80 animate-fadeIn"
             >
               <h2 className="font-semibold text-gray-800 text-lg">
-                Do you really want to delete the task "{taskToDelete.name}"?
+                Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
               </h2>
               <p className="mt-2 text-gray-600 text-sm">This action cannot be undone.</p>
 

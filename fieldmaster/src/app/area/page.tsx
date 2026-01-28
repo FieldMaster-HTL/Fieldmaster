@@ -212,8 +212,8 @@ export default function Page(): React.JSX.Element {
           ) : (
             <ul>
               {areas.map((a) => (
-                  <li key={a.id} className="py-1">{a.name} — {a.size} m² — <strong>{(a as Area & { category?: string }).category ?? 'WIESE'}</strong></li>
-                ))}
+                <li key={a.id} className="py-1">{a.name} — {a.size} m² — <strong>{(a as Area & { category?: string }).category ?? 'WIESE'}</strong></li>
+              ))}
             </ul>
           )}
         </section>
@@ -294,15 +294,69 @@ export default function Page(): React.JSX.Element {
         </div>
       )}
 
-      {/* Delete confirm */}
+      {/* Delete Confirmation Modal */}
       {deletingId && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: 24, borderRadius: 8, maxWidth: 400, textAlign: 'center' }} role="dialog" aria-modal="true">
-            <h3 style={{ marginTop: 0, marginBottom: 12 }}>Area löschen?</h3>
-            <p style={{ marginBottom: 16 }}>Möchtest du die Area &quot;{areas.find((x) => x.id === deletingId)?.name}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button onClick={() => confirmDelete(deletingId)} style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: 4 }} data-testid={`confirm-delete-${deletingId}`}>Löschen</button>
-              <button onClick={() => cancelDelete()} style={{ padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: 4 }} data-testid={`cancel-delete-${deletingId}`}>Abbrechen</button>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "24px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              textAlign: "center",
+              maxWidth: "400px",
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3 style={{ marginTop: 0, marginBottom: "16px", color: "#333" }}>Area löschen?</h3>
+            <p style={{ marginBottom: "24px", color: "#666" }}>
+              Möchtest du die Area &quot;{areas.find((x) => x.id === deletingId)?.name}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={() => confirmDelete(deletingId)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                data-testid={`confirm-delete-${deletingId}`}
+              >
+                Löschen
+              </button>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                data-testid={`cancel-delete-${deletingId}`}
+              >
+                Abbrechen
+              </button>
             </div>
           </div>
         </div>

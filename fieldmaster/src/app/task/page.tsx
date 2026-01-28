@@ -7,7 +7,6 @@ import Link from "next/link";
 import { storeTools } from "../tools/actions";
 import { getAllAreas } from "../area/actions";
 import {
-  getAllTasksAction,
   createTaskAction,
   deleteTaskAction,
   getTasksSortedFilteredAction,
@@ -18,11 +17,11 @@ import {
   updateTaskAction,
   markTaskCompletedAction
 } from "./actions";
-import { Task } from "@/src/server/db/type/DBTypes";
+import { Task, Area } from "@/src/server/db/type/DBTypes";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<any[]>([]); // store all tasks
-  const [areas, setAreas] = useState<any[]>([]); // store all areas | FMST-11
+  const [tasks, setTasks] = useState<Task[]>([]); // store all tasks
+  const [areas, setAreas] = useState<Area[]>([]); // store all areas | FMST-11
   const [newTaskName, setNewTaskName] = useState(""); // new task title
   const [newTaskDescription, setNewTaskDescription] = useState(""); // new task description
   const [dueTo, setDueTo] = useState(""); // new task due date
@@ -239,11 +238,11 @@ export default function Tasks() {
           </select>
 
           {/* FMST-12: Tool selection multi-select | Pachler Tobias */}
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+          <div className="bg-gray-50 p-3 border border-gray-200 rounded-md">
+            <label className="block mb-1 font-semibold text-gray-700 text-sm">
               Werkzeuge (optional)
             </label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="mb-2 text-gray-500 text-xs">
               Mehrfachauswahl mit Strg/Cmd oder Shift. Ausgewählt: {newTaskToolIds.length}
             </p>
             <select
@@ -254,7 +253,7 @@ export default function Tasks() {
                   Array.from(e.target.selectedOptions).map((o) => o.value)
                 )
               }
-              className="w-full rounded border border-gray-300 bg-white p-2 text-sm shadow-inner focus:border-primary-500 focus:outline-none"
+              className="bg-white shadow-inner p-2 border border-gray-300 focus:border-primary-500 rounded focus:outline-none w-full text-sm"
             >
               {tools.map((tool) => (
                 <option key={tool.id} value={tool.id}>
@@ -263,13 +262,13 @@ export default function Tasks() {
               ))}
             </select>
             {newTaskToolIds.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 {tools
                   .filter((t) => newTaskToolIds.includes(t.id))
                   .map((t) => (
                     <span
                       key={t.id}
-                      className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2 py-1 text-xs text-primary-700 border border-primary-200"
+                      className="inline-flex items-center gap-1 bg-primary-100 px-2 py-1 border border-primary-200 rounded-full text-primary-700 text-xs"
                     >
                       {t.name}
                       <button
@@ -303,7 +302,7 @@ export default function Tasks() {
           {/* FILTER */}
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
+            onChange={(e) => setFilter(e.target.value as "all" | "active" | "deleted")}
             className="p-2 border rounded-md"
           >
             <option value="all">Alle Aufgaben</option>
@@ -314,7 +313,7 @@ export default function Tasks() {
           {/* PRIORITY FILTER */}
           <select
             value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as any)}
+            onChange={(e) => setFilterPriority(e.target.value as "Alle" | "Hoch" | "Mittel" | "Niedrig")}
             className="p-2 border rounded-md"
           >
             <option>Alle</option>
@@ -336,7 +335,7 @@ export default function Tasks() {
 
         {/* FMST-54 | Pachler: Filter by completion status */}
         <div className="flex gap-2 mb-4">
-          <span className="text-sm text-gray-600 self-center mr-2 font-medium">Status:</span>
+          <span className="self-center mr-2 font-medium text-gray-600 text-sm">Status:</span>
           {[
             { value: "all", label: "Alle Tasks" },
             { value: "open", label: "Offen" },
@@ -357,15 +356,15 @@ export default function Tasks() {
 
         {/* FMST-54 | Pachler: Active Filter Chips */}
         {(filterPriority !== "Alle" || filterCompleted !== "all" || filter !== "all" || sort) && (
-          <div className="flex flex-wrap gap-2 mb-4 items-center">
-            <span className="text-sm text-gray-600 font-medium">Aktive Filter:</span>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="font-medium text-gray-600 text-sm">Aktive Filter:</span>
 
             {filterPriority !== "Alle" && (
-              <div className="flex items-center gap-1 bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex items-center gap-1 bg-primary-100 px-3 py-1 rounded-full font-medium text-primary-700 text-sm">
                 <span>Priorität: {filterPriority}</span>
                 <button
                   onClick={() => setFilterPriority("Alle")}
-                  className="ml-1 hover:bg-primary-200 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-primary-200 ml-1 p-0.5 rounded-full transition-colors"
                   aria-label="Filter entfernen"
                 >
                   ✕
@@ -374,11 +373,11 @@ export default function Tasks() {
             )}
 
             {filterCompleted !== "all" && (
-              <div className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex items-center gap-1 bg-green-100 px-3 py-1 rounded-full font-medium text-green-700 text-sm">
                 <span>Status: {filterCompleted === "open" ? "Offen" : "Erledigt"}</span>
                 <button
                   onClick={() => setFilterCompleted("all")}
-                  className="ml-1 hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-green-200 ml-1 p-0.5 rounded-full transition-colors"
                   aria-label="Filter entfernen"
                 >
                   ✕
@@ -387,11 +386,11 @@ export default function Tasks() {
             )}
 
             {filter !== "all" && (
-              <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex items-center gap-1 bg-blue-100 px-3 py-1 rounded-full font-medium text-blue-700 text-sm">
                 <span>{filter === "active" ? "Aktiv" : "Gelöscht"}</span>
                 <button
                   onClick={() => setFilter("all")}
-                  className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-blue-200 ml-1 p-0.5 rounded-full transition-colors"
                   aria-label="Filter entfernen"
                 >
                   ✕
@@ -400,11 +399,11 @@ export default function Tasks() {
             )}
 
             {sort && (
-              <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex items-center gap-1 bg-purple-100 px-3 py-1 rounded-full font-medium text-purple-700 text-sm">
                 <span>Sortiert: Nach Fälligkeitsdatum</span>
                 <button
                   onClick={() => setSort(undefined)}
-                  className="ml-1 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-purple-200 ml-1 p-0.5 rounded-full transition-colors"
                   aria-label="Sortierung entfernen"
                 >
                   ✕
@@ -419,7 +418,7 @@ export default function Tasks() {
                 setFilter("all");
                 setSort(undefined);
               }}
-              className="ml-2 text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+              className="ml-2 text-gray-500 hover:text-gray-700 text-sm underline transition-colors"
             >
               Alle Filter zurücksetzen
             </button>
@@ -428,7 +427,7 @@ export default function Tasks() {
 
         {/* FMST-75: Task Table | Rework by Pachler to show status in table */}
         <div className="overflow-x-auto">
-          <table className="border border-gray-50 w-full border-collapse min-w-full">
+          <table className="border border-gray-50 w-full min-w-full border-collapse">
             <thead>
               <tr className="bg-gray-200/50">
                 <th className="p-2 border text-left">Status</th>
@@ -473,7 +472,7 @@ export default function Tasks() {
                         {isDeleted ? (
                           "-"
                         ) : task.completed ? (
-                          <span className="text-white text-2xl font-bold" title="Erledigt">✓</span>
+                          <span className="font-bold text-white text-2xl" title="Erledigt">✓</span>
                         ) : (
                           <span className="text-gray-400 text-xl" title="Offen">○</span>
                         )}
@@ -605,7 +604,7 @@ export default function Tasks() {
               className="bg-white shadow-xl p-6 rounded-xl w-80 animate-fadeIn"
             >
               <h2 className="font-semibold text-gray-800 text-lg">
-                Do you really want to delete the task "{taskToDelete.name}"?
+                Do you really want to delete the task &quot;{taskToDelete.name}&quot;?
               </h2>
               <p className="mt-2 text-gray-600 text-sm">This action cannot be undone.</p>
 
@@ -671,10 +670,10 @@ export default function Tasks() {
             {/* FMST-11: Display area in modal */}
             {selectedTask.area && <p className="mb-4 text-gray-300 text-sm">Feld: {selectedTask.area}</p>}
             <div className="mb-4">
-              <label className="block text-sm text-gray-300 mb-1">Werkzeuge zuordnen</label>
-              <div className="max-h-40 overflow-auto p-2 bg-gray-900/30 rounded">
+              <label className="block mb-1 text-gray-300 text-sm">Werkzeuge zuordnen</label>
+              <div className="bg-gray-900/30 p-2 rounded max-h-40 overflow-auto">
                 {tools.map((t) => (
-                  <label key={t.id} className="flex items-center gap-2 text-sm mb-1">
+                  <label key={t.id} className="flex items-center gap-2 mb-1 text-sm">
                     <input
                       type="checkbox"
                       checked={modalToolIds.includes(t.id)}
@@ -688,8 +687,8 @@ export default function Tasks() {
                 ))}
               </div>
               {/* Inline add tool form */}
-              <div className="mt-3 p-2 bg-gray-900/20 rounded">
-                <label className="text-xs text-gray-300">Neues Werkzeug hinzufügen</label>
+              <div className="bg-gray-900/20 mt-3 p-2 rounded">
+                <label className="text-gray-300 text-xs">Neues Werkzeug hinzufügen</label>
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
@@ -726,7 +725,7 @@ export default function Tasks() {
                   </button>
                 </div>
               </div>
-              <div className="mt-2 flex gap-2">
+              <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => {
                     startTransition(async () => {
@@ -784,7 +783,7 @@ export default function Tasks() {
 
       {/* FMST-54 | Pachler: Toast Success Message - bottom left */}
       {successMessage && (
-        <div className="fixed bottom-4 left-4 z-50 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg max-w-sm animate-fadeIn">
+        <div className="bottom-4 left-4 z-50 fixed bg-green-600 shadow-lg px-4 py-3 rounded-lg max-w-sm text-white animate-fadeIn">
           <div className="flex items-center gap-2">
             <span className="text-xl">✓</span>
             <span className="text-sm">{successMessage}</span>

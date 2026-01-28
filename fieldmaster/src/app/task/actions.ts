@@ -39,6 +39,8 @@ export async function createTaskAction(
   description?: string,
   creatorClerkId?: string,
   due_to?: Date,
+  priority?: string,
+  areaId?: string,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -49,6 +51,8 @@ export async function createTaskAction(
       description ?? "",
       creatorClerkId,
       due_to,
+      priority,
+      areaId,
     );
     if (!newTask) throw Error("unknown error db/ orm");
     return {
@@ -72,7 +76,7 @@ export async function createTaskAction(
 // Update a task
 export async function updateTaskAction(
   id: string,
-  values: Partial<{ name: string; description: string; dueTo: Date }>,
+  values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -140,6 +144,64 @@ export async function deleteTaskAction(id: string): Promise<{
         task: null,
         error: "unknown error",
       };
+    }
+  }
+}
+
+// *******************************************
+// FMST-75: Sort and filter tasks (extended)
+// *******************************************
+export async function getTasksSortedFilteredAction(params: {
+  filter?: "all" | "active" | "deleted";
+  sort?: "dueDate";
+}): Promise<{
+  tasks: Task[] | null;
+  error?: string;
+}> {
+  try {
+    let tasks = await TASK_QUERIES.getAll();
+    if (!tasks) throw new Error("No tasks found");
+
+    /* -------------------------
+       FILTER
+    --------------------------*/
+    switch (params.filter) {
+      case "active":
+        tasks = tasks.filter((task) => task.description !== "[DELETED]");
+        break;
+
+      case "deleted":
+        tasks = tasks.filter((task) => task.description === "[DELETED]");
+        break;
+
+      case "all":
+      default:
+        break;
+    }
+
+    /* -------------------------
+       SORT
+    --------------------------*/
+    switch (params.sort) {
+      case "dueDate":
+        tasks.sort((a, b) => {
+          if (!a.dueTo && !b.dueTo) return 0;
+          if (!a.dueTo) return 1;
+          if (!b.dueTo) return -1;
+          return a.dueTo.getTime() - b.dueTo.getTime();
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return { tasks };
+  } catch (err) {
+    if (err instanceof Error) {
+      return { tasks: null, error: err.message };
+    } else {
+      return { tasks: null, error: "unknown error" };
     }
   }
 }

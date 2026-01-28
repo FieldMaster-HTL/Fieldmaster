@@ -5,6 +5,8 @@ import {
   createTaskAction,
   deleteTaskAction,
   getTasksSortedFilteredAction,
+  getAllToolsAction,
+  getAllTaskToolsAction,
 } from "../src/app/task/actions";
 import Tasks from "../src/app/task/page";
 import "@testing-library/jest-dom";
@@ -17,6 +19,8 @@ jest.mock("../src/app/area/actions");
 // Setup mocks before each test
 beforeEach(() => {
   getAllAreas.mockResolvedValue({ areas: [], error: null });
+  getAllToolsAction.mockResolvedValue([]);
+  getAllTaskToolsAction.mockResolvedValue([]);
 });
 
 // Cleanup after each test
@@ -353,7 +357,6 @@ describe("Tasks Component - Comprehensive Tests", () => {
     getTasksSortedFilteredAction.mockResolvedValue({ tasks });
 
     render(<Tasks />);
-
     await waitFor(() => {
       expect(screen.getByText("High")).toBeInTheDocument();
       expect(screen.getByText("Medium")).toBeInTheDocument();
@@ -372,6 +375,39 @@ describe("Tasks Component - Comprehensive Tests", () => {
     await waitFor(() => {
       expect(screen.getByText("High")).toBeInTheDocument();
       expect(screen.getByText("Medium")).toBeInTheDocument();
+    });
+  });
+
+  /*****************************************************************************/
+  /************************** FMST-12 | Pachler  *******************************/
+  /*****************************************************************************/
+  it("zeigt zugeordnete Werkzeuge in der Tabelle an", async () => {
+    const tasks = [
+      {
+        id: "task-1",
+        name: "Task mit Tool",
+        description: "",
+        priority: "Mittel",
+        dueTo: null,
+      },
+    ];
+
+    const tools = [{ id: "tool-1", name: "Traktor", category: "Maschine", available: true }];
+    const taskTools = [{ id: "tt-1", taskId: "task-1", toolId: "tool-1" }];
+
+    getAllTasksAction.mockResolvedValue({ tasks, error: null });
+    getTasksSortedFilteredAction.mockResolvedValue({ tasks, error: null });
+    getAllToolsAction.mockResolvedValue(tools);
+    getAllTaskToolsAction.mockResolvedValue(taskTools);
+
+    render(<Tasks />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Task mit Tool")).toBeInTheDocument();
+      const toolCell = screen
+        .getAllByRole("cell")
+        .find((el) => el.textContent && el.textContent.includes("Traktor"));
+      expect(toolCell).toBeDefined();
     });
   });
 });

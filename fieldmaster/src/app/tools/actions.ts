@@ -30,12 +30,7 @@ export async function storeTools(form: { name: string; category: string }, avail
   }
 }
 
-export async function updateTool(
-  id: string,
-  name: string,
-  category: string,
-  available: boolean
-) {
+export async function updateTool(id: string, name: string, category: string, available: boolean) {
   // Validate inputs
   if (!name?.trim()) {
     return { tool: null, error: "Tool name is required" };

@@ -22,10 +22,18 @@ CREATE TABLE "task" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"description" text,
-	"creator_id" uuid,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"due_to" timestamp,
-	"area_id" uuid
+	"creatorId" uuid,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"dueTo" timestamp,
+	"areaId" uuid,
+	"completed" boolean DEFAULT false NOT NULL,
+	"deletedAt" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "task_tools" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"taskId" uuid NOT NULL,
+	"toolId" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user" (
@@ -47,5 +55,10 @@ CREATE TABLE "tools" (
 --> statement-breakpoint
 ALTER TABLE "area" ADD CONSTRAINT "area_creatorId_user_id_fk" FOREIGN KEY ("creatorId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "farm" ADD CONSTRAINT "farm_creatorId_user_id_fk" FOREIGN KEY ("creatorId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "task" ADD CONSTRAINT "task_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "task" ADD CONSTRAINT "task_area_id_area_id_fk" FOREIGN KEY ("area_id") REFERENCES "public"."area"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "task" ADD CONSTRAINT "task_creatorId_user_id_fk" FOREIGN KEY ("creatorId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "task" ADD CONSTRAINT "task_areaId_area_id_fk" FOREIGN KEY ("areaId") REFERENCES "public"."area"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "task_tools" ADD CONSTRAINT "task_tools_taskId_task_id_fk" FOREIGN KEY ("taskId") REFERENCES "public"."task"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "task_tools" ADD CONSTRAINT "task_tools_toolId_tools_id_fk" FOREIGN KEY ("toolId") REFERENCES "public"."tools"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+CREATE UNIQUE INDEX "task_tools_taskId_toolId_unique" ON "task_tools" USING btree ("taskId","toolId");--> statement-breakpoint
+CREATE INDEX "task_tools_task_id_idx" ON "task_tools" USING btree ("taskId");--> statement-breakpoint
+CREATE INDEX "task_tools_tool_id_idx" ON "task_tools" USING btree ("toolId");

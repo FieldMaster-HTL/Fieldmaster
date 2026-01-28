@@ -58,19 +58,17 @@ test('zeigt Areas nach dem Laden und aktualisiert die Areas-Zahl im Button', asy
 test('wechselt zur Tasks-Ansicht und zeigt Tasks mit Fälligkeitsdatum', async () => {
   getAllAreas.mockResolvedValue({ areas: [] })
   const dueIso = '2025-11-17T00:00:00.000Z'
-  getAllTasksAction.mockResolvedValue({
-    tasks: [
-      {
-        id: "t1",
-        name: "Task X",
-        description: "Beschreibung",
-        creatorId: null,
-        createdAt: new Date().toISOString(),
-        dueTo: dueIso,
-        areaId: null,
-      },
-    ],
-  });
+  getAllTasksAction.mockResolvedValue([
+    {
+      id: 't1',
+      name: 'Task X',
+      description: 'Beschreibung',
+      creatorId: null,
+      createdAt: new Date().toISOString(),
+      dueTo: dueIso,
+      areaId: null
+    }
+  ])
 
   render(<Page />)
 

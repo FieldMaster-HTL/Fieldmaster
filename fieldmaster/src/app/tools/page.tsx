@@ -20,6 +20,9 @@ export default function Page() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null); // Erfolgsmeldung
 
   // Lädt die Tools beim ersten Rendern der Seite
+  useEffect(() => {
+    loadToolsfromDB()
+  }, [])
 
   // Asynchrone Funktion, um Tools aus der Datenbank zu laden
   async function loadToolsfromDB() {
@@ -32,17 +35,11 @@ export default function Page() {
     }
   }
 
-  useEffect(() => {
-    const fetchTools = () => {
-      loadToolsfromDB();
-    };
-    fetchTools();
-  }, []);
-
   // Formular absenden
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault() // Standardformularverhalten verhindern
 
+    // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
       alert("Bitte gib einen Tool-Namen ein.");
       return;
@@ -159,6 +156,7 @@ export default function Page() {
 
             {/* Formular für Name + Kategorie */}
             <form onSubmit={handleSubmit} className="modal-form">
+
               {/* 
                 FMST-17: Werkzeug - Name wählen 
                 (Kulmer Klara)
@@ -183,10 +181,12 @@ export default function Page() {
 
               {/* Buttons im Modal */}
               <div className="modal-buttons">
-                <button type="submit" className="modal-save">
-                  Speichern
-                </button>
-                <button type="button" onClick={() => setShowWindow(false)} className="modal-cancel">
+                <button type="submit" className="modal-save">Speichern</button>
+                <button
+                  type="button"
+                  onClick={() => setShowWindow(false)}
+                  className="modal-cancel"
+                >
                   Abbrechen
                 </button>
               </div>
@@ -213,7 +213,7 @@ export default function Page() {
                 <th>Name</th>
                 <th>Kategorie</th>
                 <th>Status</th>
-                
+
                 <th>Aktionen</th>
               </tr>
             </thead>
@@ -223,7 +223,7 @@ export default function Page() {
                   <td>{tool.name}</td>
                   <td>{tool.category}</td>
                   <td>{tool.available ? "Verfügbar" : "Nicht verfügbar"}</td>
-              
+
                   <td className="actions-cell">
                     <button
                       onClick={() => openModal(tool)}
@@ -315,5 +315,5 @@ export default function Page() {
         </div>
       )}
     </div>
-  );
+  )
 }

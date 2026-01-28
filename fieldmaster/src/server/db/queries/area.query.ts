@@ -5,8 +5,7 @@
 
 import { db } from "@/src/server/db/index";
 import { Area } from "@/src/server/db/schema/schema";
-import type { Area as AreaRow } from "@/src/server/db/type/DBTypes";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, isNull, and } from "drizzle-orm";
 import { UUID } from "crypto";
 
 // Allowed category values for Areas. Server-side source of truth to prevent free-text categories.
@@ -23,15 +22,35 @@ export const ALLOWED_AREA_CATEGORIES = [
 export const AREA_QUERIES = {
   // Fetch all areas (no filtering).
   async getAllAreas() {
-    return db.select().from(Area).where(isNull(Area.deletedAt));
+    try {
+      return await db.select().from(Area).where(isNull(Area.deletedAt));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAllAreas:', err)
+      throw err
+    }
   },
 
   // Fetch areas created by a specific user.
   async getAreasByCreator(creatorId: UUID) {
+    try {
+      return await db.select().from(Area).where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAreasByCreator:', err)
+      throw err
+    }
+  },
+
+  async getAreaById(id: UUID) {
     return db
       .select()
       .from(Area)
-      .where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
+      .where(and(eq(Area.id, id), isNull(Area.deletedAt)))
+      .limit(1)
+      .then((rows) => {
+        const area = rows[0];
+        if (!area) throw new Error("no Area found for id: " + id);
+        return area;
+      });
   },
 };
 
@@ -65,26 +84,6 @@ export const AREA_MUTATIONS = {
     return db
       .insert(Area)
       .values({ name, size, creatorId, ...(cat ? { category: cat } : {}) })
-      .returning()
-      .then((area) => {
-        return area[0];
-      });
-  },
-
-  async DeleteArea(areaId: UUID) {
-    return db.update(Area)
-      .set({ deletedAt: new Date() })
-      .where(eq(Area.id, areaId))
-      .returning()
-      .then((rows: AreaRow[]) => {
-        return rows[0];
-      });
-  },
-  async UpdateArea(id: string, name: string, size: number) {
-    return db
-      .update(Area)
-      .set({ name, size })
-      .where(eq(Area.id, id))
       .returning()
       .then((area) => {
         return area[0];

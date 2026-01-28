@@ -2,38 +2,73 @@
 
 "use server";
 
+import { AREA_QUERIES } from "@/src/server/db/queries/area.query";
 import { TASK_QUERIES, TASK_MUTATIONS } from "@/src/server/db/queries/task.query";
-import { Task } from "@/src/server/db/type/DBTypes";
+import { TASKTOOL_QUERIES, TASKTOOL_MUTATIONS } from "@/src/server/db/queries/taskTool.query";
+import { TOOL_QUERIES } from "@/src/server/db/queries/tools.query";
+import type { Task } from "@/src/server/db/type/DBTypes";
 import { isUUID } from "@/src/util/uuidValidator";
 import type { UUID } from "crypto";
 
 // Fetch all tasks
-export async function getAllTasksAction(): Promise<{
-  tasks: Task[] | null;
-  error?: string;
-}> {
+// Server action wrappers used by client components.
+// These functions call DB query helpers and return plain JSON-serializable
+// objects (we stringify/parse results) so they can be safely passed from
+// server actions to client components without prototype/Date issues.
+
+export async function getAllTasksAction() {
   try {
     const tasks = await TASK_QUERIES.getAll();
-
-    return {
-      tasks,
-    };
+    return JSON.parse(JSON.stringify(tasks));
   } catch (err) {
-    if (err instanceof Error) {
-      return {
-        tasks: null,
-        error: err.message,
-      };
-    } else {
-      return {
-        tasks: null,
-        error: "unknown error",
-      };
-    }
+    console.error("Error loading tasks:", err);
+    throw err;
+  }
+}
+// Fetch all areas
+export async function getAllAreasAction() {
+  try {
+    const areas = await AREA_QUERIES.getAllAreas();
+    return JSON.parse(JSON.stringify(areas));
+  } catch (err) {
+    console.error("Error loading areas:", err);
+    throw err;
+  }
+}
+// Fetch all tools - FMST-12 | Pachler
+export async function getAllToolsAction() {
+  try {
+    const tools = await TOOL_QUERIES.getToolsFromDB();
+    return JSON.parse(JSON.stringify(tools));
+  } catch (err) {
+    console.error("Error loading tools:", err);
+    throw err;
+  }
+}
+// Fetch all task tools - FMST-12 | Pachler
+export async function getAllTaskToolsAction() {
+  try {
+    const taskTools = await TASKTOOL_QUERIES.getAllTaskTools();
+    return JSON.parse(JSON.stringify(taskTools));
+  } catch (err) {
+    console.error("Error loading task tools:", err);
+    throw err;
+  }
+}
+
+// Fetch tools for a specific task - FMST-12 | Pachler
+export async function getToolsForTaskAction(taskId: UUID) {
+  try {
+    const tools = await TASKTOOL_QUERIES.getToolsForTask(taskId);
+    return JSON.parse(JSON.stringify(tools));
+  } catch (err) {
+    console.error("Error loading tools for task:", err);
+    throw err;
   }
 }
 
 // Create a new task
+
 export async function createTaskAction(
   name: string,
   description?: string,
@@ -59,6 +94,7 @@ export async function createTaskAction(
       task: newTask,
     };
   } catch (err) {
+    console.error("Error creating task:", err);
     if (err instanceof Error) {
       return {
         task: null,
@@ -73,10 +109,29 @@ export async function createTaskAction(
   }
 }
 
+// Set tools for a specific task - FMST-12 | Pachler
+export async function setTaskToolsAction(taskId: UUID, toolIds: string[]) {
+  try {
+    // Replace associations for a task (delete existing, insert new)
+    const res = await TASKTOOL_MUTATIONS.setToolsForTask(taskId, toolIds);
+    return JSON.parse(JSON.stringify(res));
+  } catch (err) {
+    console.error("Error setting tools for task:", err);
+    throw err;
+  }
+}
+
 // Update a task
+
 export async function updateTaskAction(
-  id: string,
-  values: Partial<{ name: string; description: string; dueTo: Date; priority: string }>,
+  id: UUID,
+  values: Partial<{
+    name: string;
+    description: string;
+    dueTo: Date;
+    areaId: string;
+    priority: string;
+  }>,
 ): Promise<{
   task: Task | null;
   error?: string;
@@ -145,6 +200,24 @@ export async function deleteTaskAction(id: string): Promise<{
         error: "unknown error",
       };
     }
+  }
+}
+
+// Mark task as completed | FMST-54 | Pachler 
+export async function markTaskCompletedAction(
+  id: UUID,
+  completed: boolean = true,
+): Promise<{
+  task: Task | null;
+  error?: string;
+}> {
+  try {
+    await TASK_MUTATIONS.markTaskCompleted(id, completed);
+    const updated = await TASK_QUERIES.mapIdToTask(id);
+    return { task: updated };
+  } catch (err) {
+    console.error("Failed to mark task completed:", err);
+    return { task: null, error: "Could not complete task." };
   }
 }
 

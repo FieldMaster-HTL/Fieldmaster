@@ -189,7 +189,6 @@ export default function Page(): React.JSX.Element {
         </label>
 
         {error && <div className="text-red-600">{error}</div>}
-        {successMessage && <div className="text-green-600">{successMessage}</div>}
 
         <div className="flex gap-2">
           <button type="submit" className="px-3 py-2" data-testid="submit-button">Anlegen</button>

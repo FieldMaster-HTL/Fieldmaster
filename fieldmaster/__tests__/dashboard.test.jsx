@@ -58,19 +58,17 @@ test('zeigt Areas nach dem Laden und aktualisiert die Areas-Zahl im Button', asy
 test('wechselt zur Tasks-Ansicht und zeigt Tasks mit Fälligkeitsdatum', async () => {
   getAllAreas.mockResolvedValue({ areas: [] })
   const dueIso = '2025-11-17T00:00:00.000Z'
-  getAllTasksAction.mockResolvedValue({
-    tasks: [
-      {
-        id: "t1",
-        name: "Task X",
-        description: "Beschreibung",
-        creatorId: null,
-        createdAt: new Date().toISOString(),
-        dueTo: dueIso,
-        areaId: null,
-      },
-    ],
-  });
+  getAllTasksAction.mockResolvedValue([
+    {
+      id: 't1',
+      name: 'Task X',
+      description: 'Beschreibung',
+      creatorId: null,
+      createdAt: new Date().toISOString(),
+      dueTo: dueIso,
+      areaId: null
+    }
+  ])
 
   render(<Page />)
 
@@ -90,6 +88,9 @@ test('wechselt zur Tasks-Ansicht und zeigt Tasks mit Fälligkeitsdatum', async (
 // - Setup: both area and task actions reject with an error.
 // - Expectation: an error message containing the error text is rendered.
 test('zeigt Fehlermeldung wenn Laden fehlschlägt', async () => {
+  // Mock console.error to suppress expected error output
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
   getAllAreas.mockRejectedValue(new Error('boom'))
   getAllTasksAction.mockRejectedValue(new Error('boom'))
 
@@ -97,4 +98,7 @@ test('zeigt Fehlermeldung wenn Laden fehlschlägt', async () => {
 
   // Fehler wird angezeigt
   expect(await screen.findByText(/Fehler: boom/)).toBeInTheDocument()
+
+  // Restore console.error
+  consoleErrorSpy.mockRestore()
 })

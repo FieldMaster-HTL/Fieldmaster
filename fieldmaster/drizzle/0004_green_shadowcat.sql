@@ -1,0 +1,2 @@
+-- Migration 0004: task_tools table, constraints, and indexes already exist in 0000_swift_quicksilver.sql
+-- This migration is kept as a no-op to preserve migration history.

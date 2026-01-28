@@ -1,51 +1,89 @@
 "server-only";
 
-//Area FMST-30  / FMST-31
+// Area queries & mutations (FMST-42 Lorenzer)
+// Provides DB access helpers for Area entities using the project's Drizzle DB layer.
 
 import { db } from "@/src/server/db/index";
 import { Area } from "@/src/server/db/schema/schema";
-import type { Area as AreaRow } from "@/src/server/db/type/DBTypes";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, isNull, and } from "drizzle-orm";
 import { UUID } from "crypto";
 
+// Allowed category values for Areas. Server-side source of truth to prevent free-text categories.
+export const ALLOWED_AREA_CATEGORIES = [
+  "WIESE",
+  "ACKER",
+  "OBSTGARTEN",
+  "WEINBERG",
+  "WALD",
+  "WEIDE",
+  "SONSTIGES",
+];
+
 export const AREA_QUERIES = {
+  // Fetch all areas (no filtering).
   async getAllAreas() {
-    return db.select().from(Area).where(isNull(Area.deletedAt));
+    try {
+      return await db.select().from(Area).where(isNull(Area.deletedAt));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAllAreas:', err)
+      throw err
+    }
   },
 
+  // Fetch areas created by a specific user.
   async getAreasByCreator(creatorId: UUID) {
+    try {
+      return await db.select().from(Area).where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
+    } catch (err) {
+      console.error('Error in AREA_QUERIES.getAreasByCreator:', err)
+      throw err
+    }
+  },
+
+  async getAreaById(id: UUID) {
     return db
       .select()
       .from(Area)
-      .where(and(eq(Area.creatorId, creatorId), isNull(Area.deletedAt)));
+      .where(and(eq(Area.id, id), isNull(Area.deletedAt)))
+      .limit(1)
+      .then((rows) => {
+        const area = rows[0];
+        if (!area) throw new Error("no Area found for id: " + id);
+        return area;
+      });
   },
 };
 
 export const AREA_MUTATIONS = {
-  async CreateArea(name: string, size: number, creatorId?: UUID) {
+  /**
+   * CreateArea
+   * - Inserts a new Area record.
+   * - Validates the provided category against ALLOWED_AREA_CATEGORIES.
+   * - If category is invalid or absent, it will be omitted so DB default applies.
+   *
+   * Parameters:
+   * - name: string (required)
+   * - size: number (required)
+   * - creatorId: UUID (optional)
+   * - category: string (optional, must be one of ALLOWED_AREA_CATEGORIES)
+   *
+   * Returns:
+   * - The created Area record (first returned row).
+   */
+  async CreateArea(
+    name: string,
+    size: number,
+    creatorId?: UUID,
+    category?: string
+  ) {
+    const cat =
+      category && ALLOWED_AREA_CATEGORIES.includes(category)
+        ? category
+        : undefined;
+
     return db
       .insert(Area)
-      .values({ name, size, creatorId })
-      .returning()
-      .then((area) => {
-        return area[0];
-      });
-  },
-
-  async DeleteArea(areaId: UUID) {
-    return db.update(Area)
-      .set({ deletedAt: new Date() })
-      .where(eq(Area.id, areaId))
-      .returning()
-      .then((rows: AreaRow[]) => {
-        return rows[0];
-      });
-  },
-  async UpdateArea(id: string, name: string, size: number) {
-    return db
-      .update(Area)
-      .set({ name, size })
-      .where(eq(Area.id, id))
+      .values({ name, size, creatorId, ...(cat ? { category: cat } : {}) })
       .returning()
       .then((area) => {
         return area[0];

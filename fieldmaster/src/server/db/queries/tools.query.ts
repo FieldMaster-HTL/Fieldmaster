@@ -3,13 +3,18 @@
 import { db } from "@/src/server/db/index"; 
 import { Farm } from "@/src/server/db/schema/schema";
 import { toolsTable } from "@/src/server/db/schema/schema";
-import { eq } from "drizzle-orm";
+import { categoriesTable } from "@/src/server/db/schema/schema";
+import { eq, and } from "drizzle-orm";
+import { UUID } from "crypto";
 
 // Definiert den Typ eines Tools (wird beim Erstellen eines neuen Tools verwendet)
 type Tool = {
-    name: string
-    category: string 
-    available: boolean
+  name: string
+  category: string
+  description?: string
+  imageUrl?: string
+  available: boolean
+  area?: string
 }
 
 
@@ -21,34 +26,54 @@ export const TOOL_QUERIES = {
     // Lädt alle Tools aus der Datenbank
     async getToolsFromDB() {
         // SELECT * FROM toolsTable
-            try {
-                const tools = await db.select().from(toolsTable)
-                return tools // Gibt das Array der Tools zurück
-            } catch (err) {
-                console.error('Error in TOOL_QUERIES.getToolsFromDB:', err)
-                throw err
-            }
+        const tools = await db.select().from(toolsTable).where(eq(toolsTable.deleted, false)) // Nur nicht gelöschte Tools
+        return tools // Gibt das Array der Tools zurück
     },
 
-  // Erstellt ein neues Tool in der Datenbank
-  async createToolInDB(tool: Tool) {
-    // INSERT INTO toolsTable (name, category, available) VALUES (...)
-    const result = await db.insert(toolsTable).values({
-      name: tool.name,
-      category: tool.category,
-      available: tool.available,
-    }).returning();
-    return result[0];
-  },
+    // Lädt alle Kategorien aus der Datenbank - FMST-19 (Polt Leonie)
+    async getCategoriesFromDB() {
+        const categories = await db.select().from(categoriesTable)
+        return categories
+    },
 
-  // Aktualisiert ein Tool in der Datenbank
-  async updateToolInDB(id: string, tool: Partial<Tool>) {
-    // UPDATE toolsTable SET ... WHERE id = ...
-    const result = await db
-      .update(toolsTable)
-      .set(tool)
-      .where(eq(toolsTable.id, id))
-      .returning();
-    return result[0];
-  },
-};
+    // soft löschen eines tools
+    async softDeleteToolInDB(id: string) {
+        await db
+        .update(toolsTable)
+        .set({ deleted: true })
+        .where(eq(toolsTable.id, id))
+    },
+
+    // Erstellt ein neues Tool in der Datenbank
+    async createToolInDB(tool: Tool) {
+        await db.insert(toolsTable).values({
+        name: tool.name,
+        category: tool.category,
+        description: tool.description,
+        imageUrl: tool.imageUrl,
+        available: tool.available,
+        area: tool.area,
+    })
+    },
+
+
+    async updateToolInDB(id: string, tool: any) {
+        await db.update(toolsTable).set({
+        name: tool.name,
+        category: tool.category,
+        description: tool.description,
+        imageUrl: tool.imageUrl,
+        available: tool.available,
+        area: tool.area,
+        })
+        .where(eq(toolsTable.id, id))
+        },
+
+
+    // Neue Kategorie erstellen - FMST-19 (Polt Leonie)
+    async createCategoryInDB(name: string) {
+        await db.insert(categoriesTable).values({
+            name: name.trim(),
+        })
+    }
+}

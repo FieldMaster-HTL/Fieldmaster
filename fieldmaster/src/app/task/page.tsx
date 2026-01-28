@@ -532,7 +532,13 @@ export default function Tasks() {
                           <button
                             onClick={async () => {
                               const newStatus = !task.completed;
-                              await markTaskCompletedAction(task.id, newStatus);
+                              const { task: updatedTask, error } = await markTaskCompletedAction(task.id, newStatus);
+
+                              if (error) {
+                                setSuccessMessage(`Fehler beim Aktualisieren der Task: ${error}`);
+                                return;
+                              }
+
                               await fetchTasks();
                               setSuccessMessage(
                                 newStatus
@@ -726,12 +732,23 @@ export default function Tasks() {
                     startTransition(async () => {
                       try {
                         // update area if changed
-                        await updateTaskAction(selectedTask!.id, { areaId: modalAreaId || undefined });
+                        const updateResult = await updateTaskAction(selectedTask!.id, {
+                          areaId: modalAreaId || undefined
+                        });
+
+                        if (updateResult.error) {
+                          setSuccessMessage(`Fehler beim Speichern der Task: ${updateResult.error}`);
+                          return;
+                        }
+
                         await setTaskToolsAction(selectedTask!.id as any, modalToolIds);
                         await fetchTasks();
                         await fetchTaskTools();
                         setShowModal(false);
+                        setSuccessMessage(`Task wurde erfolgreich gespeichert.`);
                       } catch (err) {
+                        const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+                        setSuccessMessage(`Fehler beim Speichern: ${errorMessage}`);
                         console.error(err);
                       }
                     });

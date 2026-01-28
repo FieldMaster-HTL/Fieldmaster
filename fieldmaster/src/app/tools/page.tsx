@@ -48,6 +48,7 @@ export default function Page() {
   const [filterAvailable, setFilterAvailable] = useState('')
 
   // Drag & Drop Handler
+  //handle drag
 const handleDrag = (e: React.DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
@@ -58,6 +59,7 @@ const handleDrag = (e: React.DragEvent) => {
   }
 }
 
+//handle drop
 const handleDrop = async (e: React.DragEvent) => {
   e.preventDefault()
   e.stopPropagation()
@@ -68,6 +70,7 @@ const handleDrop = async (e: React.DragEvent) => {
   }
 }
 
+//wenn bild geändert wird
 const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   if (e.target.files && e.target.files[0]) {
     await handleImageFile(e.target.files[0])
@@ -75,23 +78,23 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 }
 
 const handleImageFile = async (file: File) => {
-  // Validierung
+  // schaun obs ein bild ist
   if (!file.type.startsWith('image/')) {
     alert('Bitte nur Bilddateien hochladen')
     return
   }
 
-  // Max 5MB
+  // größe beschränken
   if (file.size > 5 * 1024 * 1024) {
     alert('Bild ist zu groß (max 5MB)')
     return
   }
 
-  // Konvertiere zu Base64
+  
   const reader = new FileReader()
   reader.onloadend = () => {
     const base64String = reader.result as string
-    setImagePreview(base64String)
+    setImagePreview(base64String)//zu base64 konvertieren
     setForm({ ...form, imageUrl: base64String })
   }
   reader.readAsDataURL(file)
@@ -123,14 +126,14 @@ const handleImageFile = async (file: File) => {
     init()
   }, [])
 
-  // Tools aus der DB laden
+  // tools aus db laden
   async function loadToolsfromDB() {
     const data = await loadTools()
     setTools(data)
   }
 
 
-  // funtktion zum Bearbeiten
+  // bearbeitungsfunktion
   function handleEdit(tool: any) {
   setEditingTool(tool)
   
@@ -143,24 +146,24 @@ const handleImageFile = async (file: File) => {
     area: tool.area ?? ''
   })
   
-  setImagePreview('') // Preview zurücksetzen
+  setImagePreview('') // preview zurücksetzten
   setShowWindow(true)
 }
 
-  // Löschen mit Abhängigkeitsprüfung
+  // löschen und achten auf abhängigkeit
  async function handleDelete(tool: any) {
   if (tool.activeTasksCount > 0) {
     alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
     return
   }
 
-  const confirmed = confirm(`"${tool.name}" wirklich löschen?`)
+  const confirmed = confirm(`"${tool.name}" wirklich löschen?`) //noch mal abfragen
   if (!confirmed) return
 
   await deleteTool(tool.id)
   await loadToolsfromDB()
  }
-  // Neues Tool speichern / Tool bearbeiten
+  // neues tool speichern/bearbeiten
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -174,7 +177,7 @@ const handleImageFile = async (file: File) => {
     return
   }
 
-    // Wenn editingTool gesetzt ist → UPDATE, sonst CREATE
+    // Wenn editingTool dann update sonnst create
     await storeTools(form, editingTool?.id)
 
     setShowWindow(false)
@@ -202,16 +205,16 @@ const handleImageFile = async (file: File) => {
   return (
     <div className="page-container">
 
-      {/* Filter & Suche */}
+      
       <div className="filters">
         <input
           placeholder="Suche nach Name"
           value={search}
           onChange={e => setSearch(e.target.value)}
-        />
+        />{/* allg. suche nach name */}
 
         <select onChange={e => setFilterCategory(e.target.value)}>
-          <option value="">Alle Kategorien</option>
+          <option value="">Alle Kategorien</option>{/* nach kategorie filtern */}
           {categories.map(cat => (
             <option key={cat.id} value={cat.name}>
               {cat.name}
@@ -219,13 +222,13 @@ const handleImageFile = async (file: File) => {
           ))}
         </select>
 
-        <select onChange={e => setFilterAvailable(e.target.value)}>
+        <select onChange={e => setFilterAvailable(e.target.value)}>{/* nach verfügbarkeit filtern */}
           <option value="">Alle</option>
           <option value="available">Verfügbar</option>
           <option value="unavailable">Nicht verfügbar</option>
         </select>
 
-        {/* Create Button */}
+        {/*button zum erstellen von tool*/}
         <button
           onClick={() => {
             setEditingTool(null)
@@ -239,7 +242,7 @@ const handleImageFile = async (file: File) => {
         </button>
       </div>
 
-      {/* Tabelle */}
+      {/*tabelle mit allen nötigen spalten*/}
       <div className="table-wrapper">
         <table className="tools-table">
           <thead>
@@ -300,7 +303,7 @@ const handleImageFile = async (file: File) => {
         </table>
       </div>
 
-      {/* MODAL: Neues Tool erstellen / bearbeiten */}
+      {/*neues tool erstellen/bearbeiten*/}
       {showWindow && (
         <div className="modal-overlay">
           <div className="modal-window">
@@ -333,7 +336,7 @@ const handleImageFile = async (file: File) => {
                 onChange={e => setForm({ ...form, description: e.target.value })}
               />
 
-              {/* Drag & Drop Bereich */}
+              {/*drag and drop*/}
               <div
                 className={`image-upload-area ${dragActive ? 'drag-active' : ''}`}
                 onDragEnter={handleDrag}
@@ -363,7 +366,7 @@ const handleImageFile = async (file: File) => {
                   <>
                     <div className="upload-icon">📁</div>
                     <p>Bild hierher ziehen oder klicken zum Auswählen</p>
-                    <p className="upload-hint">Max. 5MB, PNG/JPG/GIF</p>
+                    <p className="upload-hint">Max. 5MB</p>
                   </>
                 )}
                 

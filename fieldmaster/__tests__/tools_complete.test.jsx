@@ -9,9 +9,7 @@ import {
   deleteTool,
 } from "../src/app/tools/actions"
 
-// --------------------
-// MOCK ACTIONS
-// --------------------
+//mock aktionen
 jest.mock("../src/app/tools/actions", () => ({
   loadTools: jest.fn(),
   loadCategories: jest.fn(),
@@ -20,17 +18,18 @@ jest.mock("../src/app/tools/actions", () => ({
   deleteTool: jest.fn(),
 }))
 
+// zurpcksetzten von mocks
 afterEach(() => jest.clearAllMocks())
 
-describe("Tools page – minimal flow", () => {
-  it("loads tools, creates one and deletes one (no UI assertions)", async () => {
-    // Initial load returns empty array
+describe("Tools-Seite – minimaler Ablauf", () => {
+  it("lädt Tools, erstellt eines und löscht eines (keine UI-Assertions)", async () => {
+    // leeres array 
     loadTools.mockResolvedValueOnce([])
     
     loadCategories.mockResolvedValue([{ id: "1", name: "Werkzeug" }])
     loadAreas.mockResolvedValue([{ id: "1", name: "Werkstatt" }])
 
-    // After creating, return the new tool
+    // neues tool erstellen und zurückgeben
     const newTool = { 
       id: "1", 
       name: "Bohrer", 
@@ -39,42 +38,44 @@ describe("Tools page – minimal flow", () => {
     }
     storeTools.mockResolvedValue(newTool)
     
-    // Second load after creation returns the new tool
+    // noch mal laden
     loadTools.mockResolvedValueOnce([newTool])
     
     deleteTool.mockResolvedValue({ success: true })
 
+    // mock von dialoge
     jest.spyOn(window, "confirm").mockReturnValue(true)
     jest.spyOn(window, "alert").mockImplementation(() => {})
 
     render(<Tools />)
 
-    // 1️⃣ LOAD
+    //laden
     await waitFor(() => expect(loadTools).toHaveBeenCalled())
 
-    // 2️⃣ CREATE
+    //erstellen
     fireEvent.click(screen.getByText("Create Tool"))
 
-    // Wait for the form to appear
+    // warten bis formular angezeigt
     const nameInput = await screen.findByPlaceholderText("Tool-Name")
     fireEvent.change(nameInput, {
       target: { value: "Bohrer" },
     })
 
-    // Try to find category field by different methods
+    // suche nach kategorie feld
     let categoryField
     
-    // Try as a select element
+    // select
     try {
-      categoryField = screen.getByDisplayValue("") // Empty select
+      categoryField = screen.getByDisplayValue("") // Leeres Select
       if (!categoryField) {
         const selects = screen.getAllByRole("combobox", { hidden: true })
-        categoryField = selects.find(s => s.name?.includes("categ") || s.id?.includes("categ"))
+        categoryField = selects.find(
+          s => s.name?.includes("categ") || s.id?.includes("categ")
+        )
       }
     } catch {
-      // Try finding by any input after the name field
       const inputs = screen.getAllByRole("textbox")
-      categoryField = inputs[1] // Second input might be category
+      categoryField = inputs[1]
     }
 
     if (categoryField) {
@@ -83,18 +84,18 @@ describe("Tools page – minimal flow", () => {
       })
     }
 
-    // Submit the form
+    // formular senden
     fireEvent.click(screen.getByText("Erstellen"))
 
-    // Wait for storeTools to be called
+    // warten auf aufruf v. storetools
     await waitFor(() => expect(storeTools).toHaveBeenCalled())
 
-    // Wait for the tool to appear in the list (the component should reload tools)
+    // warten bis element in liste
     await waitFor(() => {
       expect(screen.queryByText("Bohrer")).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // 3️⃣ DELETE
+    // löschen
     const deleteButton = await screen.findByText("Löschen")
     fireEvent.click(deleteButton)
 

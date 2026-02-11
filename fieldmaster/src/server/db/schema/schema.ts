@@ -40,13 +40,19 @@ export const Area = pgTable("area", {
   deletedAt: timestamp("deletedAt"),
 });
 
-// Tools Table - FMST-12 | Pachler
+// Tools Table - FMST-76 (Polt Leonie) - überarbeitung von db & FMST-12 | Pachler
 export const toolsTable = pgTable("tools", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   category: text("category").notNull(),
+  description: text("description"),   
+  imageUrl: text("image_url"),         
   available: boolean("available").notNull(),
+  area: text("area"),      
+  deleted: boolean('deleted').default(false).notNull(), // FMST-76 (Polt Leonie) - Spalte für soft delete
+                
 });
+
 
 //FMST-35
 export const Task = pgTable("task", {
@@ -59,6 +65,14 @@ export const Task = pgTable("task", {
   areaId: uuid("areaId").references(() => Area.id),
   priority: text("priority"),
   completed: boolean("completed").default(false).notNull(),
+  deletedAt: timestamp("deletedAt"),
+});
+
+// FMST-19 (Polt Leonie) - tabelle mit benötigten Spalten für Kategorien
+export const categoriesTable = pgTable("categories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
 });
 

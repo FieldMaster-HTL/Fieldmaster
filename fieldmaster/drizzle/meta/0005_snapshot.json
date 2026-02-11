@@ -1,6 +1,6 @@
 {
-  "id": "77787d03-c46f-486d-9640-1685298555f6",
-  "prevId": "75200262-716b-4240-a317-38ffb9060569",
+  "id": "391add6a-f8f3-4542-a2a8-cd299d3138d8",
+  "prevId": "77787d03-c46f-486d-9640-1685298555f6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -26,13 +26,6 @@
           "type": "double precision",
           "primaryKey": false,
           "notNull": true
-        },
-        "category": {
-          "name": "category",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'WIESE'"
         },
         "creatorId": {
           "name": "creatorId",
@@ -202,25 +195,6 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
-        },
-        "priority": {
-          "name": "priority",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "completed": {
-          "name": "completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "deletedAt": {
-          "name": "deletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -250,117 +224,6 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.task_tools": {
-      "name": "task_tools",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "taskId": {
-          "name": "taskId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "toolId": {
-          "name": "toolId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "task_tools_taskId_toolId_unique": {
-          "name": "task_tools_taskId_toolId_unique",
-          "columns": [
-            {
-              "expression": "taskId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "toolId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "task_tools_task_id_idx": {
-          "name": "task_tools_task_id_idx",
-          "columns": [
-            {
-              "expression": "taskId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "task_tools_tool_id_idx": {
-          "name": "task_tools_tool_id_idx",
-          "columns": [
-            {
-              "expression": "toolId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "task_tools_taskId_task_id_fk": {
-          "name": "task_tools_taskId_task_id_fk",
-          "tableFrom": "task_tools",
-          "tableTo": "task",
-          "columnsFrom": [
-            "taskId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        },
-        "task_tools_toolId_tools_id_fk": {
-          "name": "task_tools_toolId_tools_id_fk",
-          "tableFrom": "task_tools",
-          "tableTo": "tools",
-          "columnsFrom": [
-            "toolId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -521,6 +384,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "deleted": {
+          "name": "deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},

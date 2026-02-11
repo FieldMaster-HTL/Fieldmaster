@@ -1,160 +1,319 @@
-"use client"; // Markiert diese Datei als Client Component in Next.js (wird im Browser ausgeführt)
-import { useState, useEffect } from "react";
-import { Tool } from "../../server/db/type/DBTypes";
-import { loadTools, storeTools, updateTool } from "./actions";
-import "./style.css";
+'use client' // Markiert diese Datei als Client Component (läuft im Browser)
 
-// Import von asynchronen Funktionen zur Datenbank-Interaktion
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+
+import './style.css'
+import { loadTools, storeTools, loadCategories, deleteTool, loadAreas } from './actions'
+import { getAllAreas } from '../area/actions'
+import { AnyAaaaRecord } from 'dns'
 
 export default function Page() {
-  // React State Hooks:
-  const [tools, setTools] = useState<Tool[]>([]); // Liste der gespeicherten Tools
-  const [showWindow, setShowWindow] = useState(false); // Steuert, ob das Modal-Fenster angezeigt wird
-  const [form, setForm] = useState({ name: "", category: "Maschine" }); // Formularzustand für neues Tool
-  const [showModal, setShowModal] = useState(false); // Steuert, ob das Bearbeitungs-Modal angezeigt wird
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null); // Ausgewähltes Tool für Bearbeitung
-  const [editName, setEditName] = useState(""); // Bearbeiteter Name
-  const [editCategory, setEditCategory] = useState("Maschine"); // Bearbeitete Kategorie
-  const [editAvailable, setEditAvailable] = useState(false); // Bearbeiteter Verfügbarkeitsstatus
-  const [error, setError] = useState<string | null>(null); // Fehlermeldung
-  const [successMessage, setSuccessMessage] = useState<string | null>(null); // Erfolgsmeldung
 
   // Lädt die Tools beim ersten Rendern der Seite
   useEffect(() => {
     loadToolsfromDB()
   }, [])
 
-  // Asynchrone Funktion, um Tools aus der Datenbank zu laden
-  async function loadToolsfromDB() {
-    try {
-      const data = await loadTools();
-      setTools(data);
-    } catch (error) {
-      console.error("Failed to load tools:", error);
-      setError("Fehler beim Laden der Tools.");
+  // Liste aller Tools aus der DB
+  const [tools, setTools] = useState<any[]>([])
+
+  // Liste der Kategorien
+  const [categories, setCategories] = useState<any[]>([])
+
+  // Modal sichtbar / unsichtbar
+  const [showWindow, setShowWindow] = useState(false)
+
+  // Liste der Areas
+  const [areas, setAreas] = useState<any[]>([])
+
+  // Modalfelder für bearbeiten/erstellen
+  const emptyForm = {
+    name: '',
+    category: '',
+    description: '',
+    imageUrl: '',
+    available: true,
+    area: ''
+  }
+
+  const [form, setForm] = useState(emptyForm)
+
+  // Tool das gerade bearbeitet wird
+  const [editingTool, setEditingTool] = useState<any | null>(null)
+
+  //drag and drop
+  const [dragActive, setDragActive] = useState(false)
+  const [imagePreview, setImagePreview] = useState('')
+
+  // Filter & Suche
+  const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterAvailable, setFilterAvailable] = useState('')
+
+  // Drag & Drop Handler
+  //handle drag
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
     }
   }
 
-  // Formular absenden
+  //handle drop
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleImageFile(e.dataTransfer.files[0])
+    }
+  }
+
+  //wenn bild geändert wird
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await handleImageFile(e.target.files[0])
+    }
+  }
+
+  const handleImageFile = async (file: File) => {
+    // schaun obs ein bild ist
+    if (!file.type.startsWith('image/')) {
+      alert('Bitte nur Bilddateien hochladen')
+      return
+    }
+
+    // größe beschränken
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Bild ist zu groß (max 5MB)')
+      return
+    }
+
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64String = reader.result as string
+      setImagePreview(base64String)//zu base64 konvertieren
+      setForm({ ...form, imageUrl: base64String })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Lädt Tools & Kategorien beim ersten Rendern
+  useEffect(() => {
+    async function init() {
+      // Kategorien laden
+      const categoriesData = await loadCategories()
+      setCategories(categoriesData)
+
+      // Areas laden
+      const areasData = await loadAreas()
+      setAreas(areasData)
+
+      // Setze die erste Kategorie im Form, falls noch keine ausgewählt
+      if (categoriesData.length > 0) {
+        setForm(prev => ({
+          ...prev,
+          category: categoriesData[0].name
+        }))
+      }
+
+      // Tools laden
+      await loadToolsfromDB()
+    }
+
+    init()
+  }, [])
+
+  // tools aus db laden
+  async function loadToolsfromDB() {
+    const data = await loadTools()
+    setTools(data)
+  }
+
+
+  // bearbeitungsfunktion
+  function handleEdit(tool: any) {
+    setEditingTool(tool)
+
+    setForm({
+      name: tool.name ?? '',
+      category: tool.category ?? '',
+      description: tool.description ?? '',
+      imageUrl: tool.imageUrl ?? '',
+      available: tool.available ?? true,
+      area: tool.area ?? ''
+    })
+
+    setImagePreview('') // preview zurücksetzten
+    setShowWindow(true)
+  }
+
+  // löschen und achten auf abhängigkeit
+  async function handleDelete(tool: any) {
+    if (tool.activeTasksCount > 0) {
+      alert('Tool kann nicht gelöscht werden – es existieren aktive Tasks.')
+      return
+    }
+
+    const confirmed = confirm(`"${tool.name}" wirklich löschen?`) //noch mal abfragen
+    if (!confirmed) return
+
+    await deleteTool(tool.id)
+    await loadToolsfromDB()
+  }
+
+  // neues tool speichern/bearbeiten
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault() // Standardformularverhalten verhindern
+    e.preventDefault()
 
     // Eingabevalidierung: Kein leerer Name erlaubt
     if (!form.name.trim()) {
-      alert("Bitte gib einen Tool-Namen ein.");
-      return;
+      alert('Name ist erforderlich')
+      return
     }
 
-    try {
-      await storeTools(form, true);
-    } catch (error) {
-      console.error("Failed to create tool:", error);
-      alert("Fehler beim Erstellen des Tools.");
-      return;
+    if (!form.category.trim()) {
+      alert('Kategorie ist erforderlich')
+      return
     }
 
-    setForm({ name: "", category: "Maschine" });
-    setShowWindow(false);
+    // Wenn editingTool dann update sonnst create
+    await storeTools(form, editingTool?.id)
 
-    await loadToolsfromDB();
+    setShowWindow(false)
+    setEditingTool(null)
+    setForm(emptyForm)
+
+    await loadToolsfromDB()
   }
 
-  // Modal öffnen
-  const openModal = (tool: Tool) => {
-    setSelectedTool(tool);
-    setEditName(tool.name);
-    setEditCategory(tool.category);
-    setEditAvailable(tool.available);
-    setShowModal(true);
-    setError(null);
-  };
 
-  // Modal schließen
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedTool(null);
-    setEditName("");
-    setEditCategory("Maschine");
-    setEditAvailable(false);
-    setError(null);
-  };
+  // Gefilterte Tools für Tabellenanzeige
+  const filteredTools = tools.filter(tool => {
+    return (
+      tool.name.toLowerCase().includes(search.toLowerCase()) &&
+      (!filterCategory || tool.category === filterCategory) &&
+      (
+        !filterAvailable ||
+        (filterAvailable === 'available' && tool.available) ||
+        (filterAvailable === 'unavailable' && !tool.available)
+      )
+    )
+  })
 
-  // FMST-46 Mauerhofer
-  const handleSaveEdit = async () => {
-    if (!editName.trim()) {
-      setError("Bitte einen Tool-Namen eingeben.");
-      return;
-    }
-    if (!editCategory.trim()) {
-      setError("Bitte eine Kategorie wählen.");
-      return;
-    }
-
-    if (!selectedTool) return;
-
-    try {
-      const { tool: updatedTool, error: updateError } = await updateTool(
-        selectedTool.id,
-        editName.trim(),
-        editCategory.trim(),
-        editAvailable
-      );
-
-      if (updateError || !updatedTool) {
-        setError(updateError ?? "unknown error");
-        return;
-      }
-
-      setTools((prevTools) =>
-        prevTools.map((t) => (t.id === updatedTool.id ? updatedTool : t))
-      );
-      closeModal();
-      setSuccessMessage("Tool erfolgreich gespeichert.");
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
-      console.error("Error updating tool:", err);
-      setError("Fehler beim Speichern des Tools.");
-    }
-  };
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Tools</h1>
 
-      {/* Erfolgsmeldung */}
-      {successMessage && (
-        <div className="success-message">
-          {successMessage}
-        </div>
-      )}
+      
+      <div className="filters">
+        <input
+          placeholder="Suche nach Name"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />{/* allg. suche nach name */}
 
-      {/* Fehlermeldung */}
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+        <select onChange={e => setFilterCategory(e.target.value)}>
+          <option value="">Alle Kategorien</option>{/* nach kategorie filtern */}
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
 
-      {/* BUTTON zum Öffnen des Erstellungsfensters */}
-      <button onClick={() => setShowWindow(true)} className="create-button">
-        Create Tool
-      </button>
+        <select onChange={e => setFilterAvailable(e.target.value)}>{/* nach verfügbarkeit filtern */}
+          <option value="">Alle</option>
+          <option value="available">Verfügbar</option>
+          <option value="unavailable">Nicht verfügbar</option>
+        </select>
 
-      {/* FMST-16: Werkzeug - Maschinen/Werkzeuge anzeigen 
-          (Kulmer Klara) */}
-      <ul className="tool-names">
-        {tools.map((tool) => (
-          <li key={tool.id}>{tool.name}</li>
-        ))}
-      </ul>
+        {/*button zum erstellen von tool*/}
+        <button
+          onClick={() => {
+            setEditingTool(null)
+            setForm({...emptyForm, category: categories[0]?.name || ''})
+            setImagePreview('') // Preview zurücksetzen
+            setShowWindow(true)
+          }}
+          className="create-button"
+          >
+          Create Tool
+        </button>
+      </div>
 
-      {/* MODAL-FENSTER zum Erstellen eines neuen Tools */}
+      {/*tabelle mit allen nötigen spalten*/}
+      <div className="table-wrapper">
+        <table className="tools-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Kategorie</th>
+              <th>Bild</th>
+              <th>Beschreibung</th>
+              <th>Verfügbarkeit</th>
+              <th>Area</th>
+              <th>Aktive Tasks</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredTools.map(tool => (
+              <tr key={tool.id}>
+                <td>{tool.name}</td>
+                <td>{tool.category}</td>
+
+                <td>
+                  {tool.imageUrl ? (
+                    <img
+                      src={tool.imageUrl}
+                      alt={tool.name}
+                      className="thumb"
+                    />
+                  ) : '-'}
+                </td>
+
+                <td>
+                  {tool.description
+                    ? tool.description.slice(0, 40) + '…'
+                    : '-'}
+                </td>
+
+                <td>
+                  <span className={tool.available ? 'status-ok' : 'status-bad'}>
+                    {tool.available ? 'Verfügbar' : 'Nicht verfügbar'}
+                  </span>
+                </td>
+
+                <td>{tool.area ?? '-'}</td>
+                <td>{tool.activeTasksCount ?? 0}</td>
+
+                <td className="actions">
+                  <button onClick={() => handleEdit(tool)}>
+                    Bearbeiten
+                  </button>
+                  <button onClick={() => handleDelete(tool)}>
+                    Löschen
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/*neues tool erstellen/bearbeiten*/}
       {showWindow && (
         <div className="modal-overlay">
           <div className="modal-window">
-            <h2 className="modal-title">Neues Tool erstellen</h2>
-
-            {/* Formular für Name + Kategorie */}
+            <h2 className="modal-title">{editingTool ? 'Tool bearbeiten' : 'Neues Tool erstellen'}</h2>
             <form onSubmit={handleSubmit} className="modal-form">
 
               {/* 
@@ -165,152 +324,114 @@ export default function Page() {
                 type="text"
                 placeholder="Tool-Name"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={e => setForm({ ...form, name: e.target.value })}
                 required
-                className="modal-input"
               />
 
               <select
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="modal-select"
+                onChange={e => setForm({ ...form, category: e.target.value })}
+                required
               >
-                <option value="Maschine">Maschine</option>
-                <option value="Handwerkzeug">Handwerkzeug</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
 
-              {/* Buttons im Modal */}
+              <textarea
+                placeholder="Beschreibung"
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+              />
+
+              {/*drag and drop*/}
+              <div
+                className={`image-upload-area ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                {imagePreview || form.imageUrl ? (
+                  <div className="image-preview-container">
+                    <img
+                      src={imagePreview || form.imageUrl}
+                      alt="Preview"
+                      className="image-preview"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview('')
+                        setForm({ ...form, imageUrl: '' })
+                      }}
+                      className="remove-image-btn"
+                    >
+                      ✕ Bild entfernen
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="upload-icon">📁</div>
+                    <p>Bild hierher ziehen oder klicken zum Auswählen</p>
+                    <p className="upload-hint">Max. 5MB</p>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="file-input-hidden"
+                  id="file-input"
+                />
+                <label htmlFor="file-input" className="file-input-label">
+                  oder Datei auswählen
+                </label>
+              </div>
+
+              <select
+                value={form.area}
+                onChange={e => setForm({ ...form, area: e.target.value })}
+              >
+                <option value="">Keine Area</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.name}>
+                    {area.name}
+                  </option>
+                ))}
+              </select>
+
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={form.available}
+                  onChange={e => setForm({ ...form, available: e.target.checked })}
+                />
+                Verfügbar
+              </label>
+
               <div className="modal-buttons">
-                <button type="submit" className="modal-save">Speichern</button>
+                <button type="submit" className="modal-save">
+                  {editingTool ? 'Speichern' : 'Erstellen'}
+                </button>
+
                 <button
                   type="button"
-                  onClick={() => setShowWindow(false)}
+                  onClick={() => {
+                    setShowWindow(false)
+                    setEditingTool(null)
+                    setForm(emptyForm)
+                  }}
                   className="modal-cancel"
                 >
                   Abbrechen
                 </button>
               </div>
+
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* FMST-18: Werkzeug - Beschreibung mit Bearbeiten/Löschen */}
-      {/* Detailansicht der Tools mit Kategorie & Verfügbarkeitsstatus */}
-      {/* FMST-46: Mauerhofer Tool Bearbeiten*/}
-      {tools.length === 0 ? (
-        <p>Keine Tools vorhanden.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table
-            className="tool-table"
-            data-testid="tools-table"
-            role="table"
-            aria-label="Tools Tabelle"
-          >
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Kategorie</th>
-                <th>Status</th>
-
-                <th>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tools.map((tool) => (
-                <tr key={tool.id}>
-                  <td>{tool.name}</td>
-                  <td>{tool.category}</td>
-                  <td>{tool.available ? "Verfügbar" : "Nicht verfügbar"}</td>
-
-                  <td className="actions-cell">
-                    <button
-                      onClick={() => openModal(tool)}
-                      className="edit-button"
-                      aria-label={`Bearbeite ${tool.name}`}
-                    >
-                      Bearbeiten
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* FMST-74: Tool Detail Modal */}
-      {/* FMST-46: Mauerhofer Tool Bearbeiten*/}
-      {showModal && selectedTool && (
-        <div className="modal-overlay">
-          <div className="modal-window modal-edit">
-            <button
-              onClick={closeModal}
-              className="modal-close-button"
-              aria-label="Schließen"
-            >
-              ✕
-            </button>
-
-            <h2 className="modal-title">Tool bearbeiten</h2>
-
-            {error && (
-              <div className="error-message" style={{ marginBottom: "1rem" }}>
-                {error}
-              </div>
-            )}
-
-            <label className="form-label">
-              <span>Tool-Name</span>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="modal-input"
-              />
-            </label>
-
-            <label className="form-label">
-              <span>Kategorie</span>
-              <select
-                value={editCategory}
-                onChange={(e) => setEditCategory(e.target.value)}
-                className="modal-select"
-              >
-                <option value="Maschine">Maschine</option>
-                <option value="Handwerkzeug">Handwerkzeug</option>
-              </select>
-            </label>
-
-            <label className="form-label checkbox-label">
-              <input
-                type="checkbox"
-                checked={editAvailable}
-                onChange={(e) => setEditAvailable(e.target.checked)}
-                className="modal-checkbox"
-              />
-              <span>Verfügbar</span>
-            </label>
-
-            <div className="tool-id-info">
-              ID: {selectedTool.id}
-            </div>
-
-            <div className="modal-buttons">
-              <button
-                onClick={handleSaveEdit}
-                className="modal-save"
-              >
-                Speichern
-              </button>
-              <button
-                onClick={closeModal}
-                className="modal-cancel"
-              >
-                Abbrechen
-              </button>
-            </div>
           </div>
         </div>
       )}
